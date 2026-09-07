@@ -1,0 +1,557 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum GameSlug {
+  genshin
+  wuwa
+  neverness
+}
+
+enum OrderStatus {
+  MENUNGGU
+  DIKERJAKAN
+  FINISHING
+  SELESAI
+  DIBATALKAN
+}
+
+enum ResetCycle {
+  HARIAN
+  MINGGU_1
+  MINGGU_2
+  MINGGU_3
+  BULAN_1
+  PATCH_1
+}
+
+enum QuestKind {
+  WORLD
+  ARCHON
+  LAINNYA
+}
+
+enum OrderSource {
+  DISCORD
+  INSTAGRAM
+  TIKTOK
+  WHATSAPP
+}
+
+model Game {
+  id          String   @id @default(cuid())
+  slug        GameSlug @unique
+  name        String
+  tagline     String
+  accentColor String
+  createdAt   DateTime @default(now())
+
+  categories     JokiCategory[]
+  regions        GameRegion[]
+  questTypes     QuestType[]
+  jokiItems      JokiItem[]
+  jokiPakets     JokiPaket[]
+  patches        Patch[]
+  endgameContent EndgameContent[]
+  orders         Order[]
+  testimonials   Testimonial[]
+  jokiHistoryEntries JokiHistoryEntry[]
+}
+
+/// Kategori joki per game (mis. "Push Rank", "Farming", "Eksplorasi", "Quest").
+/// requiresRegion dan requiresQuestType adalah toggle manual yang diatur admin,
+/// menentukan field apa saja yang wajib diisi saat membuat Joki Item di kategori ini.
+model JokiCategory {
+  id                String   @id @default(cuid())
+  gameId            String
+  game              Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  name              String
+  requiresRegion    Boolean  @default(false)
+  requiresQuestType Boolean  @default(false)
+  /// Tandai kategori ini sebagai "Rawat Akun" — mengaktifkan opsi tambahan
+  /// (include event & pilihan konten endgame) di form Joki Item.
+  isRawatAkun       Boolean  @default(false)
+  /// Tandai kategori ini sebagai "Material" — mengubah field harga Joki Item
+  /// menjadi harga per jumlah satuan (mis. Rp 10.000 / 100 material), lewat
+  /// field JokiItem.unitQuantity.
+  isMaterial        Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  jokiItems JokiItem[]
+
+  @@unique([gameId, name])
+  @@index([gameId])
+}
+
+/// Region/wilayah dalam satu game (mis. "Mondstadt", "Liyue").
+model GameRegion {
+  id        String   @id @default(cuid())
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jokiItems  JokiItem[]
+  jokiPakets JokiPaket[]
+
+  @@unique([gameId, name])
+  @@index([gameId])
+}
+
+/// Jenis quest dalam satu game (mis. "Archon Quest", "World Quest").
+/// isRegionSpecific: toggle on/off apakah jenis quest ini spesifik berada
+/// di region tertentu — kalau aktif, Joki Item dengan quest type ini wajib
+/// juga mengisi Region.
+/// questKind mengklasifikasikan jenis quest ini sebagai World Quest, Archon
+/// Quest, atau Lainnya — dipakai untuk menyaring pilihan item saat menyusun
+/// Paket Joki (lihat model JokiPaket).
+model QuestType {
+  id               String    @id @default(cuid())
+  gameId           String
+  game             Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  name             String
+  isRegionSpecific Boolean   @default(false)
+  questKind        QuestKind @default(LAINNYA)
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  jokiItems JokiItem[]
+
+  @@unique([gameId, name])
+  @@index([gameId])
+}
+
+/// Patch/update besar suatu game, dengan rentang tanggal berlaku.
+/// Menjadi acuan waktu untuk PatchEvent (event di dalam patch) dan
+/// EndgameContent bersiklus "1 patch", serta untuk Joki Item Rawat Akun
+/// bertipe "1 patch" (isPatchWide).
+model Patch {
+  id        String   @id @default(cuid())
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  name      String // mis. "Patch 5.0"
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events         PatchEvent[]
+  rawatAkunItems JokiItem[]
+
+  @@unique([gameId, name])
+  @@index([gameId])
+  @@index([startDate, endDate])
+}
+
+/// Event di dalam satu Patch, dengan rentang tanggal dan harga sendiri.
+/// Status tampil/tidaknya di halaman customer (kategori "Event") dihitung
+/// on-the-fly dari startDate/endDate dibanding waktu saat ini — tidak ada
+/// toggle manual: begitu tanggal mulai tiba otomatis tampil, begitu tanggal
+/// selesai lewat otomatis hilang.
+model PatchEvent {
+  id          String   @id @default(cuid())
+  patchId     String
+  patch       Patch    @relation(fields: [patchId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  priceRupiah Int
+  startDate   DateTime
+  endDate     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([patchId])
+  @@index([startDate, endDate])
+}
+
+/// Konten endgame (mis. farming mingguan, konten musiman) yang dikerjakan
+/// berulang sesuai siklus reset. Sengaja terpisah dari Patch supaya siklus
+/// mingguan/bulanan tidak terikat ke satu patch tertentu.
+///
+/// - Siklus MINGGU_1/2/3 & BULAN_1: anchorStartDate adalah tanggal mulai
+///   pertama yang diset admin; siklus berikutnya dihitung otomatis kelipatan
+///   periode dari tanggal itu (lihat lib/endgame-schedule.ts).
+/// - Siklus PATCH_1: daysAfterPatchStart menentukan berapa hari setelah
+///   sebuah Patch mulai, konten ini baru tersedia; tanggal selesainya
+///   mengikuti endDate Patch yang sedang berjalan saat ini.
+model EndgameContent {
+  id                  String     @id @default(cuid())
+  gameId              String
+  game                Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  title               String
+  description         String
+  priceRupiah         Int
+  resetCycle          ResetCycle
+  anchorStartDate     DateTime? // dipakai untuk siklus mingguan/bulanan
+  daysAfterPatchStart Int? // dipakai untuk siklus PATCH_1
+  isActive            Boolean    @default(true)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  rawatAkunItems JokiItemEndgameContent[]
+
+  @@index([gameId])
+}
+
+/// Joki Item = 1 layanan spesifik yang bisa dipesan customer (dulu bernama JokiPackage).
+/// gameId & categoryId wajib. regionId & questTypeId kondisional tergantung
+/// pengaturan requiresRegion / requiresQuestType di JokiCategory, dan
+/// isRegionSpecific di QuestType (lihat lib/joki-rules.ts untuk logika validasinya).
+model JokiItem {
+  id          String   @id @default(cuid())
+  gameId      String
+  game        Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    JokiCategory @relation(fields: [categoryId], references: [id])
+  regionId    String?
+  region      GameRegion?  @relation(fields: [regionId], references: [id])
+  questTypeId String?
+  questType   QuestType?   @relation(fields: [questTypeId], references: [id])
+
+  title       String
+  description String
+  priceRupiah Int
+  etaLabel    String
+  badge       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // --- Khusus kategori Rawat Akun (category.isRawatAkun === true) ---
+  /// Toggle: paket rawat akun ini otomatis mencakup event patch yang sedang berjalan.
+  includeEvent Boolean @default(false)
+  /// Tandai sebagai "rawat akun 1 patch" — terikat ke satu Patch tertentu (bukan ke
+  /// konten endgame spesifik). Tampil ke customer sejak Patch dibuat, hilang H+1
+  /// setelah patch.startDate terlewati (lihat lib/patch-schedule.ts).
+  isPatchWide  Boolean  @default(false)
+  patchId      String?
+  patch        Patch?   @relation(fields: [patchId], references: [id])
+  endgameContent JokiItemEndgameContent[]
+
+  // --- Khusus kategori dengan requiresQuestType (category.requiresQuestType === true) ---
+  /// Nomor Act dalam questline, default 1. Hanya relevan untuk kategori Quest.
+  actNumber Int? @default(1)
+
+  // --- Khusus kategori Material (category.isMaterial === true) ---
+  /// Jumlah satuan material untuk harga priceRupiah di atas (mis. priceRupiah=10000,
+  /// unitQuantity=100 -> "Rp 10.000 / 100 material").
+  unitQuantity Int?
+
+  // --- Khusus kategori Rawat Akun non-1-patch (category.isRawatAkun === true && isPatchWide === false) ---
+  /// Jumlah hari yang dicakup oleh 1 unit OrderLine.rawatAkunQuantity (mis. Rawat
+  /// Akun Mingguan -> durationDays=7, dipesan rawatAkunQuantity=2 -> total 14 hari).
+  /// Dipakai untuk menghitung OrderLine.endDate dari OrderLine.startDate, dan
+  /// untuk membangun kalender progres harian (lihat lib/rawat-akun-schedule.ts).
+  durationDays Int?
+
+  orderLines       OrderLine[]
+  paketMemberships JokiPaketItem[]
+
+  @@index([gameId])
+  @@index([categoryId])
+  @@index([regionId])
+  @@index([questTypeId])
+  @@index([patchId])
+}
+
+/// Paket Joki = kumpulan beberapa Joki Item dijual sebagai satu paket dengan
+/// harga sendiri (default hasil penjumlahan harga item yang dipilih, tapi
+/// bisa diubah manual oleh admin).
+///
+/// Jika regionId diisi, paket ini juga mencakup layanan Eksplorasi untuk
+/// region tersebut:
+/// - isAllMapRegion = true  -> seluruh map & World Quest region itu otomatis
+///   tercakup (tidak perlu pilih item eksplorasi/world quest manual). Archon
+///   Quest TETAP dipilih manual meski all-map aktif.
+/// - isAllMapRegion = false -> admin memilih manual mana saja Joki Item
+///   berkategori Eksplorasi, World Quest, dan Archon Quest (semuanya
+///   difilter ke region yang dipilih) yang masuk ke paket, lewat relasi
+///   items (JokiPaketItem) di bawah.
+model JokiPaket {
+  id             String   @id @default(cuid())
+  gameId         String
+  game           Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  title          String
+  description    String
+  priceRupiah    Int
+  regionId       String?
+  region         GameRegion? @relation(fields: [regionId], references: [id])
+  isAllMapRegion Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  items JokiPaketItem[]
+  orderLines OrderLine[]
+
+  @@index([gameId])
+  @@index([regionId])
+}
+
+/// Join table Paket Joki <-> Joki Item yang menjadi isi paket tersebut
+/// (mencakup item biasa yang dipilih sebagai basis harga, maupun item
+/// eksplorasi/world quest/archon quest saat isAllMapRegion = false).
+model JokiPaketItem {
+  jokiPaketId String
+  jokiPaket   JokiPaket @relation(fields: [jokiPaketId], references: [id], onDelete: Cascade)
+  jokiItemId  String
+  jokiItem    JokiItem  @relation(fields: [jokiItemId], references: [id], onDelete: Cascade)
+
+  @@id([jokiPaketId, jokiItemId])
+  @@index([jokiItemId])
+}
+
+/// Join table eksplisit Joki Item (Rawat Akun) <-> EndgameContent yang dicakupnya.
+model JokiItemEndgameContent {
+  jokiItemId       String
+  jokiItem         JokiItem       @relation(fields: [jokiItemId], references: [id], onDelete: Cascade)
+  endgameContentId String
+  endgameContent   EndgameContent @relation(fields: [endgameContentId], references: [id], onDelete: Cascade)
+
+  @@id([jokiItemId, endgameContentId])
+  @@index([endgameContentId])
+}
+
+/// Customer = identitas pemesan yang bisa punya banyak Order (lintas akun
+/// game dan lintas game). Order TETAP terpisah per akun/game (progress,
+/// status, dan harga masing-masing independen) — Customer hanya wadah
+/// pengelompokan supaya riwayat semua order milik satu orang bisa dilihat
+/// dalam satu tempat. Total harga TIDAK digabung lintas Order; setiap Order
+/// tetap unit transaksi/tagihan sendiri-sendiri.
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  notes     String?
+  /// Slug unik acak untuk URL publik /progress/[publicSlug] -- halaman tanpa
+  /// login yang menampilkan seluruh order & progress milik Customer ini.
+  /// Di-generate otomatis saat Customer dibuat (lihat lib/actions/customer.ts).
+  publicSlug String  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+}
+
+/// Order = pesanan customer, dibuat oleh admin (belum ada order mandiri dari
+/// customer). Satu Order bisa berisi banyak baris (OrderLine) — campuran
+/// Joki Item satuan dan/atau Paket Joki. totalPrice adalah jumlah
+/// calculatedPrice seluruh OrderLine di dalamnya.
+/// Order selalu untuk SATU akun/game tertentu -- kalau customer yang sama
+/// order untuk akun lain atau game lain, itu dibuat sebagai Order baru yang
+/// terpisah, tapi tetap dihubungkan ke Customer yang sama.
+model Order {
+  id          String      @id @default(cuid())
+  orderCode   String      @unique
+  gameId      String
+  game        Game        @relation(fields: [gameId], references: [id])
+  customerId  String
+  customer    Customer    @relation(fields: [customerId], references: [id])
+  jokerName   String?
+  status      OrderStatus @default(MENUNGGU)
+  progressPct Int         @default(0)
+  /// Estimasi waktu pengerjaan khusus order ini (custom per order, bukan
+  /// diambil otomatis dari etaLabel Joki Item).
+  estimasiJoki String?
+  /// Jumlah calculatedPrice seluruh OrderLine — disimpan (bukan dihitung
+  /// ulang setiap render) supaya harga order tetap konsisten meski admin
+  /// mengubah harga Joki Item/Paket di kemudian hari.
+  totalPrice   Int         @default(0)
+  /// Platform tempat order masuk. sourceUsername wajib untuk semua platform;
+  /// sourceWhatsapp hanya diisi jika orderSource = WHATSAPP.
+  orderSource    OrderSource
+  sourceUsername String
+  sourceWhatsapp String?
+  notes        String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  completedAt  DateTime?
+
+  lines       OrderLine[]
+  testimonial Testimonial?
+
+  @@index([status])
+  @@index([gameId])
+  @@index([customerId])
+}
+
+/// Satu baris dalam Order: merujuk ke SATU Joki Item ATAU SATU Paket Joki
+/// (saling eksklusif, dijaga oleh validasi di server action, bukan oleh
+/// constraint database karena Prisma belum punya CHECK constraint portable).
+///
+/// Untuk Joki Item, field kategori-spesifik diisi sesuai kategori item itu:
+/// - Eksplorasi: explorationPercent (persentase yang SUDAH dikerjakan
+///   customer sendiri; sisanya yang dikerjakan joki)
+/// - Quest: actFrom & actTo (rentang Act yang dikerjakan)
+/// - Material: materialQuantity (jumlah item yang dicari)
+/// - Rawat Akun: rawatAkunQuantity (jumlah/kelipatan rawat akun yang dipesan)
+/// Untuk Paket Joki, tidak ada field tambahan — harga diambil apa adanya
+/// dari JokiPaket.priceRupiah.
+///
+/// calculatedPrice adalah hasil akhir rumus harga baris ini (lihat
+/// lib/order-pricing.ts), disimpan permanen sebagai harga historis.
+model OrderLine {
+  id          String     @id @default(cuid())
+  orderId     String
+  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  jokiItemId  String?
+  jokiItem    JokiItem?  @relation(fields: [jokiItemId], references: [id])
+  jokiPaketId String?
+  jokiPaket   JokiPaket? @relation(fields: [jokiPaketId], references: [id])
+
+  explorationPercent Int?
+  actFrom            Int?
+  actTo              Int?
+  materialQuantity   Int?
+  rawatAkunQuantity  Int?
+
+  /// Khusus baris Rawat Akun: rentang tanggal pengerjaan baris ini, dipakai
+  /// untuk membangun kalender progres harian & menentukan event/konten
+  /// endgame apa saja yang tercakup (lihat lib/rawat-akun-schedule.ts).
+  /// startDate diisi admin saat order dibuat (default hari ini); endDate
+  /// dihitung otomatis dari JokiItem.durationDays x rawatAkunQuantity, atau
+  /// dari rentang Patch jika JokiItem.isPatchWide.
+  startDate DateTime?
+  endDate   DateTime?
+
+  calculatedPrice Int
+  createdAt       DateTime @default(now())
+
+  updates      OrderLineUpdate[]
+  dayProgress  OrderLineDayProgress[]
+  dayTasks     OrderLineDayTask[]
+
+  @@index([orderId])
+  @@index([jokiItemId])
+  @@index([jokiPaketId])
+}
+
+/// Log/riwayat update progres untuk SATU OrderLine (satu item dalam satu
+/// akun). Admin menambah entri baru tiap kali ada perkembangan pengerjaan.
+///
+/// - note: catatan bebas tentang progres (opsional).
+/// - screenshotUrl: link gambar bukti (opsional, admin tempel URL yang sudah
+///   diupload manual ke layanan gambar seperti imgur/postimages).
+/// - resetLocation: khusus item Rawat Akun yang mencakup EndgameContent
+///   bersiklus HARIAN (mis. habiskan resin/waveplate) -- opsional, catatan
+///   "dihabiskan di mana" untuk update hari itu. Untuk konten non-harian,
+///   field ini dikosongkan dan screenshotUrl yang relevan.
+model OrderLineUpdate {
+  id             String   @id @default(cuid())
+  orderLineId    String
+  orderLine      OrderLine @relation(fields: [orderLineId], references: [id], onDelete: Cascade)
+  note           String?
+  screenshotUrl  String?
+  resetLocation  String?
+  createdAt      DateTime @default(now())
+
+  @@index([orderLineId])
+}
+
+enum DayTaskStatus {
+  BELUM
+  SEDANG
+  SELESAI
+}
+
+/// Progres harian untuk SATU OrderLine Rawat Akun -- satu baris per tanggal
+/// dalam rentang OrderLine.startDate..endDate. percent diisi manual oleh
+/// admin (lewat tombol Quick Update atau input manual), TIDAK dihitung
+/// otomatis dari status OrderLineDayTask di bawah (keduanya sengaja
+/// independen, supaya admin bebas menilai persentase hari itu).
+model OrderLineDayProgress {
+  id             String    @id @default(cuid())
+  orderLineId    String
+  orderLine      OrderLine @relation(fields: [orderLineId], references: [id], onDelete: Cascade)
+  date           DateTime // dinormalisasi ke tengah malam (00:00) hari tsb.
+  percent        Int       @default(0)
+  note           String?
+  screenshotUrls String[]  @default([])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([orderLineId, date])
+  @@index([orderLineId])
+}
+
+/// Task checklist harian untuk SATU OrderLine Rawat Akun. Baris dengan
+/// sourceKey terisi dibuat otomatis oleh lib/rawat-akun-schedule.ts dari
+/// konten endgame yang dicakup Joki Item ini (dan event jika includeEvent
+/// aktif) sesuai tanggal reset/berlangsungnya masing-masing dalam rentang
+/// OrderLine.startDate..endDate; sourceKey kosong (null) untuk task yang
+/// ditambahkan manual oleh admin lewat "Kelola Checklist".
+model OrderLineDayTask {
+  id          String        @id @default(cuid())
+  orderLineId String
+  orderLine   OrderLine     @relation(fields: [orderLineId], references: [id], onDelete: Cascade)
+  date        DateTime // dinormalisasi ke tengah malam (00:00) hari tsb.
+  category    String
+  label       String
+  status      DayTaskStatus @default(BELUM)
+  note        String?
+  sourceKey   String?
+  position    Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([orderLineId, date, sourceKey])
+  @@index([orderLineId, date])
+}
+
+model Testimonial {
+  id           String   @id @default(cuid())
+  gameId       String
+  game         Game     @relation(fields: [gameId], references: [id])
+  orderId      String?  @unique
+  order        Order?   @relation(fields: [orderId], references: [id])
+  /// Testimoni untuk joki lama yang diinput manual admin lewat
+  /// JokiHistoryEntry (bukan dari alur Order) -- lihat /testimoni-lama/[token].
+  /// Cuma satu dari orderId/jokiHistoryEntryId yang terisi per testimoni.
+  jokiHistoryEntryId String?           @unique
+  jokiHistoryEntry   JokiHistoryEntry? @relation(fields: [jokiHistoryEntryId], references: [id], onDelete: Cascade)
+  customerName String
+  rating       Int
+  message      String
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([gameId])
+}
+
+/// Entri history joki yang diinput MANUAL oleh admin (bukan dari alur
+/// Order biasa) -- untuk mencatat pengerjaan joki lama/di luar sistem supaya
+/// tetap tampil di halaman History publik. Form pengisiannya sengaja dibuat
+/// ringkas (cuma field-field penting), lengkap dengan screenshot bukti
+/// pengerjaan yang bisa dilihat lewat "Lihat Detail" di halaman publik.
+model JokiHistoryEntry {
+  id             String   @id @default(cuid())
+  gameId         String
+  game           Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  title          String // nama joki/paket yang dikerjakan, mis. "Push Rank Mythic"
+  customerName   String
+  jokerName      String?
+  completedAt    DateTime
+  rating         Int? // opsional, 1-5 -- rating/catatan cepat dari admin sendiri
+  note           String? // catatan/testimoni singkat
+  screenshotUrls String[] @default([])
+  /// Token unik buat link publik /testimoni-lama/[shareToken] -- dikirim admin
+  /// ke customer lama (joki yang selesai sebelum web ini ada) supaya mereka
+  /// tetap bisa isi testimoni resmi, walau tidak punya akun/Order di sistem.
+  shareToken     String   @unique @default(cuid())
+  createdAt      DateTime @default(now())
+
+  testimonial Testimonial?
+
+  @@index([gameId])
+  @@index([completedAt])
+}
