@@ -80,7 +80,7 @@ export interface EndgameContentForSchedule {
   id: string;
   title: string;
   description: string;
-  resetCycle: "HARIAN" | "MINGGU_1" | "MINGGU_2" | "MINGGU_3" | "BULAN_1" | "PATCH_1";
+  resetCycle: "HARIAN" | "MINGGU_1" | "MINGGU_2" | "MINGGU_3" | "MINGGU_4" | "BULAN_1" | "PATCH_1";
   anchorStartDate: Date | null;
   daysAfterPatchStart: number | null;
 }
@@ -109,6 +109,7 @@ const WEEKLY_CYCLE_DAYS: Partial<Record<string, number>> = {
   MINGGU_1: 7,
   MINGGU_2: 14,
   MINGGU_3: 21,
+  MiNGGU_4: 28,
 };
 
 /**
