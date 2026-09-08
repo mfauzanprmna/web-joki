@@ -343,13 +343,17 @@ model Customer {
   orders Order[]
 }
 
-/// Order = pesanan customer, dibuat oleh admin (belum ada order mandiri dari
-/// customer). Satu Order bisa berisi banyak baris (OrderLine) — campuran
-/// Joki Item satuan dan/atau Paket Joki. totalPrice adalah jumlah
-/// calculatedPrice seluruh OrderLine di dalamnya.
-/// Order selalu untuk SATU akun/game tertentu -- kalau customer yang sama
-/// order untuk akun lain atau game lain, itu dibuat sebagai Order baru yang
-/// terpisah, tapi tetap dihubungkan ke Customer yang sama.
+model Worker {
+  id           String   @id @default(cuid())
+  name         String
+  username     String   @unique
+  passwordHash String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  orders Order[]
+}
+
 model Order {
   id          String      @id @default(cuid())
   orderCode   String      @unique
@@ -357,7 +361,13 @@ model Order {
   game        Game        @relation(fields: [gameId], references: [id])
   customerId  String
   customer    Customer    @relation(fields: [customerId], references: [id])
+  /// Label nama joki bebas teks (legacy/manual, dipakai kalau belum ada akun
+  /// Worker-nya). Kalau workerId terisi, tampilan sebaiknya pakai worker.name.
   jokerName   String?
+  /// Akun Worker yang ditugaskan mengerjakan order ini -- worker login sendiri
+  /// dan cuma bisa lihat/update progress order yang workerId-nya cocok.
+  workerId    String?
+  worker      Worker?     @relation(fields: [workerId], references: [id], onDelete: SetNull)
   status      OrderStatus @default(MENUNGGU)
   progressPct Int         @default(0)
   /// Estimasi waktu pengerjaan khusus order ini (custom per order, bukan
@@ -383,6 +393,7 @@ model Order {
   @@index([status])
   @@index([gameId])
   @@index([customerId])
+  @@index([workerId])
 }
 
 /// Satu baris dalam Order: merujuk ke SATU Joki Item ATAU SATU Paket Joki

@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { CreateOrderForm } from "@/components/admin/CreateOrderForm";
-import { OrderRowItem } from "@/components/admin/OrderRowItem";
+import { OrderListFilter } from "@/components/admin/OrderListFilter";
 
 export default async function AdminAntrianPage() {
-  const [games, items, pakets, customers, orders] = await Promise.all([
+  const [games, items, pakets, customers, orders, workers] = await Promise.all([
     prisma.game.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.jokiItem.findMany({
       where: { isActive: true },
@@ -38,6 +38,11 @@ export default async function AdminAntrianPage() {
       orderBy: { createdAt: "desc" },
       take: 60,
     }),
+    prisma.worker.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   const itemOptions = items.map((i) => ({
@@ -63,11 +68,7 @@ export default async function AdminAntrianPage() {
         <CreateOrderForm games={games} items={itemOptions} pakets={pakets} customers={customers} />
       </details>
 
-      <div className="flex flex-col gap-2.5">
-        {orders.map((o) => (
-          <OrderRowItem key={o.id} order={o} />
-        ))}
-      </div>
+      <OrderListFilter orders={orders} games={games} workers={workers} />
     </div>
   );
 }

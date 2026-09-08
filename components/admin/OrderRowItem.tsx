@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { updateOrder, deleteOrder } from "@/lib/actions/order";
+import { assignWorkerToOrder } from "@/lib/actions/worker";
 import { STATUS_LABEL } from "@/types/game";
 import { formatRupiah } from "@/lib/format";
 import { buildOrderTitle } from "@/lib/order-display";
+import { calculateWorkerCommission } from "@/lib/commission";
 
 interface GameOption {
   id: string;
@@ -25,10 +27,16 @@ interface OrderLineRow {
   jokiPaket: { title: string } | null;
 }
 
+interface WorkerOption {
+  id: string;
+  name: string;
+}
+
 interface OrderRow {
   id: string;
   orderCode: string;
   jokerName: string | null;
+  workerId: string | null;
   status: string;
   progressPct: number;
   estimasiJoki: string | null;
@@ -67,8 +75,9 @@ function describeLine(line: OrderLineRow): string {
   return `${title}${detailStr} — ${formatRupiah(line.calculatedPrice)}`;
 }
 
-export function OrderRowItem({ order }: { order: OrderRow }) {
+export function OrderRowItem({ order, workers }: { order: OrderRow; workers: WorkerOption[] }) {
   const [editing, setEditing] = useState(false);
+  const commission = calculateWorkerCommission(order.totalPrice);
 
   if (!editing) {
     return (
@@ -88,8 +97,7 @@ export function OrderRowItem({ order }: { order: OrderRow }) {
               </p>
             </div>
             <p className="text-shihu-muted text-xs mt-0.5">
-              {order.customer.name} · Joki: {order.jokerName ?? "belum ditugaskan"} ·{" "}
-              {STATUS_LABEL[order.status] ?? order.status} ({order.progressPct}%)
+              {order.customer.name} · {STATUS_LABEL[order.status] ?? order.status} ({order.progressPct}%)
               {order.estimasiJoki && ` · Estimasi: ${order.estimasiJoki}`}
             </p>
             <p className="text-shihu-faint text-[11px] mt-0.5">
@@ -97,9 +105,30 @@ export function OrderRowItem({ order }: { order: OrderRow }) {
               {order.sourceWhatsapp && ` · WA: ${order.sourceWhatsapp}`}
             </p>
           </div>
-          <span className="font-display font-bold text-shihu-corona text-sm whitespace-nowrap">
-            {formatRupiah(order.totalPrice)}
-          </span>
+          <div className="text-right">
+            <p className="font-display font-bold text-shihu-corona text-sm whitespace-nowrap">
+              {formatRupiah(order.totalPrice)}
+            </p>
+            <p className="text-[10.5px] text-shihu-faint whitespace-nowrap">
+              Komisi worker: {formatRupiah(commission)}
+            </p>
+          </div>
+          <form action={assignWorkerToOrder}>
+            <input type="hidden" name="orderId" value={order.id} />
+            <select
+              name="workerId"
+              defaultValue={order.workerId ?? ""}
+              onChange={(e) => e.currentTarget.form?.requestSubmit()}
+              className="admin-input !w-auto !py-1.5 !text-xs"
+            >
+              <option value="">Belum ditugaskan</option>
+              {workers.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
+          </form>
           <Link
             href={`/admin/progress/${order.id}`}
             className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-corona/40 text-shihu-corona hover:bg-shihu-corona/10"

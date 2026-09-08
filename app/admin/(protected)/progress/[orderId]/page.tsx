@@ -6,6 +6,7 @@ import { STATUS_LABEL } from "@/types/game";
 import { buildOrderTitle } from "@/lib/order-display";
 import { ensureRawatAkunScheduleSynced } from "@/lib/rawat-akun-service";
 import { enumerateDays } from "@/lib/rawat-akun-schedule";
+import { CopyLinkBox } from "@/components/admin/CopyLinkBox";
 
 export default async function AdminOrderProgressPage({
   params,
@@ -36,6 +37,7 @@ export default async function AdminOrderProgressPage({
     include: {
       game: true,
       customer: true,
+      worker: { select: { name: true } },
       lines: {
         include: {
           jokiItem: {
@@ -62,33 +64,33 @@ export default async function AdminOrderProgressPage({
       title: line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal",
       jokiItem: line.jokiItem
         ? {
-            category: line.jokiItem.category,
-            endgameContent: line.jokiItem.endgameContent,
-          }
+          category: line.jokiItem.category,
+          endgameContent: line.jokiItem.endgameContent,
+        }
         : null,
       updates: line.updates,
       rawatAkun:
         isRawatAkun && line.startDate && line.endDate
           ? {
-              days: enumerateDays(line.startDate, line.endDate).map((d) => {
-                const iso = d.toISOString().slice(0, 10);
-                const dp = line.dayProgress.find((p) => p.date.toISOString().slice(0, 10) === iso);
-                return {
-                  date: iso,
-                  percent: dp?.percent ?? 0,
-                  note: dp?.note ?? null,
-                  screenshotUrls: dp?.screenshotUrls ?? [],
-                };
-              }),
-              tasks: line.dayTasks.map((t) => ({
-                id: t.id,
-                date: t.date.toISOString().slice(0, 10),
-                category: t.category,
-                label: t.label,
-                status: t.status,
-                note: t.note,
-              })),
-            }
+            days: enumerateDays(line.startDate, line.endDate).map((d) => {
+              const iso = d.toISOString().slice(0, 10);
+              const dp = line.dayProgress.find((p) => p.date.toISOString().slice(0, 10) === iso);
+              return {
+                date: iso,
+                percent: dp?.percent ?? 0,
+                note: dp?.note ?? null,
+                screenshotUrls: dp?.screenshotUrls ?? [],
+              };
+            }),
+            tasks: line.dayTasks.map((t) => ({
+              id: t.id,
+              date: t.date.toISOString().slice(0, 10),
+              category: t.category,
+              label: t.label,
+              status: t.status,
+              note: t.note,
+            })),
+          }
           : null,
     };
   });
@@ -115,12 +117,13 @@ export default async function AdminOrderProgressPage({
         <OrderProgressTabs lines={lines} />
       </div>
 
-      <div className="bg-shihu-card border border-shihu-border rounded-2xl p-4">
+      <div className="bg-shihu-card border border-shihu-border rounded-2xl p-4 flex flex-col gap-2.5">
+        <CopyLinkBox label="Link progress customer" path={`/progress/${order.customer.publicSlug}`} />
         <p className="text-shihu-faint text-xs">
-          Link progress customer:{" "}
-          <span className="text-shihu-corona font-display">
-            /progress/{order.customer.publicSlug}
-          </span>
+          Worker yang ditugaskan:{" "}
+          <span className="text-shihu-corona font-display">{order.worker?.name ?? "Belum ditugaskan"}</span>
+          {" — "}worker login sendiri di{" "}
+          <span className="text-shihu-corona font-display">/worker/login</span> untuk update progres ini.
         </p>
       </div>
     </div>

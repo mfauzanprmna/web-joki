@@ -25,6 +25,7 @@ const NAV_GROUPS = [
       { href: "/admin/joki", label: "Joki item" },
       { href: "/admin/paket", label: "Paket joki" },
       { href: "/admin/antrian", label: "Pesanan" },
+      { href: "/admin/worker", label: "Akun worker" },
       { href: "/admin/history-joki", label: "History joki" },
       { href: "/admin/testimoni", label: "Testimoni" },
     ],

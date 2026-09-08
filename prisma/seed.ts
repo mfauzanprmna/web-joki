@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { hashPassword } from "../lib/password";
 
 const prisma = new PrismaClient();
 
@@ -9,6 +10,7 @@ async function main() {
   await prisma.jokiHistoryEntry.deleteMany();
   await prisma.order.deleteMany();
   await prisma.customer.deleteMany();
+  await prisma.worker.deleteMany();
   await prisma.jokiPaketItem.deleteMany();
   await prisma.jokiPaket.deleteMany();
   await prisma.jokiItemEndgameContent.deleteMany();
@@ -521,14 +523,26 @@ async function main() {
     },
   });
 
-  // Order ketiga Rafi A. -- Rawat Akun Mingguan Genshin, mendemokan input
-  // "dihabiskan di mana" untuk konten reset harian (resin).
+  
+
+  // Akun Worker contoh -- login di /worker/login pakai username "nayla" /
+  // password "worker123". Ditugaskan ke order Rawat Akun di bawah supaya
+  // langsung kelihatan cara kerja komisi 80%-nya.
+  const workerNayla = await prisma.worker.create({
+    data: {
+      name: "Nayla",
+      username: "nayla",
+      passwordHash: hashPassword("worker123"),
+    },
+  });
+
   const orderRafiRawatAkun = await prisma.order.create({
     data: {
       orderCode: "ECL-2290",
       gameId: genshin.id,
       customerId: customerRafi.id,
       jokerName: "Nayla",
+      workerId: workerNayla.id,
       status: "DIKERJAKAN",
       progressPct: 40,
       estimasiJoki: "±7 hari",
