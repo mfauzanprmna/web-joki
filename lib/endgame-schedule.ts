@@ -1,12 +1,13 @@
 import { addDays, isPatchOngoing, type PatchDateRange } from "./patch-schedule";
 
-export type ResetCycle = "HARIAN" | "MINGGU_1" | "MINGGU_2" | "MINGGU_3" | "BULAN_1" | "PATCH_1";
+export type ResetCycle = "HARIAN" | "MINGGU_1" | "MINGGU_2" | "MINGGU_3" | "MINGGU_4" | "BULAN_1" | "PATCH_1";
 
 export const RESET_CYCLE_LABEL: Record<ResetCycle, string> = {
   HARIAN: "Harian",
   MINGGU_1: "1 minggu",
   MINGGU_2: "2 minggu",
   MINGGU_3: "3 minggu",
+  MINGGU_4: "4 minggu",
   BULAN_1: "1 bulan",
   PATCH_1: "1 patch",
 };
@@ -16,6 +17,7 @@ const CYCLE_DAYS: Partial<Record<ResetCycle, number>> = {
   MINGGU_1: 7,
   MINGGU_2: 14,
   MINGGU_3: 21,
+  MINGGU_4: 28,
   // BULAN_1 ditangani khusus (bukan kelipatan hari tetap, lihat di bawah).
 };
 
