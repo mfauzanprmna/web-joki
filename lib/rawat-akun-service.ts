@@ -59,15 +59,29 @@ export async function ensureRawatAkunScheduleSynced(orderLineId: string): Promis
   );
 
   if (autoTasks.length > 0) {
-    await prisma.orderLineDayTask.createMany({
-      data: autoTasks.map((t) => ({
-        orderLineId,
-        date: t.date,
-        category: t.category,
-        label: t.label,
-        sourceKey: t.sourceKey,
-      })),
-      skipDuplicates: true,
-    });
+    await prisma.$transaction(
+      autoTasks.map((t) =>
+        prisma.orderLineDayTask.upsert({
+          where: {
+            orderLineId_date_sourceKey: {
+              orderLineId,
+              date: t.date,
+              sourceKey: t.sourceKey,
+            },
+          },
+          create: {
+            orderLineId,
+            date: t.date,
+            category: t.category,
+            label: t.label,
+            sourceKey: t.sourceKey,
+          },
+          update: {
+            category: t.category,
+            label: t.label,
+          },
+        })
+      )
+    );
   }
 }
