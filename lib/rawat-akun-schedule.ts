@@ -132,8 +132,8 @@ export function buildAutoTasks(
       for (const d of enumerateDays(period.startDate, period.endDate)) {
         tasks.push({
           date: d,
-          category: content.title,
-          label: content.description || content.title,
+          category: "EndgameContent",
+          label: content.title,
           sourceKey: `egc:${content.id}:${isoDay(d)}`,
         });
       }
@@ -189,8 +189,8 @@ export function buildAutoTasks(
           for (const d of enumerateDays(clippedStart, clippedEnd)) {
             tasks.push({
               date: d,
-              category: content.title,
-              label: content.description || content.title,
+              category: "EndgameContent",
+              label: content.title,
               sourceKey: cycleKey,
             });
           }
@@ -214,8 +214,8 @@ export function buildAutoTasks(
           for (const d of enumerateDays(clippedStart, clippedEnd)) {
             tasks.push({
               date: d,
-              category: content.title,
-              label: content.description || content.title,
+              category: "EndgameContent",
+              label: content.title,
               sourceKey: cycleKey,
             });
           }
