@@ -27,6 +27,7 @@ enum ResetCycle {
   MINGGU_1
   MINGGU_2
   MINGGU_3
+  MINGGU_4
   BULAN_1
   PATCH_1
 }
