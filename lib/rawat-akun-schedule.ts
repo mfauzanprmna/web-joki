@@ -155,8 +155,8 @@ export function buildAutoTasks(
         for (const d of enumerateDays(clippedStart, clippedEnd)) {
           tasks.push({
             date: d,
-            category: content.title,
-            label: content.description || content.title,
+            category: "EndgameContent",
+            label: content.title,
             sourceKey: cycleKey,
           });
         }
