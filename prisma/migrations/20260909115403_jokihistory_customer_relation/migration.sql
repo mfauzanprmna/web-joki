@@ -5,8 +5,6 @@
   - Added the required column `customerId` to the `JokiHistoryEntry` table without a default value. This is not possible if the table is not empty.
 
 */
--- AlterEnum
-ALTER TYPE "ResetCycle" ADD VALUE 'MINGGU_4';
 
 -- AlterTable
 ALTER TABLE "JokiHistoryEntry" DROP COLUMN "customerName",
