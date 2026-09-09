@@ -99,7 +99,7 @@ export default async function HistoryPage() {
       take: 50,
     }),
     prisma.jokiHistoryEntry.findMany({
-      include: { game: true },
+      include: { game: true, customer: { select: { name: true } } },
       orderBy: { completedAt: "desc" },
       take: 50,
     }),
@@ -146,7 +146,7 @@ export default async function HistoryPage() {
                 <JokiHistoryPublicRow
                   key={`manual-${item.data.id}`}
                   title={item.data.title}
-                  customerName={item.data.customerName}
+                  customerName={item.data.customer.name}
                   completedAt={item.data.completedAt}
                   rating={item.data.rating}
                   note={item.data.note}
