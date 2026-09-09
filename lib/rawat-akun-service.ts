@@ -45,43 +45,37 @@ export async function ensureRawatAkunScheduleSynced(orderLineId: string): Promis
   });
   const events = line.jokiItem.includeEvent
     ? await prisma.patchEvent.findMany({
-        where: { patch: { gameId: line.jokiItem.gameId } },
-        select: { id: true, title: true, startDate: true, endDate: true },
-      })
+      where: { patch: { gameId: line.jokiItem.gameId } },
+      select: { id: true, title: true, startDate: true, endDate: true },
+    })
     : [];
+
+  // Joki Item "1 Patch" (isPatchWide) sengaja TIDAK punya pilihan konten
+  // endgame manual di form (lihat JokiItemFormFields) -- otomatis mencakup
+  // SEMUA konten endgame milik game tsb. Selain itu (Rawat Akun biasa),
+  // pakai konten endgame yang dipilih manual admin lewat endgameContent.
+  const endgameContents = line.jokiItem.isPatchWide
+    ? await prisma.endgameContent.findMany({ where: { gameId: line.jokiItem.gameId, isActive: true } })
+    : line.jokiItem.endgameContent.map((e) => e.endgameContent);
 
   const autoTasks = buildAutoTasks(
     period,
-    line.jokiItem.endgameContent.map((e) => e.endgameContent),
+    endgameContents,
     patches,
     events,
     line.jokiItem.includeEvent
   );
 
   if (autoTasks.length > 0) {
-    await prisma.$transaction(
-      autoTasks.map((t) =>
-        prisma.orderLineDayTask.upsert({
-          where: {
-            orderLineId_date_sourceKey: {
-              orderLineId,
-              date: t.date,
-              sourceKey: t.sourceKey,
-            },
-          },
-          create: {
-            orderLineId,
-            date: t.date,
-            category: t.category,
-            label: t.label,
-            sourceKey: t.sourceKey,
-          },
-          update: {
-            category: t.category,
-            label: t.label,
-          },
-        })
-      )
-    );
+    await prisma.orderLineDayTask.createMany({
+      data: autoTasks.map((t) => ({
+        orderLineId,
+        date: t.date,
+        category: t.category,
+        label: t.label,
+        sourceKey: t.sourceKey,
+      })),
+      skipDuplicates: true,
+    });
   }
 }
