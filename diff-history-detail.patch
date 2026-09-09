@@ -1,0 +1,483 @@
+diff --git a/app/history/page.tsx b/app/history/page.tsx
+index c68aa12..10cd42a 100644
+--- a/app/history/page.tsx
++++ b/app/history/page.tsx
+@@ -4,10 +4,79 @@ import { Footer } from "@/components/Footer";
+ import { SectionHeading } from "@/components/SectionHeading";
+ import { HistoryRow } from "@/components/HistoryRow";
+ import { JokiHistoryPublicRow } from "@/components/JokiHistoryPublicRow";
++import type { OrderLineDetail } from "@/components/OrderLineDetailPanel";
+ import { buildOrderTitle } from "@/lib/order-display";
++import { enumerateDays } from "@/lib/rawat-akun-schedule";
+ 
+ export const revalidate = 60;
+ 
++function buildLineDetails(
++  lines: Array<{
++    id: string;
++    jokiItem: { title: string; category: { isRawatAkun: boolean } | null } | null;
++    jokiPaket: { title: string } | null;
++    explorationPercent: number | null;
++    actFrom: number | null;
++    actTo: number | null;
++    materialQuantity: number | null;
++    rawatAkunQuantity: number | null;
++    startDate: Date | null;
++    endDate: Date | null;
++    updates: {
++      id: string;
++      note: string | null;
++      screenshotUrl: string | null;
++      resetLocation: string | null;
++      createdAt: Date;
++    }[];
++    dayProgress: { date: Date; percent: number; note: string | null; screenshotUrls: string[] }[];
++    dayTasks: { date: Date; category: string; label: string; status: string }[];
++  }>,
++): OrderLineDetail[] {
++  return lines.map((line) => {
++    const isRawatAkun = line.jokiItem?.category?.isRawatAkun ?? false;
++    return {
++      id: line.id,
++      title: line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal",
++      explorationPercent: line.explorationPercent,
++      actFrom: line.actFrom,
++      actTo: line.actTo,
++      materialQuantity: line.materialQuantity,
++      rawatAkunQuantity: line.rawatAkunQuantity,
++      updates: line.updates.map((u) => ({
++        id: u.id,
++        note: u.note,
++        screenshotUrl: u.screenshotUrl,
++        resetLocation: u.resetLocation,
++        createdAt: u.createdAt.toISOString(),
++      })),
++      rawatAkun:
++        isRawatAkun && line.startDate && line.endDate
++          ? {
++              days: enumerateDays(line.startDate, line.endDate).map((d) => {
++                const iso = d.toISOString().slice(0, 10);
++                const dp = line.dayProgress.find(
++                  (p) => p.date.toISOString().slice(0, 10) === iso,
++                );
++                return {
++                  date: iso,
++                  percent: dp?.percent ?? 0,
++                  note: dp?.note ?? null,
++                  screenshotUrls: dp?.screenshotUrls ?? [],
++                };
++              }),
++              tasks: line.dayTasks.map((t) => ({
++                date: t.date.toISOString().slice(0, 10),
++                category: t.category,
++                label: t.label,
++                status: t.status as "BELUM" | "SEDANG" | "SELESAI",
++              })),
++            }
++          : null,
++    };
++  });
++}
++
+ export default async function HistoryPage() {
+   const [orders, manualEntries] = await Promise.all([
+     prisma.order.findMany({
+@@ -15,7 +84,15 @@ export default async function HistoryPage() {
+       include: {
+         game: true,
+         customer: true,
+-        lines: { include: { jokiItem: true, jokiPaket: true } },
++        lines: {
++          include: {
++            jokiItem: { include: { category: { select: { isRawatAkun: true } } } },
++            jokiPaket: true,
++            updates: { orderBy: { createdAt: "desc" } },
++            dayProgress: { orderBy: { date: "asc" } },
++            dayTasks: { orderBy: [{ date: "asc" }, { position: "asc" }] },
++          },
++        },
+         testimonial: true,
+       },
+       orderBy: { completedAt: "desc" },
+@@ -63,6 +140,7 @@ export default async function HistoryPage() {
+                   completedAt={item.data.completedAt ?? item.data.updatedAt}
+                   rating={item.data.testimonial?.rating ?? null}
+                   game={item.data.game}
++                  lines={buildLineDetails(item.data.lines)}
+                 />
+               ) : (
+                 <JokiHistoryPublicRow
+diff --git a/app/progress/[slug]/page.tsx b/app/progress/[slug]/page.tsx
+index 1767350..a11bcd9 100644
+--- a/app/progress/[slug]/page.tsx
++++ b/app/progress/[slug]/page.tsx
+@@ -8,6 +8,7 @@ import {
+   CustomerAccountTabs,
+   type AccountProgress,
+ } from "@/components/CustomerAccountTabs";
++import type { OrderLineDetail } from "@/components/OrderLineDetailPanel";
+ import { TestimonialPrompt } from "@/components/TestimonialPrompt";
+ import { buildOrderTitle } from "@/lib/order-display";
+ import { ensureRawatAkunScheduleSynced } from "@/lib/rawat-akun-service";
+@@ -15,6 +16,73 @@ import { enumerateDays } from "@/lib/rawat-akun-schedule";
+ 
+ export const revalidate = 0;
+ 
++function buildLineDetails(
++  lines: Array<{
++    id: string;
++    jokiItem: { title: string; category: { isRawatAkun: boolean } } | null;
++    jokiPaket: { title: string } | null;
++    explorationPercent: number | null;
++    actFrom: number | null;
++    actTo: number | null;
++    materialQuantity: number | null;
++    rawatAkunQuantity: number | null;
++    startDate: Date | null;
++    endDate: Date | null;
++    updates: {
++      id: string;
++      note: string | null;
++      screenshotUrl: string | null;
++      resetLocation: string | null;
++      createdAt: Date;
++    }[];
++    dayProgress: { date: Date; percent: number; note: string | null; screenshotUrls: string[] }[];
++    dayTasks: { date: Date; category: string; label: string; status: string }[];
++  }>,
++): OrderLineDetail[] {
++  return lines.map((line) => {
++    const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;
++    return {
++      id: line.id,
++      title: line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal",
++      explorationPercent: line.explorationPercent,
++      actFrom: line.actFrom,
++      actTo: line.actTo,
++      materialQuantity: line.materialQuantity,
++      rawatAkunQuantity: line.rawatAkunQuantity,
++      updates: line.updates.map((u) => ({
++        id: u.id,
++        note: u.note,
++        screenshotUrl: u.screenshotUrl,
++        resetLocation: u.resetLocation,
++        createdAt: u.createdAt.toISOString(),
++      })),
++      rawatAkun:
++        isRawatAkun && line.startDate && line.endDate
++          ? {
++              days: enumerateDays(line.startDate, line.endDate).map((d) => {
++                const iso = d.toISOString().slice(0, 10);
++                const dp = line.dayProgress.find(
++                  (p) => p.date.toISOString().slice(0, 10) === iso,
++                );
++                return {
++                  date: iso,
++                  percent: dp?.percent ?? 0,
++                  note: dp?.note ?? null,
++                  screenshotUrls: dp?.screenshotUrls ?? [],
++                };
++              }),
++              tasks: line.dayTasks.map((t) => ({
++                date: t.date.toISOString().slice(0, 10),
++                category: t.category,
++                label: t.label,
++                status: t.status as "BELUM" | "SEDANG" | "SELESAI",
++              })),
++            }
++          : null,
++    };
++  });
++}
++
+ export default async function CustomerProgressPage({
+   params,
+ }: {
+@@ -93,50 +161,7 @@ export default async function CustomerProgressPage({
+     jokerName: o.jokerName,
+     estimasiJoki: o.estimasiJoki,
+     totalPrice: o.totalPrice,
+-    lines: o.lines.map((line) => {
+-      const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;
+-      return {
+-        id: line.id,
+-        title:
+-          line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal",
+-        explorationPercent: line.explorationPercent,
+-        actFrom: line.actFrom,
+-        actTo: line.actTo,
+-        materialQuantity: line.materialQuantity,
+-        rawatAkunQuantity: line.rawatAkunQuantity,
+-        calculatedPrice: line.calculatedPrice,
+-        updates: line.updates.map((u) => ({
+-          id: u.id,
+-          note: u.note,
+-          screenshotUrl: u.screenshotUrl,
+-          resetLocation: u.resetLocation,
+-          createdAt: u.createdAt.toISOString(),
+-        })),
+-        rawatAkun:
+-          isRawatAkun && line.startDate && line.endDate
+-            ? {
+-                days: enumerateDays(line.startDate, line.endDate).map((d) => {
+-                  const iso = d.toISOString().slice(0, 10);
+-                  const dp = line.dayProgress.find(
+-                    (p) => p.date.toISOString().slice(0, 10) === iso,
+-                  );
+-                  return {
+-                    date: iso,
+-                    percent: dp?.percent ?? 0,
+-                    note: dp?.note ?? null,
+-                    screenshotUrls: dp?.screenshotUrls ?? [],
+-                  };
+-                }),
+-                tasks: line.dayTasks.map((t) => ({
+-                  date: t.date.toISOString().slice(0, 10),
+-                  category: t.category,
+-                  label: t.label,
+-                  status: t.status,
+-                })),
+-              }
+-            : null,
+-      };
+-    }),
++    lines: buildLineDetails(o.lines),
+   }));
+ 
+   return (
+@@ -179,6 +204,7 @@ export default async function CustomerProgressPage({
+                     completedAt={o.completedAt ?? o.updatedAt}
+                     rating={o.testimonial?.rating ?? null}
+                     game={o.game}
++                    lines={buildLineDetails(o.lines)}
+                   />
+                   <div className="pl-1">
+                     <TestimonialPrompt
+diff --git a/components/CustomerAccountTabs.tsx b/components/CustomerAccountTabs.tsx
+index 905729e..1e7349a 100644
+--- a/components/CustomerAccountTabs.tsx
++++ b/components/CustomerAccountTabs.tsx
+@@ -2,31 +2,10 @@
+ 
+ import { useState } from "react";
+ import { RingProgress } from "@/components/RingProgress";
+-import { RawatAkunProgressView, type CustomerDayProgressItem, type CustomerDayTaskItem } from "@/components/RawatAkunProgressView";
++import { OrderLineDetailPanel, type OrderLineDetail } from "@/components/OrderLineDetailPanel";
+ import { STATUS_LABEL } from "@/types/game";
+ import { formatRupiah } from "@/lib/format";
+ 
+-interface UpdateEntry {
+-  id: string;
+-  note: string | null;
+-  screenshotUrl: string | null;
+-  resetLocation: string | null;
+-  createdAt: string; // ISO string
+-}
+-
+-interface LineDetail {
+-  id: string;
+-  title: string;
+-  explorationPercent: number | null;
+-  actFrom: number | null;
+-  actTo: number | null;
+-  materialQuantity: number | null;
+-  rawatAkunQuantity: number | null;
+-  calculatedPrice: number;
+-  updates: UpdateEntry[];
+-  rawatAkun: { days: CustomerDayProgressItem[]; tasks: CustomerDayTaskItem[] } | null;
+-}
+-
+ export interface AccountProgress {
+   orderId: string;
+   orderCode: string;
+@@ -37,16 +16,7 @@ export interface AccountProgress {
+   jokerName: string | null;
+   estimasiJoki: string | null;
+   totalPrice: number;
+-  lines: LineDetail[];
+-}
+-
+-function lineDetailTags(line: LineDetail): string[] {
+-  const tags: string[] = [];
+-  if (line.explorationPercent != null) tags.push(`${line.explorationPercent}% sudah dikerjakan sendiri`);
+-  if (line.actFrom != null && line.actTo != null) tags.push(`Act ${line.actFrom}-${line.actTo}`);
+-  if (line.materialQuantity != null) tags.push(`${line.materialQuantity} material`);
+-  if (line.rawatAkunQuantity != null) tags.push(`${line.rawatAkunQuantity}x rawat akun`);
+-  return tags;
++  lines: OrderLineDetail[];
+ }
+ 
+ export function CustomerAccountTabs({ accounts }: { accounts: AccountProgress[] }) {
+@@ -136,62 +106,7 @@ export function CustomerAccountTabs({ accounts }: { accounts: AccountProgress[]
+ 
+           {activeLine && (
+             <div className="bg-shihu-card border border-shihu-border rounded-2xl p-5">
+-              <p className="font-display text-sm font-semibold mb-1.5">{activeLine.title}</p>
+-              <div className="flex flex-wrap gap-1.5 mb-4">
+-                {lineDetailTags(activeLine).map((tag) => (
+-                  <span
+-                    key={tag}
+-                    className="text-[10.5px] px-2 py-0.5 rounded-md bg-[#2C2540] text-shihu-muted font-display"
+-                  >
+-                    {tag}
+-                  </span>
+-                ))}
+-              </div>
+-
+-              <p className="font-display text-xs font-semibold text-shihu-muted mb-2">
+-                Riwayat pengerjaan
+-              </p>
+-              {activeLine.rawatAkun ? (
+-                <RawatAkunProgressView days={activeLine.rawatAkun.days} tasks={activeLine.rawatAkun.tasks} />
+-              ) : activeLine.updates.length === 0 ? (
+-                <p className="text-shihu-faint text-[12.5px]">Belum ada update untuk item ini.</p>
+-              ) : (
+-                <div className="flex flex-col gap-2.5">
+-                  {activeLine.updates.map((u) => (
+-                    <div key={u.id} className="border-l-2 border-shihu-corona/40 pl-3.5 py-0.5">
+-                      <p className="text-[11px] text-shihu-faint font-display mb-1">
+-                        {new Date(u.createdAt).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}
+-                      </p>
+-                      {u.note && <p className="text-[13px] text-shihu-text mb-1">{u.note}</p>}
+-                      {u.resetLocation && (
+-                        <p className="text-[12.5px] text-shihu-muted mb-1">
+-                          <span className="text-shihu-corona font-medium">Dihabiskan di: </span>
+-                          {u.resetLocation}
+-                        </p>
+-                      )}
+-                      {u.screenshotUrl && (
+-                        <a
+-                          href={u.screenshotUrl}
+-                          target="_blank"
+-                          rel="noopener noreferrer"
+-                          className="inline-block mt-1"
+-                        >
+-                          {/* eslint-disable-next-line @next/next/no-img-element --
+-                              URL gambar berasal dari domain eksternal arbitrary
+-                              (imgur/postimages/dll, ditempel bebas oleh admin),
+-                              sehingga tidak bisa/praktis di-whitelist semua di
+-                              next.config.ts untuk next/image. */}
+-                          <img
+-                            src={u.screenshotUrl}
+-                            alt="Bukti progres"
+-                            className="max-w-[220px] rounded-lg border border-shihu-border"
+-                          />
+-                        </a>
+-                      )}
+-                    </div>
+-                  ))}
+-                </div>
+-              )}
++              <OrderLineDetailPanel line={activeLine} bare />
+             </div>
+           )}
+         </div>
+diff --git a/components/HistoryRow.tsx b/components/HistoryRow.tsx
+index b8839e3..a63c1a0 100644
+--- a/components/HistoryRow.tsx
++++ b/components/HistoryRow.tsx
+@@ -1,5 +1,9 @@
++"use client";
++
++import { useState } from "react";
+ import { GameBadge } from "./GameBadge";
+ import { Stars } from "./Stars";
++import { OrderLineDetailPanel, type OrderLineDetail } from "./OrderLineDetailPanel";
+ import { formatDate } from "@/lib/format";
+ import type { GameLite } from "@/types/game";
+ 
+@@ -10,6 +14,9 @@ interface HistoryRowProps {
+   completedAt: Date | string;
+   rating: number | null;
+   game: GameLite;
++  /** Detail per item pesanan (riwayat update, screenshot, dsb). Opsional —
++   * kalau kosong/tidak dikirim, tombol "Lihat Detail" tidak ditampilkan. */
++  lines?: OrderLineDetail[];
+ }
+ 
+ export function HistoryRow({
+@@ -19,36 +26,58 @@ export function HistoryRow({
+   completedAt,
+   rating,
+   game,
++  lines = [],
+ }: HistoryRowProps) {
++  const [showDetail, setShowDetail] = useState(false);
++  const hasDetail = lines.length > 0;
++
+   return (
+-    <div className="bg-shihu-card border border-shihu-border rounded-2xl p-4 px-5 flex items-center gap-4 flex-wrap">
+-      <div
+-        className="w-9.5 h-9.5 rounded-full shrink-0 flex items-center justify-center border"
+-        style={{
+-          width: 38,
+-          height: 38,
+-          borderColor: game.accentColor,
+-          borderWidth: 1.5,
+-          backgroundColor: `${game.accentColor}1F`,
+-        }}
+-      >
+-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={game.accentColor} strokeWidth="2.5">
+-          <path d="M20 6L9 17l-5-5" />
+-        </svg>
+-      </div>
+-      <div className="flex-1 min-w-[180px]">
+-        <div className="flex gap-2 items-center mb-1 flex-wrap">
+-          <span className="text-[11.5px] text-shihu-faint font-display">
+-            {orderCode}
+-          </span>
+-          <GameBadge game={game} />
++    <div className="bg-shihu-card border border-shihu-border rounded-2xl p-4 px-5 flex flex-col gap-3">
++      <div className="flex items-center gap-4 flex-wrap">
++        <div
++          className="w-9.5 h-9.5 rounded-full shrink-0 flex items-center justify-center border"
++          style={{
++            width: 38,
++            height: 38,
++            borderColor: game.accentColor,
++            borderWidth: 1.5,
++            backgroundColor: `${game.accentColor}1F`,
++          }}
++        >
++          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={game.accentColor} strokeWidth="2.5">
++            <path d="M20 6L9 17l-5-5" />
++          </svg>
+         </div>
+-        <h4 className="font-display text-[14.5px] font-semibold">{title}</h4>
+-        <p className="text-shihu-muted text-[12.5px] mt-0.5">
+-          {customerName} · Selesai {formatDate(completedAt)}
+-        </p>
++        <div className="flex-1 min-w-[180px]">
++          <div className="flex gap-2 items-center mb-1 flex-wrap">
++            <span className="text-[11.5px] text-shihu-faint font-display">
++              {orderCode}
++            </span>
++            <GameBadge game={game} />
++          </div>
++          <h4 className="font-display text-[14.5px] font-semibold">{title}</h4>
++          <p className="text-shihu-muted text-[12.5px] mt-0.5">
++            {customerName} · Selesai {formatDate(completedAt)}
++          </p>
++        </div>
++        {rating != null && <Stars rating={rating} />}
++        {hasDetail && (
++          <button
++            onClick={() => setShowDetail((v) => !v)}
++            className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540] shrink-0"
++          >
++            {showDetail ? "Tutup" : "Lihat Detail"}
++          </button>
++        )}
+       </div>
+-      {rating != null && <Stars rating={rating} />}
++
++      {showDetail && hasDetail && (
++        <div className="flex flex-col gap-2.5">
++          {lines.map((line) => (
++            <OrderLineDetailPanel key={line.id} line={line} />
++          ))}
++        </div>
++      )}
+     </div>
+   );
+ }

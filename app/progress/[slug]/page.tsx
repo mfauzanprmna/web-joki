@@ -8,12 +8,80 @@ import {
   CustomerAccountTabs,
   type AccountProgress,
 } from "@/components/CustomerAccountTabs";
+import type { OrderLineDetail } from "@/components/OrderLineDetailPanel";
 import { TestimonialPrompt } from "@/components/TestimonialPrompt";
 import { buildOrderTitle } from "@/lib/order-display";
 import { ensureRawatAkunScheduleSynced } from "@/lib/rawat-akun-service";
 import { enumerateDays } from "@/lib/rawat-akun-schedule";
 
 export const revalidate = 0;
+
+function buildLineDetails(
+  lines: Array<{
+    id: string;
+    jokiItem: { title: string; category: { isRawatAkun: boolean } } | null;
+    jokiPaket: { title: string } | null;
+    explorationPercent: number | null;
+    actFrom: number | null;
+    actTo: number | null;
+    materialQuantity: number | null;
+    rawatAkunQuantity: number | null;
+    startDate: Date | null;
+    endDate: Date | null;
+    updates: {
+      id: string;
+      note: string | null;
+      screenshotUrl: string | null;
+      resetLocation: string | null;
+      createdAt: Date;
+    }[];
+    dayProgress: { date: Date; percent: number; note: string | null; screenshotUrls: string[] }[];
+    dayTasks: { date: Date; category: string; label: string; status: string }[];
+  }>,
+): OrderLineDetail[] {
+  return lines.map((line) => {
+    const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;
+    return {
+      id: line.id,
+      title: line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal",
+      explorationPercent: line.explorationPercent,
+      actFrom: line.actFrom,
+      actTo: line.actTo,
+      materialQuantity: line.materialQuantity,
+      rawatAkunQuantity: line.rawatAkunQuantity,
+      updates: line.updates.map((u) => ({
+        id: u.id,
+        note: u.note,
+        screenshotUrl: u.screenshotUrl,
+        resetLocation: u.resetLocation,
+        createdAt: u.createdAt.toISOString(),
+      })),
+      rawatAkun:
+        isRawatAkun && line.startDate && line.endDate
+          ? {
+              days: enumerateDays(line.startDate, line.endDate).map((d) => {
+                const iso = d.toISOString().slice(0, 10);
+                const dp = line.dayProgress.find(
+                  (p) => p.date.toISOString().slice(0, 10) === iso,
+                );
+                return {
+                  date: iso,
+                  percent: dp?.percent ?? 0,
+                  note: dp?.note ?? null,
+                  screenshotUrls: dp?.screenshotUrls ?? [],
+                };
+              }),
+              tasks: line.dayTasks.map((t) => ({
+                date: t.date.toISOString().slice(0, 10),
+                category: t.category,
+                label: t.label,
+                status: t.status as "BELUM" | "SEDANG" | "SELESAI",
+              })),
+            }
+          : null,
+    };
+  });
+}
 
 export default async function CustomerProgressPage({
   params,
@@ -93,50 +161,7 @@ export default async function CustomerProgressPage({
     jokerName: o.jokerName,
     estimasiJoki: o.estimasiJoki,
     totalPrice: o.totalPrice,
-    lines: o.lines.map((line) => {
-      const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;
-      return {
-        id: line.id,
-        title:
-          line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal",
-        explorationPercent: line.explorationPercent,
-        actFrom: line.actFrom,
-        actTo: line.actTo,
-        materialQuantity: line.materialQuantity,
-        rawatAkunQuantity: line.rawatAkunQuantity,
-        calculatedPrice: line.calculatedPrice,
-        updates: line.updates.map((u) => ({
-          id: u.id,
-          note: u.note,
-          screenshotUrl: u.screenshotUrl,
-          resetLocation: u.resetLocation,
-          createdAt: u.createdAt.toISOString(),
-        })),
-        rawatAkun:
-          isRawatAkun && line.startDate && line.endDate
-            ? {
-                days: enumerateDays(line.startDate, line.endDate).map((d) => {
-                  const iso = d.toISOString().slice(0, 10);
-                  const dp = line.dayProgress.find(
-                    (p) => p.date.toISOString().slice(0, 10) === iso,
-                  );
-                  return {
-                    date: iso,
-                    percent: dp?.percent ?? 0,
-                    note: dp?.note ?? null,
-                    screenshotUrls: dp?.screenshotUrls ?? [],
-                  };
-                }),
-                tasks: line.dayTasks.map((t) => ({
-                  date: t.date.toISOString().slice(0, 10),
-                  category: t.category,
-                  label: t.label,
-                  status: t.status,
-                })),
-              }
-            : null,
-      };
-    }),
+    lines: buildLineDetails(o.lines),
   }));
 
   return (
@@ -179,6 +204,7 @@ export default async function CustomerProgressPage({
                     completedAt={o.completedAt ?? o.updatedAt}
                     rating={o.testimonial?.rating ?? null}
                     game={o.game}
+                    lines={buildLineDetails(o.lines)}
                   />
                   <div className="pl-1">
                     <TestimonialPrompt

@@ -2,30 +2,9 @@
 
 import { useState } from "react";
 import { RingProgress } from "@/components/RingProgress";
-import { RawatAkunProgressView, type CustomerDayProgressItem, type CustomerDayTaskItem } from "@/components/RawatAkunProgressView";
+import { OrderLineDetailPanel, type OrderLineDetail } from "@/components/OrderLineDetailPanel";
 import { STATUS_LABEL } from "@/types/game";
 import { formatRupiah } from "@/lib/format";
-
-interface UpdateEntry {
-  id: string;
-  note: string | null;
-  screenshotUrl: string | null;
-  resetLocation: string | null;
-  createdAt: string; // ISO string
-}
-
-interface LineDetail {
-  id: string;
-  title: string;
-  explorationPercent: number | null;
-  actFrom: number | null;
-  actTo: number | null;
-  materialQuantity: number | null;
-  rawatAkunQuantity: number | null;
-  calculatedPrice: number;
-  updates: UpdateEntry[];
-  rawatAkun: { days: CustomerDayProgressItem[]; tasks: CustomerDayTaskItem[] } | null;
-}
 
 export interface AccountProgress {
   orderId: string;
@@ -37,16 +16,7 @@ export interface AccountProgress {
   jokerName: string | null;
   estimasiJoki: string | null;
   totalPrice: number;
-  lines: LineDetail[];
-}
-
-function lineDetailTags(line: LineDetail): string[] {
-  const tags: string[] = [];
-  if (line.explorationPercent != null) tags.push(`${line.explorationPercent}% sudah dikerjakan sendiri`);
-  if (line.actFrom != null && line.actTo != null) tags.push(`Act ${line.actFrom}-${line.actTo}`);
-  if (line.materialQuantity != null) tags.push(`${line.materialQuantity} material`);
-  if (line.rawatAkunQuantity != null) tags.push(`${line.rawatAkunQuantity}x rawat akun`);
-  return tags;
+  lines: OrderLineDetail[];
 }
 
 export function CustomerAccountTabs({ accounts }: { accounts: AccountProgress[] }) {
@@ -136,62 +106,7 @@ export function CustomerAccountTabs({ accounts }: { accounts: AccountProgress[] 
 
           {activeLine && (
             <div className="bg-shihu-card border border-shihu-border rounded-2xl p-5">
-              <p className="font-display text-sm font-semibold mb-1.5">{activeLine.title}</p>
-              <div className="flex flex-wrap gap-1.5 mb-4">
-                {lineDetailTags(activeLine).map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-[10.5px] px-2 py-0.5 rounded-md bg-[#2C2540] text-shihu-muted font-display"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
-              <p className="font-display text-xs font-semibold text-shihu-muted mb-2">
-                Riwayat pengerjaan
-              </p>
-              {activeLine.rawatAkun ? (
-                <RawatAkunProgressView days={activeLine.rawatAkun.days} tasks={activeLine.rawatAkun.tasks} />
-              ) : activeLine.updates.length === 0 ? (
-                <p className="text-shihu-faint text-[12.5px]">Belum ada update untuk item ini.</p>
-              ) : (
-                <div className="flex flex-col gap-2.5">
-                  {activeLine.updates.map((u) => (
-                    <div key={u.id} className="border-l-2 border-shihu-corona/40 pl-3.5 py-0.5">
-                      <p className="text-[11px] text-shihu-faint font-display mb-1">
-                        {new Date(u.createdAt).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}
-                      </p>
-                      {u.note && <p className="text-[13px] text-shihu-text mb-1">{u.note}</p>}
-                      {u.resetLocation && (
-                        <p className="text-[12.5px] text-shihu-muted mb-1">
-                          <span className="text-shihu-corona font-medium">Dihabiskan di: </span>
-                          {u.resetLocation}
-                        </p>
-                      )}
-                      {u.screenshotUrl && (
-                        <a
-                          href={u.screenshotUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block mt-1"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element --
-                              URL gambar berasal dari domain eksternal arbitrary
-                              (imgur/postimages/dll, ditempel bebas oleh admin),
-                              sehingga tidak bisa/praktis di-whitelist semua di
-                              next.config.ts untuk next/image. */}
-                          <img
-                            src={u.screenshotUrl}
-                            alt="Bukti progres"
-                            className="max-w-[220px] rounded-lg border border-shihu-border"
-                          />
-                        </a>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+              <OrderLineDetailPanel line={activeLine} bare />
             </div>
           )}
         </div>
