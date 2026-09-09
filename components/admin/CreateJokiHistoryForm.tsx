@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { createJokiHistoryEntry, type JokiHistoryActionState } from "@/lib/actions/joki-history";
+import { CustomerSelector, type CustomerOption } from "./CustomerSelector";
 
 interface GameOption {
   id: string;
@@ -14,7 +15,7 @@ function todayInputValue(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export function CreateJokiHistoryForm({ games }: { games: GameOption[] }) {
+export function CreateJokiHistoryForm({ games, customers }: { games: GameOption[]; customers: CustomerOption[] }) {
   const [state, formAction, pending] = useActionState<JokiHistoryActionState | undefined, FormData>(
     createJokiHistoryEntry,
     undefined
@@ -63,12 +64,7 @@ export function CreateJokiHistoryForm({ games }: { games: GameOption[] }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1">
-            Nama customer <span className="text-red-400">*</span>
-          </label>
-          <input name="customerName" required className="admin-input" placeholder="mis. Rafi A." />
-        </div>
+        <CustomerSelector customers={customers} />
         <div>
           <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1">
             Nama joki (opsional)

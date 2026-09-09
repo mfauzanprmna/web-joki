@@ -342,6 +342,7 @@ model Customer {
   updatedAt DateTime @updatedAt
 
   orders Order[]
+  jokiHistoryEntries JokiHistoryEntry[]
 }
 
 model Worker {
@@ -550,7 +551,11 @@ model JokiHistoryEntry {
   gameId         String
   game           Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   title          String // nama joki/paket yang dikerjakan, mis. "Push Rank Mythic"
-  customerName   String
+  /// Sama seperti Order -- pilih Customer yang sudah ada atau buat baru, BUKAN
+  /// teks bebas, supaya history manual ini tergabung dengan riwayat order asli
+  /// milik customer yang sama (lihat /admin/customer).
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   jokerName      String?
   completedAt    DateTime
   rating         Int? // opsional, 1-5 -- rating/catatan cepat dari admin sendiri
@@ -566,4 +571,5 @@ model JokiHistoryEntry {
 
   @@index([gameId])
   @@index([completedAt])
+  @@index([customerId])
 }

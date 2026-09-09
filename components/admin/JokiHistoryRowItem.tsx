@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/format";
 interface JokiHistoryRow {
   id: string;
   title: string;
-  customerName: string;
+  customer: { name: string };
   jokerName: string | null;
   completedAt: Date;
   rating: number | null;
@@ -34,18 +34,14 @@ export function JokiHistoryRowItem({ item }: { item: JokiHistoryRow }) {
   return (
     <div className="bg-shihu-card border border-shihu-border rounded-2xl p-4 flex flex-col gap-3">
       <div className="flex items-center gap-3 flex-wrap">
-        <span
-          className="w-2 h-2 rounded-full shrink-0"
-          style={{ backgroundColor: item.game.accentColor }}
-        />
+        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.game.accentColor }} />
         <div className="flex-1 min-w-[200px]">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-display text-sm font-semibold">{item.title}</p>
             {item.rating != null && <Stars rating={item.rating} />}
           </div>
           <p className="text-shihu-muted text-xs mt-0.5">
-            {item.game.name} · {item.customerName} · Selesai{" "}
-            {formatDate(item.completedAt)}
+            {item.game.name} · {item.customer.name} · Selesai {formatDate(item.completedAt)}
             {item.jokerName && ` · Joki: ${item.jokerName}`}
           </p>
         </div>
@@ -53,11 +49,7 @@ export function JokiHistoryRowItem({ item }: { item: JokiHistoryRow }) {
           onClick={copyTestimonialLink}
           className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-corona hover:bg-[#2C2540]"
         >
-          {copied
-            ? "Link disalin!"
-            : item.hasTestimonial
-              ? "Salin link (sudah diisi)"
-              : "Salin link testimoni"}
+          {copied ? "Link disalin!" : item.hasTestimonial ? "Salin link (sudah diisi)" : "Salin link testimoni"}
         </button>
         <button
           onClick={() => setShowDetail((v) => !v)}
@@ -81,14 +73,10 @@ export function JokiHistoryRowItem({ item }: { item: JokiHistoryRow }) {
           {item.note ? (
             <div>
               <p className="text-[11px] text-shihu-muted mb-1">Catatan</p>
-              <p className="text-xs text-shihu-text whitespace-pre-line">
-                {item.note}
-              </p>
+              <p className="text-xs text-shihu-text whitespace-pre-line">{item.note}</p>
             </div>
           ) : (
-            <p className="text-xs text-shihu-faint">
-              Tidak ada catatan tambahan.
-            </p>
+            <p className="text-xs text-shihu-faint">Tidak ada catatan tambahan.</p>
           )}
 
           {item.screenshotUrls.length > 0 ? (
@@ -98,12 +86,7 @@ export function JokiHistoryRowItem({ item }: { item: JokiHistoryRow }) {
               </p>
               <div className="flex flex-wrap gap-2">
                 {item.screenshotUrls.map((url) => (
-                  <a
-                    key={url}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a key={url} href={url} target="_blank" rel="noopener noreferrer">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={url}
@@ -115,9 +98,7 @@ export function JokiHistoryRowItem({ item }: { item: JokiHistoryRow }) {
               </div>
             </div>
           ) : (
-            <p className="text-xs text-shihu-faint">
-              Belum ada screenshot bukti pengerjaan.
-            </p>
+            <p className="text-xs text-shihu-faint">Belum ada screenshot bukti pengerjaan.</p>
           )}
         </div>
       )}

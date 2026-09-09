@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { createUniqueCustomerSlug } from "./customer";
 
 export interface JokiHistoryActionState {
   error?: string;
@@ -22,14 +23,21 @@ function isValidHttpUrl(value: string): boolean {
   }
 }
 
-/** Tambah 1 entri history joki secara manual (form ringkas di /admin/history-joki). */
+/**
+ * Tambah 1 entri history joki secara manual (form ringkas di
+ * /admin/history-joki). Customer-nya dipilih dari Customer yang sudah ada
+ * ATAU dibuat baru (persis pola yang sama seperti bikin Order) -- BUKAN teks
+ * bebas, supaya history manual ini otomatis tergabung dengan riwayat order
+ * asli milik customer yang sama.
+ */
 export async function createJokiHistoryEntry(
   _prevState: JokiHistoryActionState | undefined,
   formData: FormData
 ): Promise<JokiHistoryActionState> {
   const gameId = String(formData.get("gameId") || "").trim();
   const title = String(formData.get("title") || "").trim();
-  const customerName = String(formData.get("customerName") || "").trim();
+  const customerId = String(formData.get("customerId") || "").trim();
+  const newCustomerName = String(formData.get("newCustomerName") || "").trim();
   const jokerName = String(formData.get("jokerName") || "").trim();
   const completedAt = parseDate(formData.get("completedAt")) ?? new Date();
   const ratingRaw = String(formData.get("rating") || "").trim();
@@ -39,16 +47,18 @@ export async function createJokiHistoryEntry(
 
   if (!gameId) return { error: "Pilih game terlebih dahulu." };
   if (!title) return { error: "Judul joki wajib diisi." };
-  if (!customerName) return { error: "Nama customer wajib diisi." };
+  if (!customerId && !newCustomerName) {
+    return { error: "Pilih customer yang sudah ada, atau isi nama customer baru." };
+  }
   if (rating != null && (Number.isNaN(rating) || rating < 1 || rating > 5)) {
     return { error: "Rating harus angka 1-5." };
   }
 
   const screenshotUrls = screenshotUrlsRaw
     ? screenshotUrlsRaw
-        .split("\n")
-        .map((s) => s.trim())
-        .filter(Boolean)
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean)
     : [];
 
   for (const url of screenshotUrls) {
@@ -57,11 +67,19 @@ export async function createJokiHistoryEntry(
     }
   }
 
+  const resolvedCustomerId =
+    customerId ||
+    (
+      await prisma.customer.create({
+        data: { name: newCustomerName, publicSlug: await createUniqueCustomerSlug() },
+      })
+    ).id;
+
   await prisma.jokiHistoryEntry.create({
     data: {
       gameId,
       title,
-      customerName,
+      customerId: resolvedCustomerId,
       jokerName: jokerName || null,
       completedAt,
       rating,
@@ -71,6 +89,7 @@ export async function createJokiHistoryEntry(
   });
 
   revalidatePath("/admin/history-joki");
+  revalidatePath("/admin/customer");
   revalidatePath("/history");
   return {};
 }
@@ -82,5 +101,6 @@ export async function deleteJokiHistoryEntry(formData: FormData) {
   await prisma.jokiHistoryEntry.delete({ where: { id } });
 
   revalidatePath("/admin/history-joki");
+  revalidatePath("/admin/customer");
   revalidatePath("/history");
 }

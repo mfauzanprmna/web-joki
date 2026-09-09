@@ -18,7 +18,7 @@ export default async function JokiHistoryTestimonialPage({
 
     const entry = await prisma.jokiHistoryEntry.findUnique({
         where: { shareToken: token },
-        include: { game: true, testimonial: true },
+        include: { game: true, customer: { select: { name: true } }, testimonial: true },
     });
 
     if (!entry) notFound();
@@ -32,7 +32,7 @@ export default async function JokiHistoryTestimonialPage({
                 <SectionHeading
                     eyebrow="Terima kasih sudah pakai jasa kami"
                     title={entry.title}
-                    desc={`Joki untuk ${entry.customerName} · selesai ${formatDate(entry.completedAt)}.`}
+                    desc={`Joki untuk ${entry.customer.name} · selesai ${formatDate(entry.completedAt)}.`}
                 />
 
                 <div className="bg-shihu-card border border-shihu-border rounded-2xl p-5 mb-6 flex items-center justify-between flex-wrap gap-2">
@@ -46,7 +46,7 @@ export default async function JokiHistoryTestimonialPage({
 
                 <JokiHistoryTestimonialForm
                     shareToken={entry.shareToken}
-                    defaultCustomerName={entry.customerName}
+                    defaultCustomerName={entry.customer.name}
                     existing={
                         entry.testimonial
                             ? {
