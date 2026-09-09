@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SectionHeading } from "@/components/SectionHeading";
-import { QueueRow } from "@/components/QueueRow";
+import { AntrianListFilter } from "@/components/AntrianListFilter";
 import { buildOrderTitle } from "@/lib/order-display";
 
 export const revalidate = 15;
@@ -18,6 +18,17 @@ export default async function AntrianPage() {
     orderBy: [{ status: "asc" }, { createdAt: "asc" }],
   });
 
+  const rows = orders.map((o) => ({
+    id: o.id,
+    orderCode: o.orderCode,
+    title: buildOrderTitle(o.lines),
+    customerName: o.customer.name,
+    jokerName: o.jokerName,
+    status: o.status,
+    progressPct: o.progressPct,
+    game: o.game,
+  }));
+
   return (
     <div className="min-h-screen relative">
       <div className="shihu-glow-top" />
@@ -30,23 +41,10 @@ export default async function AntrianPage() {
           desc="Progres pengerjaan tiap pesanan yang sedang berjalan, diperbarui langsung oleh joki yang bertugas."
         />
 
-        {orders.length === 0 ? (
+        {rows.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="flex flex-col gap-3">
-            {orders.map((o) => (
-              <QueueRow
-                key={o.id}
-                orderCode={o.orderCode}
-                title={buildOrderTitle(o.lines)}
-                customerName={o.customer.name}
-                jokerName={o.jokerName}
-                status={o.status}
-                progressPct={o.progressPct}
-                game={o.game}
-              />
-            ))}
-          </div>
+          <AntrianListFilter orders={rows} />
         )}
       </main>
 

@@ -3,7 +3,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SectionHeading } from "@/components/SectionHeading";
 import { FilterChips } from "@/components/FilterChips";
-import { JokiCard } from "@/components/JokiCard";
+import { JokiListFilter, type JokiDisplayCard } from "@/components/JokiListFilter";
 import { isPatchEventLive, isPatchWideRawatAkunLive } from "@/lib/patch-schedule";
 import { formatRupiah } from "@/lib/format";
 
@@ -16,17 +16,7 @@ function isValidSlug(value: string | undefined): value is ValidSlug {
   return !!value && (VALID_SLUGS as readonly string[]).includes(value);
 }
 
-interface DisplayCard {
-  key: string;
-  title: string;
-  description: string;
-  priceLabel: string;
-  etaLabel: string;
-  badge?: string | null;
-  game: { slug: string; name: string; accentColor: string };
-  categoryName: string; // dipakai untuk sort, bukan ditampilkan langsung
-  metaTags: (string | null | undefined)[];
-}
+type DisplayCard = JokiDisplayCard;
 
 export default async function JokiListPage({
   searchParams,
@@ -192,20 +182,7 @@ export default async function JokiListPage({
         {cards.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {cards.map((card) => (
-              <JokiCard
-                key={card.key}
-                title={card.title}
-                description={card.description}
-                priceLabel={card.priceLabel}
-                etaLabel={card.etaLabel}
-                badge={card.badge}
-                game={card.game}
-                metaTags={card.metaTags}
-              />
-            ))}
-          </div>
+          <JokiListFilter cards={cards} />
         )}
       </main>
 

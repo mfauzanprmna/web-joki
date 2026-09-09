@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
+import { SweetAlertProvider } from "@/components/ui/SweetAlertProvider";
+import { NavigationProgress } from "@/components/ui/NavigationProgress";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -28,7 +30,10 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${spaceGrotesk.variable} ${inter.variable}`}>
       <body className="font-body antialiased bg-shihu-bg text-shihu-text min-h-screen">
-        {children}
+        <SweetAlertProvider>
+          <NavigationProgress />
+          {children}
+        </SweetAlertProvider>
       </body>
     </html>
   );

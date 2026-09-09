@@ -1,11 +1,21 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { loginAction } from "@/lib/actions/auth";
 import { ShihuMark } from "@/components/ShihuMark";
+import { useSweetAlert } from "@/components/ui/SweetAlertProvider";
 
 export default function AdminLoginPage() {
   const [state, formAction, pending] = useActionState(loginAction, undefined);
+  const { error: showError } = useSweetAlert();
+  const lastShownError = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (state?.error && state.error !== lastShownError.current) {
+      lastShownError.current = state.error;
+      showError("Gagal masuk", state.error);
+    }
+  }, [state?.error, showError]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-shihu-bg relative px-6">
