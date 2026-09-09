@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { hashPassword } from "../lib/password";
+import { generateCustomerSlug } from "@/lib/customer-slug";
 
 const prisma = new PrismaClient();
 
@@ -49,6 +50,8 @@ async function main() {
       accentColor: "#C2A3FF",
     },
   });
+
+  
 
   // ---------- Kategori ----------
   const genshinCatPushRank = await prisma.jokiCategory.create({
@@ -466,6 +469,9 @@ async function main() {
   const customerSalsa = await prisma.customer.create({
     data: { name: "Salsa D.", publicSlug: "salsa-demo" },
   });
+  const customerBimo = await prisma.customer.create({
+    data: { name: "Bimo S.", publicSlug: generateCustomerSlug() },
+  });
 
   // ---------- Order (antrian aktif) ----------
   const orderRafiAbyss = await prisma.order.create({
@@ -755,7 +761,7 @@ async function main() {
     data: {
       gameId: genshin.id,
       title: "Rawat Akun Bulanan (transaksi lama, dicatat manual)",
-      customerName: "Bimo S.",
+      customerId: customerBimo.id,
       jokerName: "Dimas",
       completedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
       rating: 5,
