@@ -114,7 +114,7 @@ export async function updateDayTaskStatus(formData: FormData) {
 
   if (task.sourceKey) {
     await prisma.orderLineDayTask.updateMany({
-      where: { orderLineId: task.orderLineId, sourceKey: task.sourceKey, date: { gte: task.date } },
+      where: { orderLineId: task.orderLineId, sourceKey: task.sourceKey },
       data: { status },
     });
   } else {

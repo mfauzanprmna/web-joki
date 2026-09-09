@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { calculateJokiItemLinePrice } from "@/lib/order-pricing";
 import { computeRawatAkunPeriod } from "@/lib/rawat-akun-schedule";
 import { createUniqueCustomerSlug } from "./customer";
+import { notifyOrderCreated, notifyOrderProgress } from "@/lib/discord-notify";
 
 export interface OrderActionState {
   error?: string;
@@ -278,11 +279,22 @@ export async function createOrder(
   // untuk memastikan keunikan) -- hanya diperlukan kalau customer baru dibuat.
   const newCustomerSlug = !customerId ? await createUniqueCustomerSlug() : null;
 
+  // Kumpulkan info tiap akun yang berhasil dibuat, dipakai untuk notifikasi
+  // Discord SETELAH transaksi commit (supaya tidak ada notif untuk order
+  // yang ternyata gagal tersimpan).
+  const createdForNotify: {
+    orderCode: string;
+    gameId: string;
+    layanan: string;
+    totalPrice: number;
+  }[] = [];
+
   // Semua akun (Order) dibuat dalam satu transaksi: kalau salah satu akun
   // gagal (mis. constraint DB), tidak ada Order yang tersimpan setengah-setengah.
   const usedCodes = new Set<string>();
+  let resolvedCustomerId = "";
   await prisma.$transaction(async (tx) => {
-    const resolvedCustomerId =
+    resolvedCustomerId =
       customerId ||
       (
         await tx.customer.create({
@@ -291,9 +303,10 @@ export async function createOrder(
       ).id;
 
     for (const acc of resolvedAccounts) {
+      const orderCode = generateOrderCode(usedCodes);
       await tx.order.create({
         data: {
-          orderCode: generateOrderCode(usedCodes),
+          orderCode,
           gameId: acc.gameId,
           customerId: resolvedCustomerId,
           jokerName: acc.jokerName,
@@ -307,6 +320,22 @@ export async function createOrder(
           lines: { create: acc.lines },
         },
       });
+
+      createdForNotify.push({
+        orderCode,
+        gameId: acc.gameId,
+        layanan: acc.lines
+          .map((l) =>
+            l.jokiItemId
+              ? itemMap.get(l.jokiItemId)?.title
+              : l.jokiPaketId
+                ? paketMap.get(l.jokiPaketId)?.title
+                : null,
+          )
+          .filter((title): title is string => !!title)
+          .join(", ") || "Pesanan kustom",
+        totalPrice: acc.totalPrice,
+      });
     }
   });
 
@@ -314,6 +343,37 @@ export async function createOrder(
   revalidatePath("/admin/customer");
   revalidatePath("/antrian");
   revalidatePath("/history");
+
+  // Notifikasi Discord dikirim TERPISAH dari transaksi DB di atas (fire-and-
+  // forget, lihat lib/discord-notify.ts) -- kalau bot down, order tetap
+  // sukses dibuat, cuma notifnya yang tidak terkirim.
+  if (createdForNotify.length > 0) {
+    const [customer, games] = await Promise.all([
+      prisma.customer.findUnique({
+        where: { id: resolvedCustomerId },
+        select: { name: true, publicSlug: true },
+      }),
+      prisma.game.findMany({
+        where: { id: { in: createdForNotify.map((c) => c.gameId) } },
+        select: { id: true, name: true },
+      }),
+    ]);
+    const gameNameById = new Map(games.map((g) => [g.id, g.name]));
+
+    if (customer) {
+      for (const created of createdForNotify) {
+        notifyOrderCreated({
+          orderCode: created.orderCode,
+          customerName: customer.name,
+          gameName: gameNameById.get(created.gameId) ?? "-",
+          layanan: created.layanan,
+          totalPrice: created.totalPrice,
+          status: "MENUNGGU",
+          publicSlug: customer.publicSlug,
+        });
+      }
+    }
+  }
 
   return {};
 }
@@ -343,11 +403,30 @@ export async function updateOrder(formData: FormData) {
     data.progressPct = 100;
   }
 
-  await prisma.order.update({ where: { id }, data });
+  const updated = await prisma.order.update({
+    where: { id },
+    data,
+    select: {
+      orderCode: true,
+      status: true,
+      progressPct: true,
+      customer: { select: { publicSlug: true } },
+    },
+  });
 
   revalidatePath("/admin/antrian");
   revalidatePath("/antrian");
   revalidatePath("/history");
+
+  // Fire-and-forget: kirim update progress/status ke Discord (lihat catatan
+  // di lib/discord-notify.ts -- tidak akan menggagalkan update ini kalau
+  // bot sedang tidak bisa dihubungi).
+  notifyOrderProgress({
+    orderCode: updated.orderCode,
+    status: updated.status,
+    progressPct: updated.progressPct,
+    publicSlug: updated.customer.publicSlug,
+  });
 }
 
 export async function deleteOrder(formData: FormData) {

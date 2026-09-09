@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { notifyOrderProgress } from "@/lib/discord-notify";
 
 export interface OrderLineUpdateActionState {
   error?: string;
@@ -37,7 +38,17 @@ export async function addOrderLineUpdate(
 
   const orderLine = await prisma.orderLine.findUnique({
     where: { id: orderLineId },
-    select: { orderId: true, order: { select: { customer: { select: { publicSlug: true } } } } },
+    select: {
+      orderId: true,
+      order: {
+        select: {
+          orderCode: true,
+          status: true,
+          progressPct: true,
+          customer: { select: { publicSlug: true } },
+        },
+      },
+    },
   });
   if (!orderLine) {
     return { error: "OrderLine tidak ditemukan." };
@@ -55,6 +66,16 @@ export async function addOrderLineUpdate(
   revalidatePath("/admin/antrian");
   revalidatePath(`/admin/progress/${orderLine.orderId}`);
   revalidatePath(`/progress/${orderLine.order.customer.publicSlug}`);
+
+  // Fire-and-forget: kabari Discord ada update baru (dengan catatannya kalau
+  // ada), supaya customer yang punya ticket order langsung lihat progresnya.
+  notifyOrderProgress({
+    orderCode: orderLine.order.orderCode,
+    status: orderLine.order.status,
+    progressPct: orderLine.order.progressPct,
+    publicSlug: orderLine.order.customer.publicSlug,
+    note: note || null,
+  });
 
   return {};
 }
