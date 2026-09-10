@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { validateJokiItemRelations } from "@/lib/joki-rules";
+import { notifyPriceListChanged } from "@/lib/discord-notify";
 
 export interface JokiItemActionState {
   error?: string;
@@ -161,6 +162,9 @@ export async function createJokiItem(
   revalidatePath("/joki");
   revalidatePath("/");
 
+  const game = await prisma.game.findUnique({ where: { id: gameId }, select: { slug: true } });
+  if (game) notifyPriceListChanged(game.slug);
+
   return {};
 }
 
@@ -192,6 +196,8 @@ export async function updateJokiItem(
 
   const additional = resolveAdditionalFields(formData, resolved.requiresQuestType, resolved.isMaterial);
 
+  const before = await prisma.jokiItem.findUnique({ where: { id }, select: { gameId: true } });
+
   await prisma.jokiItem.update({
     where: { id },
     data: {
@@ -222,16 +228,30 @@ export async function updateJokiItem(
   revalidatePath("/joki");
   revalidatePath("/");
 
+  // Notify game baru, dan kalau item dipindah ke game lain, notify game
+  // lama juga (supaya tabel harga game lama ikut ter-update, item-nya hilang).
+  const affectedGameIds = Array.from(new Set([gameId, before?.gameId].filter((v): v is string => !!v)));
+  const affectedGames = await prisma.game.findMany({
+    where: { id: { in: affectedGameIds } },
+    select: { slug: true },
+  });
+  for (const g of affectedGames) notifyPriceListChanged(g.slug);
+
   return {};
 }
 
 export async function deleteJokiItem(formData: FormData) {
   const id = String(formData.get("id"));
-  await prisma.jokiItem.delete({ where: { id } });
+  const deleted = await prisma.jokiItem.delete({
+    where: { id },
+    select: { game: { select: { slug: true } } },
+  });
 
   revalidatePath("/admin/joki");
   revalidatePath("/joki");
   revalidatePath("/");
+
+  notifyPriceListChanged(deleted.game.slug);
 }
 
 // ---------- Kategori ----------

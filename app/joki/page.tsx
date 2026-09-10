@@ -85,7 +85,11 @@ export default async function JokiListPage({
     const priceLabel =
       item.category.isMaterial && item.unitQuantity
         ? `${formatRupiah(item.priceRupiah)} / ${item.unitQuantity}`
-        : formatRupiah(item.priceRupiah);
+        : item.category.requiresQuestType
+          ? `${formatRupiah(item.priceRupiah)} / bagian`
+          : item.category.requiresRegion
+            ? `${formatRupiah(item.priceRupiah)} / persen`
+            : formatRupiah(item.priceRupiah);
     return {
       key: `item-${item.id}`,
       title: item.title,

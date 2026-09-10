@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { notifyPriceListChanged } from "@/lib/discord-notify";
 
 export interface PaketActionState {
   error?: string;
@@ -52,6 +53,9 @@ export async function createJokiPaket(
   revalidatePath("/joki");
   revalidatePath("/");
 
+  const game = await prisma.game.findUnique({ where: { id: gameId }, select: { slug: true } });
+  if (game) notifyPriceListChanged(game.slug);
+
   return {};
 }
 
@@ -77,7 +81,7 @@ export async function updateJokiPaket(
     : [];
   const allItemIds = Array.from(new Set([...itemIds, ...archonQuestItemIds]));
 
-  await prisma.jokiPaket.update({
+  const updated = await prisma.jokiPaket.update({
     where: { id },
     data: {
       title,
@@ -91,20 +95,28 @@ export async function updateJokiPaket(
         create: allItemIds.map((jokiItemId) => ({ jokiItemId })),
       },
     },
+    select: { game: { select: { slug: true } } },
   });
 
   revalidatePath("/admin/paket");
   revalidatePath("/joki");
   revalidatePath("/");
 
+  notifyPriceListChanged(updated.game.slug);
+
   return {};
 }
 
 export async function deleteJokiPaket(formData: FormData) {
   const id = String(formData.get("id"));
-  await prisma.jokiPaket.delete({ where: { id } });
+  const deleted = await prisma.jokiPaket.delete({
+    where: { id },
+    select: { game: { select: { slug: true } } },
+  });
 
   revalidatePath("/admin/paket");
   revalidatePath("/joki");
   revalidatePath("/");
+
+  notifyPriceListChanged(deleted.game.slug);
 }

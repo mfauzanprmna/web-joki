@@ -63,3 +63,13 @@ export interface NotifyOrderProgressInput {
 export function notifyOrderProgress(input: NotifyOrderProgressInput): void {
   void postToBot("/api/order-progress", input);
 }
+
+/**
+ * Beri tahu bot bahwa daftar harga satu game berubah (Joki Item / Paket
+ * dibuat, diubah, atau dihapus), supaya bot re-sync tabel harga di channel
+ * game terkait (mis. #genshin-impact). Bot yang menentukan channel mana
+ * lewat gameSlug -- kita tidak perlu tahu ID channel Discord-nya di sini.
+ */
+export function notifyPriceListChanged(gameSlug: string): void {
+  void postToBot("/api/pricelist-changed", { gameSlug });
+}

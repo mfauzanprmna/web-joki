@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { JokiCard } from "./JokiCard";
+import { Pagination } from "./Pagination";
 import type { GameLite } from "@/types/game";
 
 export interface JokiDisplayCard {
@@ -16,6 +17,8 @@ export interface JokiDisplayCard {
   metaTags: (string | null | undefined)[];
 }
 
+const PAGE_SIZE = 12;
+
 /**
  * Filter kategori + pencarian di halaman list joki customer. Filter game
  * (per game apa) sudah ditangani server-side lewat query string ?game=,
@@ -25,6 +28,7 @@ export interface JokiDisplayCard {
 export function JokiListFilter({ cards }: { cards: JokiDisplayCard[] }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
+  const [page, setPage] = useState(1);
 
   const categories = useMemo(() => {
     const unique = new Set(cards.map((c) => c.categoryName));
@@ -50,6 +54,13 @@ export function JokiListFilter({ cards }: { cards: JokiDisplayCard[] }) {
       return haystack.includes(keyword);
     });
   }, [cards, query, category]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, category]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div>
@@ -95,20 +106,23 @@ export function JokiListFilter({ cards }: { cards: JokiDisplayCard[] }) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {filtered.map((card) => (
-            <JokiCard
-              key={card.key}
-              title={card.title}
-              description={card.description}
-              priceLabel={card.priceLabel}
-              etaLabel={card.etaLabel}
-              badge={card.badge}
-              game={card.game}
-              metaTags={card.metaTags}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {paged.map((card) => (
+              <JokiCard
+                key={card.key}
+                title={card.title}
+                description={card.description}
+                priceLabel={card.priceLabel}
+                etaLabel={card.etaLabel}
+                badge={card.badge}
+                game={card.game}
+                metaTags={card.metaTags}
+              />
+            ))}
+          </div>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
       )}
     </div>
   );
