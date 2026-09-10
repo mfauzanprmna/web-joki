@@ -121,6 +121,7 @@ function OrderCard({
         lines: {
             jokiItem: { title: string } | null;
             jokiPaket: { title: string } | null;
+            characterName?: string | null;
         }[];
     };
 }) {

@@ -32,7 +32,7 @@ interface JokiItemRow {
   unitQuantity: number | null;
   durationDays: number | null;
   game: { name: string; accentColor: string };
-  category: { name: string; isRawatAkun: boolean; isMaterial: boolean };
+  category: { name: string; isRawatAkun: boolean; isMaterial: boolean; requiresCharacterLevel: boolean };
   region: { name: string } | null;
   questType: { name: string } | null;
   patch: { name: string } | null;
@@ -81,7 +81,9 @@ export function JokiItemRowItem({
     const priceLabel =
       item.category.isMaterial && item.unitQuantity
         ? `${formatRupiah(item.priceRupiah)} / ${item.unitQuantity}`
-        : formatRupiah(item.priceRupiah);
+        : item.category.requiresCharacterLevel
+          ? `${formatRupiah(item.priceRupiah)} / level`
+          : formatRupiah(item.priceRupiah);
     return (
       <div className="bg-shihu-card border border-shihu-border rounded-2xl p-4 flex items-center gap-4 flex-wrap">
         <span

@@ -59,9 +59,15 @@ export default async function AdminOrderProgressPage({
 
   const lines = order.lines.map((line) => {
     const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;
+    const characterName =
+      "characterName" in line && typeof line.characterName === "string"
+        ? line.characterName
+        : null;
     return {
       id: line.id,
-      title: line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal",
+      title:
+        (line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal") +
+        (characterName ? ` — ${characterName}` : ""),
       jokiItem: line.jokiItem
         ? {
           category: line.jokiItem.category,

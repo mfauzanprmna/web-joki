@@ -3,16 +3,26 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SectionHeading } from "@/components/SectionHeading";
 import { TestimoniCard } from "@/components/TestimoniCard";
+import { PaginatedList } from "@/components/PaginatedList";
+import { GameCountBadges } from "@/components/GameCountBadges";
 
 export const revalidate = 60;
 
 export default async function TestimoniPage() {
-  const testimonials = await prisma.testimonial.findMany({
-    where: { isPublished: true },
-    include: { game: true },
-    orderBy: { createdAt: "desc" },
-    take: 30,
-  });
+  const [games, testimonials] = await Promise.all([
+    prisma.game.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.testimonial.findMany({
+      where: { isPublished: true },
+      include: { game: true },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    }),
+  ]);
+
+  const gameCounts = games.map((g) => ({
+    ...g,
+    count: testimonials.filter((t) => t.gameId === g.id).length,
+  }));
 
   return (
     <div className="min-h-screen relative">
@@ -29,17 +39,22 @@ export default async function TestimoniPage() {
         {testimonials.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {testimonials.map((t) => (
-              <TestimoniCard
-                key={t.id}
-                customerName={t.customerName}
-                message={t.message}
-                rating={t.rating}
-                game={t.game}
-              />
-            ))}
-          </div>
+          <>
+            <GameCountBadges counts={gameCounts} />
+            <PaginatedList
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3.5"
+              pageSize={12}
+              items={testimonials.map((t) => (
+                <TestimoniCard
+                  key={t.id}
+                  customerName={t.customerName}
+                  message={t.message}
+                  rating={t.rating}
+                  game={t.game}
+                />
+              ))}
+            />
+          </>
         )}
       </main>
 

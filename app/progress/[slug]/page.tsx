@@ -26,6 +26,9 @@ function buildLineDetails(
     actTo: number | null;
     materialQuantity: number | null;
     rawatAkunQuantity: number | null;
+    characterName?: string | null;
+    levelFrom?: number | null;
+    levelTo?: number | null;
     startDate: Date | null;
     endDate: Date | null;
     updates: {
@@ -49,6 +52,9 @@ function buildLineDetails(
       actTo: line.actTo,
       materialQuantity: line.materialQuantity,
       rawatAkunQuantity: line.rawatAkunQuantity,
+      characterName: line.characterName ?? null,
+      levelFrom: line.levelFrom ?? null,
+      levelTo: line.levelTo ?? null,
       updates: line.updates.map((u) => ({
         id: u.id,
         note: u.note,
@@ -59,25 +65,25 @@ function buildLineDetails(
       rawatAkun:
         isRawatAkun && line.startDate && line.endDate
           ? {
-              days: enumerateDays(line.startDate, line.endDate).map((d) => {
-                const iso = d.toISOString().slice(0, 10);
-                const dp = line.dayProgress.find(
-                  (p) => p.date.toISOString().slice(0, 10) === iso,
-                );
-                return {
-                  date: iso,
-                  percent: dp?.percent ?? 0,
-                  note: dp?.note ?? null,
-                  screenshotUrls: dp?.screenshotUrls ?? [],
-                };
-              }),
-              tasks: line.dayTasks.map((t) => ({
-                date: t.date.toISOString().slice(0, 10),
-                category: t.category,
-                label: t.label,
-                status: t.status as "BELUM" | "SEDANG" | "SELESAI",
-              })),
-            }
+            days: enumerateDays(line.startDate, line.endDate).map((d) => {
+              const iso = d.toISOString().slice(0, 10);
+              const dp = line.dayProgress.find(
+                (p) => p.date.toISOString().slice(0, 10) === iso,
+              );
+              return {
+                date: iso,
+                percent: dp?.percent ?? 0,
+                note: dp?.note ?? null,
+                screenshotUrls: dp?.screenshotUrls ?? [],
+              };
+            }),
+            tasks: line.dayTasks.map((t) => ({
+              date: t.date.toISOString().slice(0, 10),
+              category: t.category,
+              label: t.label,
+              status: t.status as "BELUM" | "SEDANG" | "SELESAI",
+            })),
+          }
           : null,
     };
   });
@@ -213,10 +219,10 @@ export default async function CustomerProgressPage({
                       existing={
                         o.testimonial
                           ? {
-                              rating: o.testimonial.rating,
-                              message: o.testimonial.message,
-                              isPublished: o.testimonial.isPublished,
-                            }
+                            rating: o.testimonial.rating,
+                            message: o.testimonial.message,
+                            isPublished: o.testimonial.isPublished,
+                          }
                           : null
                       }
                     />

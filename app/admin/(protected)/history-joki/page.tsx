@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { CreateJokiHistoryForm } from "@/components/admin/CreateJokiHistoryForm";
-import { JokiHistoryRowItem } from "@/components/admin/JokiHistoryRowItem";
+import { JokiHistoryListFilter } from "@/components/admin/JokiHistoryListFilter";
 
 export default async function AdminJokiHistoryPage() {
   const [games, customers, entries] = await Promise.all([
@@ -9,9 +9,11 @@ export default async function AdminJokiHistoryPage() {
     prisma.jokiHistoryEntry.findMany({
       include: { game: true, customer: { select: { name: true } }, testimonial: { select: { id: true } } },
       orderBy: { completedAt: "desc" },
-      take: 100,
+      take: 300,
     }),
   ]);
+
+  const entriesForFilter = entries.map((e) => ({ ...e, hasTestimonial: Boolean(e.testimonial) }));
 
   return (
     <div>
@@ -39,11 +41,7 @@ export default async function AdminJokiHistoryPage() {
           <p className="text-shihu-muted text-sm">Tambahkan lewat form di atas.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2.5">
-          {entries.map((e) => (
-            <JokiHistoryRowItem key={e.id} item={{ ...e, hasTestimonial: Boolean(e.testimonial) }} />
-          ))}
-        </div>
+        <JokiHistoryListFilter entries={entriesForFilter} games={games} />
       )}
     </div>
   );

@@ -22,6 +22,9 @@ interface OrderLineRow {
   actTo: number | null;
   materialQuantity: number | null;
   rawatAkunQuantity: number | null;
+  characterName?: string | null;
+  levelFrom?: number | null;
+  levelTo?: number | null;
   calculatedPrice: number;
   jokiItem: { title: string } | null;
   jokiPaket: { title: string } | null;
@@ -71,6 +74,8 @@ function describeLine(line: OrderLineRow): string {
   if (line.actFrom != null && line.actTo != null) details.push(`Act ${line.actFrom}-${line.actTo}`);
   if (line.materialQuantity != null) details.push(`${line.materialQuantity} material`);
   if (line.rawatAkunQuantity != null) details.push(`${line.rawatAkunQuantity}x rawat akun`);
+  if (line.characterName) details.push(line.characterName);
+  if (line.levelFrom != null && line.levelTo != null) details.push(`Lv ${line.levelFrom}-${line.levelTo}`);
   const detailStr = details.length > 0 ? ` (${details.join(", ")})` : "";
   return `${title}${detailStr} — ${formatRupiah(line.calculatedPrice)}`;
 }

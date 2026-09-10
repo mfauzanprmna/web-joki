@@ -22,6 +22,9 @@ export interface OrderLineDetail {
   actTo: number | null;
   materialQuantity: number | null;
   rawatAkunQuantity: number | null;
+  characterName: string | null;
+  levelFrom: number | null;
+  levelTo: number | null;
   updates: OrderLineUpdateEntry[];
   rawatAkun: { days: CustomerDayProgressItem[]; tasks: CustomerDayTaskItem[] } | null;
 }
@@ -33,6 +36,7 @@ function lineDetailTags(line: OrderLineDetail): string[] {
   if (line.actFrom != null && line.actTo != null) tags.push(`Act ${line.actFrom}-${line.actTo}`);
   if (line.materialQuantity != null) tags.push(`${line.materialQuantity} material`);
   if (line.rawatAkunQuantity != null) tags.push(`${line.rawatAkunQuantity}x rawat akun`);
+  if (line.levelFrom != null && line.levelTo != null) tags.push(`Level ${line.levelFrom} → ${line.levelTo}`);
   return tags;
 }
 
@@ -62,9 +66,8 @@ export function OrderLineDetailPanel({
           {tags.map((tag) => (
             <span
               key={tag}
-              className={`text-[10.5px] px-2 py-0.5 rounded-md text-shihu-muted font-display ${
-                bare ? "bg-[#2C2540]" : "bg-shihu-card"
-              }`}
+              className={`text-[10.5px] px-2 py-0.5 rounded-md text-shihu-muted font-display ${bare ? "bg-[#2C2540]" : "bg-shihu-card"
+                }`}
             >
               {tag}
             </span>

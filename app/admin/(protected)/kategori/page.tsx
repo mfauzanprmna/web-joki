@@ -103,6 +103,19 @@ export default async function AdminKategoriPage() {
                 className="accent-shihu-corona w-4 h-4 shrink-0"
               />
             </label>
+            <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+              <span>
+                Kategori Build Karakter
+                <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">
+                  Aktifkan untuk build ascend/talent karakter — memunculkan input nama karakter + rentang level saat order. Harga Joki Item dianggap harga per level.
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                name="requiresCharacterLevel"
+                className="accent-shihu-corona w-4 h-4 shrink-0"
+              />
+            </label>
           </div>
 
           <button

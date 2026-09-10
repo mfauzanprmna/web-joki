@@ -12,6 +12,9 @@
  * - Material: (harga Joki Item / unitQuantity Joki Item) x jumlah yang
  *   diminta customer -- dihitung harga per 1 material dulu, baru dikalikan.
  * - Rawat Akun: jumlah (mis. jumlah minggu/siklus) x harga Joki Item.
+ * - Build Karakter: (levelTo - levelFrom) x harga PER LEVEL Joki Item.
+ *   Varian "ascend saja" vs "ascend + talent" adalah Joki Item terpisah
+ *   dengan harga per level berbeda, bukan field tambahan.
  * - Paket Joki: harga tetap apa adanya dari JokiPaket.priceRupiah, tidak
  *   ada input tambahan atau perhitungan.
  */
@@ -24,6 +27,7 @@ export interface JokiItemForPricing {
     requiresQuestType: boolean;
     isMaterial: boolean;
     isRawatAkun: boolean;
+    requiresCharacterLevel: boolean;
   };
 }
 
@@ -33,6 +37,9 @@ export interface OrderLineInput {
   actTo?: number | null;
   materialQuantity?: number | null;
   rawatAkunQuantity?: number | null;
+  characterName?: string | null;
+  levelFrom?: number | null;
+  levelTo?: number | null;
 }
 
 export interface PriceResult {
@@ -88,6 +95,23 @@ export function calculateJokiItemLinePrice(
       return { valid: false, price: 0, error: "Jumlah rawat akun wajib diisi (lebih dari 0)." };
     }
     return { valid: true, price: quantity * item.priceRupiah };
+  }
+
+  if (category.requiresCharacterLevel) {
+    const characterName = input.characterName?.trim();
+    if (!characterName) {
+      return { valid: false, price: 0, error: "Nama karakter wajib diisi." };
+    }
+    const levelFrom = input.levelFrom;
+    const levelTo = input.levelTo;
+    if (levelFrom == null || levelTo == null) {
+      return { valid: false, price: 0, error: "Level sekarang dan level target wajib diisi." };
+    }
+    if (levelTo <= levelFrom) {
+      return { valid: false, price: 0, error: "Level target harus lebih besar dari level sekarang." };
+    }
+    const levelCount = levelTo - levelFrom;
+    return { valid: true, price: levelCount * item.priceRupiah };
   }
 
   // Kategori lain (Push Rank, Daily Commission, dll) -> harga tetap.

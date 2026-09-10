@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { createCustomer } from "@/lib/actions/customer";
-import { CustomerRowItem } from "@/components/admin/CustomerRowItem";
+import { CustomerListFilter } from "@/components/admin/CustomerListFilter";
 
 export default async function AdminCustomerPage() {
   const customers = await prisma.customer.findMany({
@@ -17,6 +17,7 @@ export default async function AdminCustomerPage() {
       },
     },
     orderBy: { createdAt: "desc" },
+    take: 300,
   });
 
   return (
@@ -58,11 +59,13 @@ export default async function AdminCustomerPage() {
         </form>
       </details>
 
-      <div className="flex flex-col gap-2.5">
-        {customers.map((c) => (
-          <CustomerRowItem key={c.id} customer={c} />
-        ))}
-      </div>
+      {customers.length === 0 ? (
+        <div className="bg-shihu-card border border-shihu-border rounded-2xl p-8 text-center">
+          <p className="text-shihu-muted text-sm">Belum ada customer.</p>
+        </div>
+      ) : (
+        <CustomerListFilter customers={customers} />
+      )}
     </div>
   );
 }

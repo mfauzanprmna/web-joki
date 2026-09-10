@@ -243,9 +243,10 @@ export async function createJokiCategory(formData: FormData) {
   const requiresQuestType = formData.get("requiresQuestType") === "on";
   const isRawatAkun = formData.get("isRawatAkun") === "on";
   const isMaterial = formData.get("isMaterial") === "on";
+  const requiresCharacterLevel = formData.get("requiresCharacterLevel") === "on";
 
   await prisma.jokiCategory.create({
-    data: { gameId, name, requiresRegion, requiresQuestType, isRawatAkun, isMaterial },
+    data: { gameId, name, requiresRegion, requiresQuestType, isRawatAkun, isMaterial, requiresCharacterLevel },
   });
 
   revalidatePath("/admin/kategori");
@@ -259,11 +260,12 @@ export async function updateJokiCategory(formData: FormData) {
   const requiresQuestType = formData.get("requiresQuestType") === "on";
   const isRawatAkun = formData.get("isRawatAkun") === "on";
   const isMaterial = formData.get("isMaterial") === "on";
+  const requiresCharacterLevel = formData.get("requiresCharacterLevel") === "on";
   const isActive = formData.get("isActive") === "on";
 
   await prisma.jokiCategory.update({
     where: { id },
-    data: { name, requiresRegion, requiresQuestType, isRawatAkun, isMaterial, isActive },
+    data: { name, requiresRegion, requiresQuestType, isRawatAkun, isMaterial, requiresCharacterLevel, isActive },
   });
 
   revalidatePath("/admin/kategori");

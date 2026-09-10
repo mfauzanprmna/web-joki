@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { OrderRowItem } from "./OrderRowItem";
+import { Pagination } from "@/components/Pagination";
 import { STATUS_LABEL } from "@/types/game";
 
 interface GameOption {
@@ -17,6 +18,9 @@ interface OrderLineRow {
     actTo: number | null;
     materialQuantity: number | null;
     rawatAkunQuantity: number | null;
+    characterName?: string | null;
+    levelFrom?: number | null;
+    levelTo?: number | null;
     calculatedPrice: number;
     jokiItem: { title: string } | null;
     jokiPaket: { title: string } | null;
@@ -45,11 +49,13 @@ interface OrderRow {
 }
 
 const STATUS_OPTIONS = ["MENUNGGU", "DIKERJAKAN", "FINISHING", "SELESAI", "DIBATALKAN"];
+const PAGE_SIZE = 15;
 
 export function OrderListFilter({ orders, games, workers }: { orders: OrderRow[]; games: GameOption[]; workers: WorkerOption[] }) {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
     const [gameFilter, setGameFilter] = useState("");
+    const [page, setPage] = useState(1);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -69,6 +75,13 @@ export function OrderListFilter({ orders, games, workers }: { orders: OrderRow[]
             return haystack.includes(q);
         });
     }, [orders, search, statusFilter, gameFilter]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [search, statusFilter, gameFilter]);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
     return (
         <div className="flex flex-col gap-3">
@@ -98,7 +111,8 @@ export function OrderListFilter({ orders, games, workers }: { orders: OrderRow[]
             </div>
 
             <p className="text-shihu-faint text-xs">
-                Menampilkan {filtered.length} dari {orders.length} pesanan
+                Menampilkan {filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} dari {filtered.length} pesanan
+                {filtered.length !== orders.length && ` (total ${orders.length})`}
             </p>
 
             {filtered.length === 0 ? (
@@ -106,11 +120,14 @@ export function OrderListFilter({ orders, games, workers }: { orders: OrderRow[]
                     <p className="text-shihu-muted text-sm">Tidak ada pesanan yang cocok dengan filter.</p>
                 </div>
             ) : (
-                <div className="flex flex-col gap-2.5">
-                    {filtered.map((o) => (
-                        <OrderRowItem key={o.id} order={o} workers={workers} />
-                    ))}
-                </div>
+                <>
+                    <div className="flex flex-col gap-2.5">
+                        {paged.map((o) => (
+                            <OrderRowItem key={o.id} order={o} workers={workers} />
+                        ))}
+                    </div>
+                    <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                </>
             )}
         </div>
     );

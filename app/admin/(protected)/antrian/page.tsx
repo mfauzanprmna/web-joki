@@ -18,7 +18,13 @@ export default async function AdminAntrianPage() {
         durationDays: true,
         patch: { select: { startDate: true, endDate: true } },
         category: {
-          select: { requiresRegion: true, requiresQuestType: true, isMaterial: true, isRawatAkun: true },
+          select: {
+            requiresRegion: true,
+            requiresQuestType: true,
+            isMaterial: true,
+            isRawatAkun: true,
+            requiresCharacterLevel: true,
+          },
         },
       },
       orderBy: { createdAt: "asc" },

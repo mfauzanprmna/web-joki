@@ -82,6 +82,12 @@ model JokiCategory {
   /// menjadi harga per jumlah satuan (mis. Rp 10.000 / 100 material), lewat
   /// field JokiItem.unitQuantity.
   isMaterial        Boolean  @default(false)
+  /// Tandai kategori ini sebagai "Build Karakter" (ascend & talent) --
+  /// memunculkan input nama karakter + rentang level di form Order. Harga
+  /// Joki Item dianggap harga PER LEVEL. Varian "ascend saja" vs "ascend +
+  /// talent" cukup dibuat sebagai 2 Joki Item terpisah di kategori yang
+  /// sama (harga per level beda), bukan lewat field tambahan.
+  requiresCharacterLevel Boolean @default(false)
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -434,6 +440,9 @@ model OrderLine {
   /// startDate diisi admin saat order dibuat (default hari ini); endDate
   /// dihitung otomatis dari JokiItem.durationDays x rawatAkunQuantity, atau
   /// dari rentang Patch jika JokiItem.isPatchWide.
+  characterName String?
+  levelFrom     Int?
+  levelTo       Int?
   startDate DateTime?
   endDate   DateTime?
 

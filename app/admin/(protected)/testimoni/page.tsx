@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { createTestimonial } from "@/lib/actions/testimonial";
-import { TestimonialRowItem } from "@/components/admin/TestimonialRowItem";
+import { TestimoniListFilter } from "@/components/admin/TestimoniListFilter";
 
 export default async function AdminTestimoniPage() {
   const [games, testimonials] = await Promise.all([
@@ -8,7 +8,7 @@ export default async function AdminTestimoniPage() {
     prisma.testimonial.findMany({
       include: { game: true },
       orderBy: { createdAt: "desc" },
-      take: 60,
+      take: 300,
     }),
   ]);
 
@@ -86,11 +86,13 @@ export default async function AdminTestimoniPage() {
         </form>
       </details>
 
-      <div className="flex flex-col gap-2.5">
-        {testimonials.map((t) => (
-          <TestimonialRowItem key={t.id} item={t} />
-        ))}
-      </div>
+      {testimonials.length === 0 ? (
+        <div className="bg-shihu-card border border-shihu-border rounded-2xl p-8 text-center">
+          <p className="text-shihu-muted text-sm">Belum ada testimoni.</p>
+        </div>
+      ) : (
+        <TestimoniListFilter testimonials={testimonials} games={games} />
+      )}
     </div>
   );
 }
