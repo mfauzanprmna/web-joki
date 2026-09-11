@@ -188,12 +188,12 @@ export function OrderLineSelector({ gameId, items, pakets, onLinesChange }: Orde
             const checked = !!line;
             const priceResult = line
               ? calculateJokiItemLinePrice(item, {
-                  explorationPercent: line.explorationPercent ? Number(line.explorationPercent) : null,
-                  actFrom: line.actFrom ? Number(line.actFrom) : null,
-                  actTo: line.actTo ? Number(line.actTo) : null,
-                  materialQuantity: line.materialQuantity ? Number(line.materialQuantity) : null,
-                  rawatAkunQuantity: line.rawatAkunQuantity ? Number(line.rawatAkunQuantity) : null,
-                })
+                explorationPercent: line.explorationPercent ? Number(line.explorationPercent) : null,
+                actFrom: line.actFrom ? Number(line.actFrom) : null,
+                actTo: line.actTo ? Number(line.actTo) : null,
+                materialQuantity: line.materialQuantity ? Number(line.materialQuantity) : null,
+                rawatAkunQuantity: line.rawatAkunQuantity ? Number(line.rawatAkunQuantity) : null,
+              })
               : null;
 
             return (
