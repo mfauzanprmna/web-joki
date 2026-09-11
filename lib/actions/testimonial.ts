@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { notifyTestimonialPublished } from "@/lib/discord-notify";
 
 export async function createTestimonial(formData: FormData) {
   const gameId = String(formData.get("gameId"));
@@ -31,13 +32,31 @@ export async function updateTestimonial(formData: FormData) {
   const message = String(formData.get("message"));
   const isPublished = formData.get("isPublished") === "on";
 
-  await prisma.testimonial.update({
+  const before = await prisma.testimonial.findUnique({
+    where: { id },
+    select: { isPublished: true },
+  });
+
+  const updated = await prisma.testimonial.update({
     where: { id },
     data: { customerName, rating, message, isPublished },
+    select: { game: { select: { name: true } } },
   });
 
   revalidatePath("/admin/testimoni");
   revalidatePath("/testimoni");
+
+  // Cuma notify Discord kalau testimoni ini BARU SAJA di-approve (transisi
+  // false -> true) -- supaya admin tidak di-spam notif tiap kali edit
+  // testimoni yang sudah lama published.
+  if (before && !before.isPublished && isPublished) {
+    notifyTestimonialPublished({
+      gameName: updated.game.name,
+      customerName,
+      rating,
+      message,
+    });
+  }
 }
 
 export async function deleteTestimonial(formData: FormData) {

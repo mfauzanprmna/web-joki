@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SectionHeading } from "@/components/SectionHeading";
 import { HistoryRow } from "@/components/HistoryRow";
+import { JokiHistoryPublicRow } from "@/components/JokiHistoryPublicRow";
 import {
   CustomerAccountTabs,
   type AccountProgress,
@@ -147,6 +148,10 @@ export default async function CustomerProgressPage({
         },
         orderBy: { createdAt: "desc" },
       },
+      jokiHistoryEntries: {
+        include: { game: true },
+        orderBy: { completedAt: "desc" },
+      },
     },
   });
 
@@ -156,6 +161,21 @@ export default async function CustomerProgressPage({
     ["MENUNGGU", "DIKERJAKAN", "FINISHING"].includes(o.status),
   );
   const completedOrders = customer.orders.filter((o) => o.status === "SELESAI");
+  type CompletedHistoryItem =
+    | { kind: "order"; completedAt: Date; data: (typeof completedOrders)[number] }
+    | { kind: "manual"; completedAt: Date; data: (typeof customer.jokiHistoryEntries)[number] };
+  const completedHistory: CompletedHistoryItem[] = [
+    ...completedOrders.map((order): CompletedHistoryItem => ({
+      kind: "order",
+      completedAt: order.completedAt ?? order.updatedAt,
+      data: order,
+    })),
+    ...customer.jokiHistoryEntries.map((entry): CompletedHistoryItem => ({
+      kind: "manual",
+      completedAt: entry.completedAt,
+      data: entry,
+    })),
+  ].sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
 
   const accounts: AccountProgress[] = activeOrders.map((o) => ({
     orderId: o.id,
@@ -191,9 +211,9 @@ export default async function CustomerProgressPage({
 
         <div>
           <p className="font-display text-sm font-semibold text-shihu-muted mb-3">
-            History pesanan selesai ({completedOrders.length})
+            History pesanan selesai ({completedHistory.length})
           </p>
-          {completedOrders.length === 0 ? (
+          {completedHistory.length === 0 ? (
             <div className="bg-shihu-card border border-shihu-border rounded-2xl p-8 text-center">
               <p className="text-shihu-muted text-sm">
                 Belum ada pesanan yang selesai.
@@ -201,34 +221,47 @@ export default async function CustomerProgressPage({
             </div>
           ) : (
             <div className="flex flex-col gap-2.5">
-              {completedOrders.map((o) => (
-                <div key={o.id} className="flex flex-col gap-2">
-                  <HistoryRow
-                    orderCode={o.orderCode}
-                    title={buildOrderTitle(o.lines)}
-                    customerName={customer.name}
-                    completedAt={o.completedAt ?? o.updatedAt}
-                    rating={o.testimonial?.rating ?? null}
-                    game={o.game}
-                    lines={buildLineDetails(o.lines)}
-                  />
-                  <div className="pl-1">
-                    <TestimonialPrompt
-                      orderId={o.id}
-                      defaultCustomerName={customer.name}
-                      existing={
-                        o.testimonial
-                          ? {
-                            rating: o.testimonial.rating,
-                            message: o.testimonial.message,
-                            isPublished: o.testimonial.isPublished,
-                          }
-                          : null
-                      }
+              {completedHistory.map((item) =>
+                item.kind === "order" ? (
+                  <div key={`order-${item.data.id}`} className="flex flex-col gap-2">
+                    <HistoryRow
+                      orderCode={item.data.orderCode}
+                      title={buildOrderTitle(item.data.lines)}
+                      customerName={customer.name}
+                      completedAt={item.data.completedAt ?? item.data.updatedAt}
+                      rating={item.data.testimonial?.rating ?? null}
+                      game={item.data.game}
+                      lines={buildLineDetails(item.data.lines)}
                     />
+                    <div className="pl-1">
+                      <TestimonialPrompt
+                        orderId={item.data.id}
+                        defaultCustomerName={customer.name}
+                        existing={
+                          item.data.testimonial
+                            ? {
+                              rating: item.data.testimonial.rating,
+                              message: item.data.testimonial.message,
+                              isPublished: item.data.testimonial.isPublished,
+                            }
+                            : null
+                        }
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ) : (
+                  <JokiHistoryPublicRow
+                    key={`manual-${item.data.id}`}
+                    title={item.data.title}
+                    customerName={customer.name}
+                    completedAt={item.data.completedAt}
+                    rating={item.data.rating}
+                    note={item.data.note}
+                    screenshotUrls={item.data.screenshotUrls}
+                    game={item.data.game}
+                  />
+                ),
+              )}
             </div>
           )}
         </div>

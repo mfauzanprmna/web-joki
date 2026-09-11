@@ -73,3 +73,19 @@ export function notifyOrderProgress(input: NotifyOrderProgressInput): void {
 export function notifyPriceListChanged(gameSlug: string): void {
   void postToBot("/api/pricelist-changed", { gameSlug });
 }
+
+export interface NotifyTestimonialPublishedInput {
+  gameName: string;
+  customerName: string;
+  rating: number;
+  message: string;
+}
+
+/**
+ * Beri tahu bot bahwa ada testimoni yang baru saja di-approve admin
+ * (isPublished berubah dari false ke true), supaya bot post testimoni itu
+ * ke channel #testimoni.
+ */
+export function notifyTestimonialPublished(input: NotifyTestimonialPublishedInput): void {
+  void postToBot("/api/testimonial-published", input);
+}
