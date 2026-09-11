@@ -24,6 +24,7 @@ interface OrderLineRow {
     calculatedPrice: number;
     jokiItem: { title: string } | null;
     jokiPaket: { title: string } | null;
+    patchEvent: { title: string } | null;
 }
 
 interface WorkerOption {

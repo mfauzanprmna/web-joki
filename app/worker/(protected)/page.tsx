@@ -19,7 +19,7 @@ export default async function WorkerDashboardPage() {
         include: {
             game: true,
             customer: { select: { name: true } },
-            lines: { include: { jokiItem: true, jokiPaket: true } },
+            lines: { include: { jokiItem: true, jokiPaket: true, patchEvent: true } },
         },
         orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     });

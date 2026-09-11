@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
     include: {
       game: true,
       customer: true,
-      lines: { include: { jokiItem: true, jokiPaket: true } },
+      lines: { include: { jokiItem: true, jokiPaket: true, patchEvent: true } },
     },
     orderBy: { createdAt: "desc" },
     take: 10,

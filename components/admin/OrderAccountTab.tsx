@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { formatRupiah } from "@/lib/format";
-import { OrderLineSelector, type JokiItemOption, type JokiPaketOption, type ExportedLine } from "./OrderLineSelector";
+import { OrderLineSelector, type JokiItemOption, type JokiPaketOption, type PatchEventOption, type ExportedLine } from "./OrderLineSelector";
 
 interface GameOption {
   id: string;
@@ -21,10 +21,11 @@ interface OrderAccountTabProps {
   games: GameOption[];
   items: JokiItemOption[];
   pakets: JokiPaketOption[];
+  events: PatchEventOption[];
   onChange: (data: AccountData) => void;
 }
 
-export function OrderAccountTab({ games, items, pakets, onChange }: OrderAccountTabProps) {
+export function OrderAccountTab({ games, items, pakets, events, onChange }: OrderAccountTabProps) {
   const [gameId, setGameId] = useState(games[0]?.id ?? "");
   const [jokerName, setJokerName] = useState("");
   const [estimasiJoki, setEstimasiJoki] = useState("");
@@ -104,6 +105,7 @@ export function OrderAccountTab({ games, items, pakets, onChange }: OrderAccount
         gameId={gameId}
         items={items}
         pakets={pakets}
+        events={events}
         onLinesChange={(newLines, newTotal) => {
           setLines(newLines);
           setTotal(newTotal);

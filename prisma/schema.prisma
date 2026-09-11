@@ -178,6 +178,8 @@ model PatchEvent {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  orderLines OrderLine[]
+
   @@index([patchId])
   @@index([startDate, endDate])
 }
@@ -427,6 +429,8 @@ model OrderLine {
   jokiItem    JokiItem?  @relation(fields: [jokiItemId], references: [id])
   jokiPaketId String?
   jokiPaket   JokiPaket? @relation(fields: [jokiPaketId], references: [id])
+  patchEventId String?
+  patchEvent   PatchEvent? @relation(fields: [patchEventId], references: [id])
 
   explorationPercent Int?
   actFrom            Int?
@@ -456,6 +460,7 @@ model OrderLine {
   @@index([orderId])
   @@index([jokiItemId])
   @@index([jokiPaketId])
+  @@index([patchEventId])
 }
 
 /// Log/riwayat update progres untuk SATU OrderLine (satu item dalam satu

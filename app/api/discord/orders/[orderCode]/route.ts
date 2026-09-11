@@ -24,7 +24,7 @@ export async function GET(
     include: {
       game: true,
       customer: true,
-      lines: { include: { jokiItem: true, jokiPaket: true } },
+      lines: { include: { jokiItem: true, jokiPaket: true, patchEvent: true } },
     },
   });
 

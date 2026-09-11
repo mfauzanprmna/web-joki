@@ -13,7 +13,7 @@ export default async function AntrianPage() {
     include: {
       game: true,
       customer: true,
-      lines: { include: { jokiItem: true, jokiPaket: true } },
+      lines: { include: { jokiItem: true, jokiPaket: true, patchEvent: true } },
     },
     orderBy: [{ status: "asc" }, { createdAt: "asc" }],
   });

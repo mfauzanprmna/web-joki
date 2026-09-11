@@ -81,7 +81,6 @@ export function CustomerAccountTabs({ accounts }: { accounts: AccountProgress[] 
                 {account.estimasiJoki && ` · Estimasi: ${account.estimasiJoki}`}
               </p>
             </div>
-            <p className="font-display font-bold text-shihu-corona">{formatRupiah(account.totalPrice)}</p>
           </div>
 
           {lines.length > 1 && (

@@ -23,8 +23,17 @@ export interface JokiPaketOption {
   priceRupiah: number;
 }
 
+export interface PatchEventOption {
+  id: string;
+  gameId: string;
+  title: string;
+  priceRupiah: number;
+  patchName: string;
+  endDate: string;
+}
+
 interface LineState {
-  type: "item" | "paket";
+  type: "item" | "paket" | "event";
   id: string;
   explorationPercent: string;
   actFrom: string;
@@ -35,7 +44,7 @@ interface LineState {
 }
 
 export interface ExportedLine {
-  type: "item" | "paket";
+  type: "item" | "paket" | "event";
   id: string;
   explorationPercent: number | null;
   actFrom: number | null;
@@ -66,16 +75,19 @@ interface OrderLineSelectorProps {
   gameId: string;
   items: JokiItemOption[];
   pakets: JokiPaketOption[];
+  events: PatchEventOption[];
   onLinesChange?: (lines: ExportedLine[], total: number) => void;
 }
 
-export function OrderLineSelector({ gameId, items, pakets, onLinesChange }: OrderLineSelectorProps) {
+export function OrderLineSelector({ gameId, items, pakets, events, onLinesChange }: OrderLineSelectorProps) {
   const [selectedLines, setSelectedLines] = useState<Map<string, LineState>>(new Map());
   const [itemSearch, setItemSearch] = useState("");
   const [paketSearch, setPaketSearch] = useState("");
+  const [eventSearch, setEventSearch] = useState("");
 
   const itemsForGame = useMemo(() => items.filter((i) => i.gameId === gameId), [items, gameId]);
   const paketsForGame = useMemo(() => pakets.filter((p) => p.gameId === gameId), [pakets, gameId]);
+  const eventsForGame = useMemo(() => events.filter((event) => event.gameId === gameId), [events, gameId]);
   const filteredItems = useMemo(
     () => itemsForGame.filter((item) => item.title.toLowerCase().includes(itemSearch.toLowerCase())),
     [itemsForGame, itemSearch]
@@ -84,8 +96,12 @@ export function OrderLineSelector({ gameId, items, pakets, onLinesChange }: Orde
     () => paketsForGame.filter((paket) => paket.title.toLowerCase().includes(paketSearch.toLowerCase())),
     [paketsForGame, paketSearch]
   );
+  const filteredEvents = useMemo(
+    () => eventsForGame.filter((event) => event.title.toLowerCase().includes(eventSearch.toLowerCase())),
+    [eventsForGame, eventSearch]
+  );
 
-  function makeKey(type: "item" | "paket", id: string) {
+  function makeKey(type: "item" | "paket" | "event", id: string) {
     return `${type}:${id}`;
   }
 
@@ -104,7 +120,7 @@ export function OrderLineSelector({ gameId, items, pakets, onLinesChange }: Orde
     onLinesChange(exported, computeTotal(lines));
   }
 
-  function toggleLine(type: "item" | "paket", id: string, item?: JokiItemOption) {
+  function toggleLine(type: "item" | "paket" | "event", id: string, item?: JokiItemOption) {
     setSelectedLines((prev) => {
       const key = makeKey(type, id);
       const next = new Map(prev);
@@ -144,6 +160,11 @@ export function OrderLineSelector({ gameId, items, pakets, onLinesChange }: Orde
       if (line.type === "paket") {
         const paket = paketsForGame.find((p) => p.id === line.id);
         if (paket) sum += paket.priceRupiah;
+        continue;
+      }
+      if (line.type === "event") {
+        const event = eventsForGame.find((candidate) => candidate.id === line.id);
+        if (event) sum += event.priceRupiah;
         continue;
       }
       const item = itemsForGame.find((i) => i.id === line.id);
@@ -327,6 +348,46 @@ export function OrderLineSelector({ gameId, items, pakets, onLinesChange }: Orde
                   </div>
                 )}
               </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1.5">
+          Event Patch
+        </label>
+        <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
+          <input
+            type="search"
+            value={eventSearch}
+            onChange={(e) => setEventSearch(e.target.value)}
+            className="admin-input"
+            placeholder="Cari event..."
+            aria-label="Cari event"
+          />
+          {eventsForGame.length === 0 && (
+            <p className="text-[11px] text-shihu-faint px-1 py-1">Belum ada event yang sedang berjalan.</p>
+          )}
+          {eventsForGame.length > 0 && filteredEvents.length === 0 && (
+            <p className="text-[11px] text-shihu-faint px-1 py-1">Event tidak ditemukan.</p>
+          )}
+          {filteredEvents.map((event) => {
+            const key = makeKey("event", event.id);
+            const checked = selectedLines.has(key);
+            return (
+              <label key={event.id} className="flex items-center gap-2 text-xs text-shihu-text px-1 py-1">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleLine("event", event.id)}
+                  className="accent-shihu-corona w-3.5 h-3.5 shrink-0"
+                />
+                <span className="flex-1">{event.title} <span className="text-shihu-faint">({event.patchName})</span></span>
+                <span className="text-shihu-corona font-display font-semibold text-[11px]">
+                  {formatRupiah(event.priceRupiah)}
+                </span>
+              </label>
             );
           })}
         </div>

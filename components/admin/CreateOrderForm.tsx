@@ -4,7 +4,7 @@ import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { createOrder } from "@/lib/actions/order";
 import type { OrderActionState } from "@/lib/actions/order";
 import { formatRupiah } from "@/lib/format";
-import type { JokiItemOption, JokiPaketOption } from "./OrderLineSelector";
+import type { JokiItemOption, JokiPaketOption, PatchEventOption } from "./OrderLineSelector";
 import { OrderSourceFields } from "./OrderSourceFields";
 import { CustomerSelector, type CustomerOption } from "./CustomerSelector";
 import { OrderAccountTab, type AccountData } from "./OrderAccountTab";
@@ -18,6 +18,7 @@ interface CreateOrderFormProps {
   games: GameOption[];
   items: JokiItemOption[];
   pakets: JokiPaketOption[];
+  events: PatchEventOption[];
   customers: CustomerOption[];
 }
 
@@ -27,7 +28,7 @@ function emptyAccount(): AccountData {
   return { gameId: "", jokerName: "", estimasiJoki: "", lines: [], total: 0 };
 }
 
-export function CreateOrderForm({ games, items, pakets, customers }: CreateOrderFormProps) {
+export function CreateOrderForm({ games, items, pakets, events, customers }: CreateOrderFormProps) {
   const [state, formAction, pending] = useActionState<OrderActionState | undefined, FormData>(
     createOrder,
     undefined
@@ -163,6 +164,7 @@ export function CreateOrderForm({ games, items, pakets, customers }: CreateOrder
             games={games}
             items={items}
             pakets={pakets}
+            events={events}
             onChange={(data) => updateAccount(i, data)}
           />
         </div>

@@ -47,6 +47,7 @@ export default async function AdminOrderProgressPage({
             },
           },
           jokiPaket: true,
+          patchEvent: true,
           updates: { orderBy: { createdAt: "desc" } },
           dayProgress: { orderBy: { date: "asc" } },
           dayTasks: { orderBy: [{ date: "asc" }, { position: "asc" }] },
@@ -66,7 +67,7 @@ export default async function AdminOrderProgressPage({
     return {
       id: line.id,
       title:
-        (line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal") +
+        (line.jokiItem?.title ?? line.jokiPaket?.title ?? line.patchEvent?.title ?? "Item tidak dikenal") +
         (characterName ? ` — ${characterName}` : ""),
       jokiItem: line.jokiItem
         ? {

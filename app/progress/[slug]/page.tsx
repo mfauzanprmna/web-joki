@@ -22,6 +22,7 @@ function buildLineDetails(
     id: string;
     jokiItem: { title: string; category: { isRawatAkun: boolean } } | null;
     jokiPaket: { title: string } | null;
+    patchEvent: { title: string } | null;
     explorationPercent: number | null;
     actFrom: number | null;
     actTo: number | null;
@@ -47,7 +48,7 @@ function buildLineDetails(
     const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;
     return {
       id: line.id,
-      title: line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal",
+      title: line.jokiItem?.title ?? line.jokiPaket?.title ?? line.patchEvent?.title ?? "Item tidak dikenal",
       explorationPercent: line.explorationPercent,
       actFrom: line.actFrom,
       actTo: line.actTo,
@@ -139,6 +140,7 @@ export default async function CustomerProgressPage({
                 include: { category: { select: { isRawatAkun: true } } },
               },
               jokiPaket: true,
+              patchEvent: true,
               updates: { orderBy: { createdAt: "desc" } },
               dayProgress: { orderBy: { date: "asc" } },
               dayTasks: { orderBy: [{ date: "asc" }, { position: "asc" }] },

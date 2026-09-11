@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { CreateOrderForm } from "@/components/admin/CreateOrderForm";
 import { OrderListFilter } from "@/components/admin/OrderListFilter";
+import { isPatchEventLive } from "@/lib/patch-schedule";
 
 export default async function AdminAntrianPage() {
-  const [games, items, pakets, customers, orders, workers] = await Promise.all([
+  const [games, items, pakets, events, customers, orders, workers] = await Promise.all([
     prisma.game.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.jokiItem.findMany({
       where: { isActive: true },
@@ -34,6 +35,11 @@ export default async function AdminAntrianPage() {
       select: { id: true, gameId: true, title: true, priceRupiah: true },
       orderBy: { createdAt: "asc" },
     }),
+    prisma.patchEvent.findMany({
+      where: { startDate: { lte: new Date() }, endDate: { gte: new Date() } },
+      include: { patch: { select: { gameId: true, name: true } } },
+      orderBy: { startDate: "asc" },
+    }),
     prisma.customer.findMany({
       orderBy: { name: "asc" },
       include: {
@@ -47,7 +53,7 @@ export default async function AdminAntrianPage() {
       include: {
         game: true,
         customer: true,
-        lines: { include: { jokiItem: true, jokiPaket: true } },
+        lines: { include: { jokiItem: true, jokiPaket: true, patchEvent: true } },
       },
       orderBy: { createdAt: "desc" },
       take: 60,
@@ -63,6 +69,16 @@ export default async function AdminAntrianPage() {
     ...i,
     patch: i.patch ? { startDate: i.patch.startDate.toISOString(), endDate: i.patch.endDate.toISOString() } : null,
   }));
+  const eventOptions = events
+    .filter((event) => isPatchEventLive(event))
+    .map((event) => ({
+      id: event.id,
+      gameId: event.patch.gameId,
+      title: event.title,
+      priceRupiah: event.priceRupiah,
+      patchName: event.patch.name,
+      endDate: event.endDate.toISOString(),
+    }));
 
   const customerOptions = customers.map(({ id, name, orders: customerOrders }) => ({
     id,
@@ -91,7 +107,7 @@ export default async function AdminAntrianPage() {
           </span>
         </summary>
 
-        <CreateOrderForm games={games} items={itemOptions} pakets={pakets} customers={customerOptions} />
+        <CreateOrderForm games={games} items={itemOptions} pakets={pakets} events={eventOptions} customers={customerOptions} />
       </details>
 
       <OrderListFilter orders={orders} games={games} workers={workers} />

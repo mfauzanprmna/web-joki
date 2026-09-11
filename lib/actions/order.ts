@@ -6,6 +6,7 @@ import { calculateJokiItemLinePrice } from "@/lib/order-pricing";
 import { computeRawatAkunPeriod } from "@/lib/rawat-akun-schedule";
 import { createUniqueCustomerSlug } from "./customer";
 import { notifyOrderCreated, notifyOrderProgress } from "@/lib/discord-notify";
+import { isPatchEventLive } from "@/lib/patch-schedule";
 
 export interface OrderActionState {
   error?: string;
@@ -22,7 +23,7 @@ function generateOrderCode(usedCodes: Set<string>): string {
 }
 
 interface LineInputRaw {
-  type: "item" | "paket";
+  type: "item" | "paket" | "event";
   id: string;
   explorationPercent: number | null;
   actFrom: number | null;
@@ -49,7 +50,7 @@ function parseLine(raw: unknown): LineInputRaw | { error: string } {
     return { error: "Data baris order tidak valid." };
   }
   const e = raw as Record<string, unknown>;
-  if (e.type !== "item" && e.type !== "paket") {
+  if (e.type !== "item" && e.type !== "paket" && e.type !== "event") {
     return { error: "Data baris order tidak valid." };
   }
   return {
@@ -158,10 +159,12 @@ export async function createOrder(
   // satu query masing-masing (bukan per-akun berulang).
   const allItemIds = new Set<string>();
   const allPaketIds = new Set<string>();
+  const allEventIds = new Set<string>();
   for (const acc of parsedAccounts.accounts) {
     for (const line of acc.lines) {
       if (line.type === "item") allItemIds.add(line.id);
-      else allPaketIds.add(line.id);
+      else if (line.type === "paket") allPaketIds.add(line.id);
+      else allEventIds.add(line.id);
     }
   }
 
@@ -176,9 +179,17 @@ export async function createOrder(
     allPaketIds.size > 0
       ? await prisma.jokiPaket.findMany({ where: { id: { in: Array.from(allPaketIds) } } })
       : [];
+  const events =
+    allEventIds.size > 0
+      ? await prisma.patchEvent.findMany({
+          where: { id: { in: Array.from(allEventIds) } },
+          include: { patch: { select: { gameId: true } } },
+        })
+      : [];
 
   const itemMap = new Map(items.map((i) => [i.id, i]));
   const paketMap = new Map(pakets.map((p) => [p.id, p]));
+  const eventMap = new Map(events.map((event) => [event.id, event]));
 
   interface ResolvedAccount {
     gameId: string;
@@ -188,6 +199,7 @@ export async function createOrder(
     lines: {
       jokiItemId: string | null;
       jokiPaketId: string | null;
+      patchEventId: string | null;
       explorationPercent: number | null;
       actFrom: number | null;
       actTo: number | null;
@@ -237,6 +249,7 @@ export async function createOrder(
         linesToCreate.push({
           jokiItemId: item.id,
           jokiPaketId: null,
+          patchEventId: null,
           explorationPercent: line.explorationPercent,
           actFrom: line.actFrom,
           actTo: line.actTo,
@@ -246,7 +259,7 @@ export async function createOrder(
           endDate,
           calculatedPrice: result.price,
         });
-      } else {
+      } else if (line.type === "paket") {
         const paket = paketMap.get(line.id);
         if (!paket) {
           return { error: "Salah satu Paket Joki yang dipilih tidak ditemukan." };
@@ -254,6 +267,7 @@ export async function createOrder(
         linesToCreate.push({
           jokiItemId: null,
           jokiPaketId: paket.id,
+          patchEventId: null,
           explorationPercent: null,
           actFrom: null,
           actTo: null,
@@ -262,6 +276,27 @@ export async function createOrder(
           startDate: null,
           endDate: null,
           calculatedPrice: paket.priceRupiah,
+        });
+      } else {
+        const event = eventMap.get(line.id);
+        if (!event || !isPatchEventLive(event)) {
+          return { error: "Salah satu event yang dipilih sudah tidak sedang berjalan." };
+        }
+        if (event.patch.gameId !== acc.gameId) {
+          return { error: "Event yang dipilih tidak sesuai dengan game akun ini." };
+        }
+        linesToCreate.push({
+          jokiItemId: null,
+          jokiPaketId: null,
+          patchEventId: event.id,
+          explorationPercent: null,
+          actFrom: null,
+          actTo: null,
+          materialQuantity: null,
+          rawatAkunQuantity: null,
+          startDate: null,
+          endDate: null,
+          calculatedPrice: event.priceRupiah,
         });
       }
     }
@@ -330,7 +365,9 @@ export async function createOrder(
               ? itemMap.get(l.jokiItemId)?.title
               : l.jokiPaketId
                 ? paketMap.get(l.jokiPaketId)?.title
-                : null,
+                : l.patchEventId
+                  ? eventMap.get(l.patchEventId)?.title
+                  : null,
           )
           .filter((title): title is string => !!title)
           .join(", ") || "Pesanan kustom",
