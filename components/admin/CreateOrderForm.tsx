@@ -39,6 +39,7 @@ export function CreateOrderForm({ games, items, pakets, customers }: CreateOrder
   const [accountCount, setAccountCount] = useState(1);
   const [activeTab, setActiveTab] = useState(0);
   const [accounts, setAccounts] = useState<AccountData[]>([emptyAccount()]);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(null);
 
   useEffect(() => {
     if (hasSubmittedRef.current && !pending && !state?.error) {
@@ -47,6 +48,7 @@ export function CreateOrderForm({ games, items, pakets, customers }: CreateOrder
       setAccountCount(1);
       setActiveTab(0);
       setAccounts([emptyAccount()]);
+      setSelectedCustomer(null);
       hasSubmittedRef.current = false;
     }
   }, [pending, state]);
@@ -101,8 +103,15 @@ export function CreateOrderForm({ games, items, pakets, customers }: CreateOrder
         Data customer
       </p>
 
-      <CustomerSelector key={`customer-${formKey}`} customers={customers} />
-      <OrderSourceFields key={`source-${formKey}`} />
+      <CustomerSelector
+        key={`customer-${formKey}`}
+        customers={customers}
+        onCustomerChange={setSelectedCustomer}
+      />
+      <OrderSourceFields
+        key={`source-${formKey}`}
+        customerSourceUsernames={selectedCustomer?.sourceUsernames}
+      />
 
       <div>
         <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1">

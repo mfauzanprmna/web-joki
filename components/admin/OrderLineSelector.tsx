@@ -71,9 +71,19 @@ interface OrderLineSelectorProps {
 
 export function OrderLineSelector({ gameId, items, pakets, onLinesChange }: OrderLineSelectorProps) {
   const [selectedLines, setSelectedLines] = useState<Map<string, LineState>>(new Map());
+  const [itemSearch, setItemSearch] = useState("");
+  const [paketSearch, setPaketSearch] = useState("");
 
   const itemsForGame = useMemo(() => items.filter((i) => i.gameId === gameId), [items, gameId]);
   const paketsForGame = useMemo(() => pakets.filter((p) => p.gameId === gameId), [pakets, gameId]);
+  const filteredItems = useMemo(
+    () => itemsForGame.filter((item) => item.title.toLowerCase().includes(itemSearch.toLowerCase())),
+    [itemsForGame, itemSearch]
+  );
+  const filteredPakets = useMemo(
+    () => paketsForGame.filter((paket) => paket.title.toLowerCase().includes(paketSearch.toLowerCase())),
+    [paketsForGame, paketSearch]
+  );
 
   function makeKey(type: "item" | "paket", id: string) {
     return `${type}:${id}`;
@@ -158,10 +168,21 @@ export function OrderLineSelector({ gameId, items, pakets, onLinesChange }: Orde
           Joki Item
         </label>
         <div className="flex flex-col gap-2 max-h-64 overflow-y-auto bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
+          <input
+            type="search"
+            value={itemSearch}
+            onChange={(e) => setItemSearch(e.target.value)}
+            className="admin-input"
+            placeholder="Cari Joki Item..."
+            aria-label="Cari Joki Item"
+          />
           {itemsForGame.length === 0 && (
             <p className="text-[11px] text-shihu-faint px-1 py-1">Belum ada Joki Item untuk game ini.</p>
           )}
-          {itemsForGame.map((item) => {
+          {itemsForGame.length > 0 && filteredItems.length === 0 && (
+            <p className="text-[11px] text-shihu-faint px-1 py-1">Joki Item tidak ditemukan.</p>
+          )}
+          {filteredItems.map((item) => {
             const key = makeKey("item", item.id);
             const line = selectedLines.get(key);
             const checked = !!line;
@@ -316,10 +337,21 @@ export function OrderLineSelector({ gameId, items, pakets, onLinesChange }: Orde
           Paket Joki
         </label>
         <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
+          <input
+            type="search"
+            value={paketSearch}
+            onChange={(e) => setPaketSearch(e.target.value)}
+            className="admin-input"
+            placeholder="Cari Paket Joki..."
+            aria-label="Cari Paket Joki"
+          />
           {paketsForGame.length === 0 && (
             <p className="text-[11px] text-shihu-faint px-1 py-1">Belum ada Paket Joki untuk game ini.</p>
           )}
-          {paketsForGame.map((paket) => {
+          {paketsForGame.length > 0 && filteredPakets.length === 0 && (
+            <p className="text-[11px] text-shihu-faint px-1 py-1">Paket Joki tidak ditemukan.</p>
+          )}
+          {filteredPakets.map((paket) => {
             const key = makeKey("paket", paket.id);
             const checked = selectedLines.has(key);
             return (

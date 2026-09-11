@@ -34,7 +34,15 @@ export default async function AdminAntrianPage() {
       select: { id: true, gameId: true, title: true, priceRupiah: true },
       orderBy: { createdAt: "asc" },
     }),
-    prisma.customer.findMany({ orderBy: { name: "asc" } }),
+    prisma.customer.findMany({
+      orderBy: { name: "asc" },
+      include: {
+        orders: {
+          orderBy: { createdAt: "desc" },
+          select: { orderSource: true, sourceUsername: true },
+        },
+      },
+    }),
     prisma.order.findMany({
       include: {
         game: true,
@@ -56,6 +64,18 @@ export default async function AdminAntrianPage() {
     patch: i.patch ? { startDate: i.patch.startDate.toISOString(), endDate: i.patch.endDate.toISOString() } : null,
   }));
 
+  const customerOptions = customers.map(({ id, name, orders: customerOrders }) => ({
+    id,
+    name,
+    sourceUsernames: customerOrders.reduce<Partial<Record<"DISCORD" | "INSTAGRAM" | "TIKTOK" | "WHATSAPP", string>>>(
+      (usernames, order) => {
+        if (!usernames[order.orderSource]) usernames[order.orderSource] = order.sourceUsername;
+        return usernames;
+      },
+      {}
+    ),
+  }));
+
   return (
     <div>
       <h1 className="font-display text-2xl font-bold mb-1">Kelola pesanan</h1>
@@ -71,7 +91,7 @@ export default async function AdminAntrianPage() {
           </span>
         </summary>
 
-        <CreateOrderForm games={games} items={itemOptions} pakets={pakets} customers={customers} />
+        <CreateOrderForm games={games} items={itemOptions} pakets={pakets} customers={customerOptions} />
       </details>
 
       <OrderListFilter orders={orders} games={games} workers={workers} />

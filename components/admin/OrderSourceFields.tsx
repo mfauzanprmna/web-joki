@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-type OrderSource = "DISCORD" | "INSTAGRAM" | "TIKTOK" | "WHATSAPP";
+export type OrderSource = "DISCORD" | "INSTAGRAM" | "TIKTOK" | "WHATSAPP";
 
 const SOURCE_OPTIONS: { value: OrderSource; label: string }[] = [
   { value: "DISCORD", label: "Discord" },
@@ -12,6 +12,7 @@ const SOURCE_OPTIONS: { value: OrderSource; label: string }[] = [
 ];
 
 interface OrderSourceFieldsProps {
+  customerSourceUsernames?: Partial<Record<OrderSource, string>>;
   defaultValues?: {
     orderSource?: OrderSource;
     sourceUsername?: string;
@@ -19,9 +20,18 @@ interface OrderSourceFieldsProps {
   };
 }
 
-export function OrderSourceFields({ defaultValues }: OrderSourceFieldsProps) {
+export function OrderSourceFields({ customerSourceUsernames, defaultValues }: OrderSourceFieldsProps) {
   const [orderSource, setOrderSource] = useState<OrderSource | "">(defaultValues?.orderSource ?? "");
+  const [sourceUsername, setSourceUsername] = useState(defaultValues?.sourceUsername ?? "");
+  const autoFilledUsername = useRef("");
   const isWhatsapp = orderSource === "WHATSAPP";
+
+  useEffect(() => {
+    if (!orderSource || !customerSourceUsernames) return;
+    const nextUsername = customerSourceUsernames[orderSource] ?? "";
+    setSourceUsername(nextUsername);
+    autoFilledUsername.current = nextUsername;
+  }, [customerSourceUsernames, orderSource]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -55,7 +65,8 @@ export function OrderSourceFields({ defaultValues }: OrderSourceFieldsProps) {
           <input
             name="sourceUsername"
             required
-            defaultValue={defaultValues?.sourceUsername}
+            value={sourceUsername}
+            onChange={(e) => setSourceUsername(e.target.value)}
             className="admin-input"
             placeholder="@username"
           />
