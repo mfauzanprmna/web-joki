@@ -58,10 +58,15 @@ export async function ensureRawatAkunScheduleSynced(orderLineId: string): Promis
     ? await prisma.endgameContent.findMany({ where: { gameId: line.jokiItem.gameId, isActive: true } })
     : line.jokiItem.endgameContent.map((e) => e.endgameContent);
 
+  const selectedPatchId = line.jokiItem.patch?.id;
+  const schedulePatches = line.jokiItem.isPatchWide && selectedPatchId
+    ? patches.filter((patch) => patch.id === selectedPatchId)
+    : patches;
+
   const autoTasks = buildAutoTasks(
     period,
     endgameContents,
-    patches,
+    schedulePatches,
     events,
     line.jokiItem.includeEvent
   );

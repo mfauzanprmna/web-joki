@@ -108,11 +108,10 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
                 key={d.date}
                 type="button"
                 onClick={() => setSelectedDate(d.date)}
-                className={`shrink-0 w-[84px] rounded-xl border px-2 py-2.5 text-center transition-colors ${
-                  active
+                className={`shrink-0 w-[84px] rounded-xl border px-2 py-2.5 text-center transition-colors ${active
                     ? "border-shihu-corona bg-shihu-corona/10"
                     : "border-shihu-border bg-[#241E38] hover:border-shihu-corona/40"
-                }`}
+                  }`}
               >
                 <p className="text-[10px] text-shihu-faint">{dayName(d.date)}</p>
                 <p className="text-[11px] text-shihu-text font-medium mb-1">{dayNum(d.date)}</p>
@@ -167,17 +166,15 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
                       <div key={url} className="relative w-16 h-16 rounded-lg overflow-hidden border border-shihu-border group">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={url} alt="Screenshot" className="w-full h-full object-cover" />
-                        <form action={deleteDayScreenshot}>
-                          <input type="hidden" name="orderLineId" value={orderLineId} />
-                          <input type="hidden" name="date" value={selectedDay.date} />
-                          <input type="hidden" name="url" value={url} />
-                          <button
-                            type="submit"
-                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 text-white text-[10px] flex items-center justify-center transition-opacity"
-                          >
-                            Hapus
-                          </button>
-                        </form>
+                        <button
+                          type="submit"
+                          formAction={deleteDayScreenshot}
+                          name="url"
+                          value={url}
+                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 text-white text-[10px] flex items-center justify-center transition-opacity"
+                        >
+                          Hapus
+                        </button>
                       </div>
                     ))}
                   </div>

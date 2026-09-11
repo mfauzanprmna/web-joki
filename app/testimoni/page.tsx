@@ -13,15 +13,43 @@ export default async function TestimoniPage() {
     prisma.game.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.testimonial.findMany({
       where: { isPublished: true },
-      include: { game: true },
+      include: {
+        game: true,
+        order: { select: { customerId: true } },
+        jokiHistoryEntry: { select: { customerId: true } },
+      },
       orderBy: { createdAt: "desc" },
-      take: 200,
     }),
   ]);
 
+  const bestTestimonials = testimonials.reduce<typeof testimonials>((selected, testimonial) => {
+    const customerKey =
+      testimonial.order?.customerId ??
+      testimonial.jokiHistoryEntry?.customerId ??
+      `name:${testimonial.customerName.trim().toLocaleLowerCase()}`;
+    const existingIndex = selected.findIndex((item) => {
+      const itemKey =
+        item.order?.customerId ??
+        item.jokiHistoryEntry?.customerId ??
+        `name:${item.customerName.trim().toLocaleLowerCase()}`;
+      return itemKey === customerKey;
+    });
+
+    if (existingIndex === -1) {
+      selected.push(testimonial);
+    } else {
+      const existing = selected[existingIndex];
+      if (testimonial.rating > existing.rating) {
+        selected[existingIndex] = testimonial;
+      }
+    }
+
+    return selected;
+  }, []);
+
   const gameCounts = games.map((g) => ({
     ...g,
-    count: testimonials.filter((t) => t.gameId === g.id).length,
+    count: bestTestimonials.filter((t) => t.gameId === g.id).length,
   }));
 
   return (
@@ -36,7 +64,7 @@ export default async function TestimoniPage() {
           desc="Pengalaman langsung dari customer yang sudah menggunakan jasa joki Shihu Service."
         />
 
-        {testimonials.length === 0 ? (
+        {bestTestimonials.length === 0 ? (
           <EmptyState />
         ) : (
           <>
@@ -44,7 +72,7 @@ export default async function TestimoniPage() {
             <PaginatedList
               className="grid grid-cols-1 sm:grid-cols-2 gap-3.5"
               pageSize={12}
-              items={testimonials.map((t) => (
+              items={bestTestimonials.map((t) => (
                 <TestimoniCard
                   key={t.id}
                   customerName={t.customerName}

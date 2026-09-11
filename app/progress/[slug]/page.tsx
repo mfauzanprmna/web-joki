@@ -149,7 +149,7 @@ export default async function CustomerProgressPage({
         orderBy: { createdAt: "desc" },
       },
       jokiHistoryEntries: {
-        include: { game: true },
+        include: { game: true, testimonial: true },
         orderBy: { completedAt: "desc" },
       },
     },
@@ -176,6 +176,10 @@ export default async function CustomerProgressPage({
       data: entry,
     })),
   ].sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
+
+  const testimonialHistory = completedHistory.filter((item) =>
+    item.kind === "order" ? !item.data.testimonial : !item.data.testimonial,
+  );
 
   const accounts: AccountProgress[] = activeOrders.map((o) => ({
     orderId: o.id,
@@ -210,6 +214,44 @@ export default async function CustomerProgressPage({
         </div>
 
         <div>
+          {testimonialHistory.length > 0 && (
+            <div className="mb-6 bg-[#241E38] border border-shihu-border rounded-2xl p-4">
+              <p className="font-display text-sm font-semibold text-shihu-text mb-1">
+                Kasih Testimoni
+              </p>
+              <p className="text-xs text-shihu-muted mb-3">
+                Pilih history joki yang ingin kamu beri testimoni.
+              </p>
+              <div className="flex flex-col gap-2">
+                {testimonialHistory.map((item) =>
+                  item.kind === "order" ? (
+                    <div key={`testimonial-order-${item.data.id}`} className="flex flex-col gap-1.5">
+                      <p className="text-xs text-shihu-text font-medium">
+                        {item.data.orderCode} · {buildOrderTitle(item.data.lines)}
+                      </p>
+                      <TestimonialPrompt
+                        orderId={item.data.id}
+                        defaultCustomerName={customer.name}
+                        existing={null}
+                      />
+                    </div>
+                  ) : (
+                    <a
+                      key={`testimonial-manual-${item.data.id}`}
+                      href={`/testimoni-lama/${item.data.shareToken}`}
+                      className="flex items-center justify-between gap-3 bg-shihu-card border border-shihu-borderSoft rounded-xl px-3.5 py-2.5 text-xs text-shihu-text hover:border-shihu-corona/50"
+                    >
+                      <span>{item.data.title}</span>
+                      <span className="text-shihu-corona font-display font-semibold shrink-0">
+                        Beri Testimoni →
+                      </span>
+                    </a>
+                  ),
+                )}
+              </div>
+            </div>
+          )}
+
           <p className="font-display text-sm font-semibold text-shihu-muted mb-3">
             History pesanan selesai ({completedHistory.length})
           </p>
@@ -233,21 +275,6 @@ export default async function CustomerProgressPage({
                       game={item.data.game}
                       lines={buildLineDetails(item.data.lines)}
                     />
-                    <div className="pl-1">
-                      <TestimonialPrompt
-                        orderId={item.data.id}
-                        defaultCustomerName={customer.name}
-                        existing={
-                          item.data.testimonial
-                            ? {
-                              rating: item.data.testimonial.rating,
-                              message: item.data.testimonial.message,
-                              isPublished: item.data.testimonial.isPublished,
-                            }
-                            : null
-                        }
-                      />
-                    </div>
                   </div>
                 ) : (
                   <JokiHistoryPublicRow

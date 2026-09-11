@@ -244,5 +244,11 @@ export function buildAutoTasks(
     }
   }
 
-  return tasks;
+  const uniqueTasks = new Map<string, AutoTaskDef>();
+  for (const task of tasks) {
+    const key = `${task.category}:${task.label}:${isoDay(task.date)}`;
+    if (!uniqueTasks.has(key)) uniqueTasks.set(key, task);
+  }
+
+  return Array.from(uniqueTasks.values());
 }
