@@ -33,6 +33,13 @@ interface RawatAkunProgressPanelProps {
   tasks: DayTaskItem[];
 }
 
+function localDateKey(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 const STATUS_STYLE: Record<string, string> = {
   SELESAI: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
   SEDANG: "bg-shihu-corona/15 text-shihu-corona border-shihu-corona/30",
@@ -58,7 +65,7 @@ function statusOf(percent: number): "SELESAI" | "SEDANG" | "BELUM" {
 }
 
 export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunProgressPanelProps) {
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = localDateKey();
   const defaultDay = days.find((d) => d.date === todayIso)?.date ?? days[days.length - 1]?.date ?? days[0]?.date;
   const [selectedDate, setSelectedDate] = useState<string>(defaultDay ?? "");
   const [manualPercent, setManualPercent] = useState("");

@@ -69,6 +69,7 @@ export default async function AdminAntrianPage() {
     ...i,
     patch: i.patch ? { startDate: i.patch.startDate.toISOString(), endDate: i.patch.endDate.toISOString() } : null,
   }));
+  const paketOptions = pakets;
   const eventOptions = events
     .filter((event) => isPatchEventLive(event))
     .map((event) => ({
@@ -107,7 +108,7 @@ export default async function AdminAntrianPage() {
           </span>
         </summary>
 
-        <CreateOrderForm games={games} items={itemOptions} pakets={pakets} events={eventOptions} customers={customerOptions} />
+        <CreateOrderForm games={games} items={itemOptions} pakets={paketOptions} events={eventOptions} customers={customerOptions} />
       </details>
 
       <OrderListFilter orders={orders} games={games} workers={workers} />

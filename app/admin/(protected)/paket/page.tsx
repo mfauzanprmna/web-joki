@@ -17,7 +17,7 @@ export default async function AdminPaketPage() {
       include: {
         game: true,
         region: true,
-        items: { include: { jokiItem: { select: { title: true } } } },
+        items: { include: { jokiItem: { select: { title: true, category: { select: { requiresQuestType: true } } } } } },
       },
       orderBy: [{ game: { createdAt: "asc" } }, { createdAt: "asc" }],
     }),

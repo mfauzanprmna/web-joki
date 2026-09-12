@@ -120,7 +120,11 @@ export function OrderLineSelector({ gameId, items, pakets, events, onLinesChange
     onLinesChange(exported, computeTotal(lines));
   }
 
-  function toggleLine(type: "item" | "paket" | "event", id: string, item?: JokiItemOption) {
+  function toggleLine(
+    type: "item" | "paket" | "event",
+    id: string,
+    defaults?: Pick<JokiItemOption, "actNumber">
+  ) {
     setSelectedLines((prev) => {
       const key = makeKey(type, id);
       const next = new Map(prev);
@@ -132,7 +136,7 @@ export function OrderLineSelector({ gameId, items, pakets, events, onLinesChange
           id,
           explorationPercent: "0",
           actFrom: "1",
-          actTo: String(item?.actNumber ?? 1),
+          actTo: String(defaults?.actNumber ?? 1),
           materialQuantity: "",
           rawatAkunQuantity: "1",
           rawatAkunStartDate: todayInputValue(),
@@ -416,7 +420,8 @@ export function OrderLineSelector({ gameId, items, pakets, events, onLinesChange
             const key = makeKey("paket", paket.id);
             const checked = selectedLines.has(key);
             return (
-              <label key={paket.id} className="flex items-center gap-2 text-xs text-shihu-text px-1 py-1">
+              <div key={paket.id} className="px-1 py-1">
+                <label className="flex items-center gap-2 text-xs text-shihu-text">
                 <input
                   type="checkbox"
                   checked={checked}
@@ -429,7 +434,8 @@ export function OrderLineSelector({ gameId, items, pakets, events, onLinesChange
                     {formatRupiah(paket.priceRupiah)}
                   </span>
                 )}
-              </label>
+                </label>
+              </div>
             );
           })}
         </div>

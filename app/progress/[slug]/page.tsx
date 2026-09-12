@@ -4,92 +4,16 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SectionHeading } from "@/components/SectionHeading";
 import { HistoryRow } from "@/components/HistoryRow";
-import { JokiHistoryPublicRow } from "@/components/JokiHistoryPublicRow";
-import {
-  CustomerAccountTabs,
-  type AccountProgress,
-} from "@/components/CustomerAccountTabs";
-import type { OrderLineDetail } from "@/components/OrderLineDetailPanel";
+import { TestimoniCard } from "@/components/TestimoniCard";
+import { CustomerAccountTabs, type AccountProgress } from "@/components/CustomerAccountTabs";
 import { TestimonialPrompt } from "@/components/TestimonialPrompt";
+import { JokiHistoryTestimonialForm } from "@/components/JokiHistoryTestimonialForm";
 import { buildOrderTitle } from "@/lib/order-display";
 import { ensureRawatAkunScheduleSynced } from "@/lib/rawat-akun-service";
-import { enumerateDays } from "@/lib/rawat-akun-schedule";
+import { enumerateDays, isoDay } from "@/lib/rawat-akun-schedule";
+import { getJokiItemCategoryLabel } from "@/lib/order-progress-grouping";
 
 export const revalidate = 0;
-
-function buildLineDetails(
-  lines: Array<{
-    id: string;
-    jokiItem: { title: string; category: { isRawatAkun: boolean } } | null;
-    jokiPaket: { title: string } | null;
-    patchEvent: { title: string } | null;
-    explorationPercent: number | null;
-    actFrom: number | null;
-    actTo: number | null;
-    materialQuantity: number | null;
-    rawatAkunQuantity: number | null;
-    characterName?: string | null;
-    levelFrom?: number | null;
-    levelTo?: number | null;
-    startDate: Date | null;
-    endDate: Date | null;
-    updates: {
-      id: string;
-      note: string | null;
-      screenshotUrl: string | null;
-      resetLocation: string | null;
-      createdAt: Date;
-    }[];
-    dayProgress: { date: Date; percent: number; note: string | null; screenshotUrls: string[] }[];
-    dayTasks: { date: Date; category: string; label: string; status: string }[];
-  }>,
-): OrderLineDetail[] {
-  return lines.map((line) => {
-    const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;
-    return {
-      id: line.id,
-      title: line.jokiItem?.title ?? line.jokiPaket?.title ?? line.patchEvent?.title ?? "Item tidak dikenal",
-      explorationPercent: line.explorationPercent,
-      actFrom: line.actFrom,
-      actTo: line.actTo,
-      materialQuantity: line.materialQuantity,
-      rawatAkunQuantity: line.rawatAkunQuantity,
-      characterName: line.characterName ?? null,
-      levelFrom: line.levelFrom ?? null,
-      levelTo: line.levelTo ?? null,
-      updates: line.updates.map((u) => ({
-        id: u.id,
-        note: u.note,
-        screenshotUrl: u.screenshotUrl,
-        resetLocation: u.resetLocation,
-        createdAt: u.createdAt.toISOString(),
-      })),
-      rawatAkun:
-        isRawatAkun && line.startDate && line.endDate
-          ? {
-            days: enumerateDays(line.startDate, line.endDate).map((d) => {
-              const iso = d.toISOString().slice(0, 10);
-              const dp = line.dayProgress.find(
-                (p) => p.date.toISOString().slice(0, 10) === iso,
-              );
-              return {
-                date: iso,
-                percent: dp?.percent ?? 0,
-                note: dp?.note ?? null,
-                screenshotUrls: dp?.screenshotUrls ?? [],
-              };
-            }),
-            tasks: line.dayTasks.map((t) => ({
-              date: t.date.toISOString().slice(0, 10),
-              category: t.category,
-              label: t.label,
-              status: t.status as "BELUM" | "SEDANG" | "SELESAI",
-            })),
-          }
-          : null,
-    };
-  });
-}
 
 export default async function CustomerProgressPage({
   params,
@@ -104,14 +28,7 @@ export default async function CustomerProgressPage({
       orders: {
         select: {
           lines: {
-            select: {
-              id: true,
-              startDate: true,
-              endDate: true,
-              jokiItem: {
-                select: { category: { select: { isRawatAkun: true } } },
-              },
-            },
+            select: { id: true, startDate: true, endDate: true, jokiItem: { select: { category: { select: { isRawatAkun: true } } } } },
           },
         },
       },
@@ -122,10 +39,8 @@ export default async function CustomerProgressPage({
   await Promise.all(
     customerPreview.orders
       .flatMap((o) => o.lines)
-      .filter(
-        (l) => l.jokiItem?.category.isRawatAkun && l.startDate && l.endDate,
-      )
-      .map((l) => ensureRawatAkunScheduleSynced(l.id)),
+      .filter((l) => l.jokiItem?.category.isRawatAkun && l.startDate && l.endDate)
+      .map((l) => ensureRawatAkunScheduleSynced(l.id))
   );
 
   const customer = await prisma.customer.findUnique({
@@ -137,10 +52,29 @@ export default async function CustomerProgressPage({
           lines: {
             include: {
               jokiItem: {
-                include: { category: { select: { isRawatAkun: true } } },
+                include: {
+                  category: true,
+                  region: { select: { name: true } },
+                  questType: { select: { name: true, questKind: true } },
+                },
               },
-              jokiPaket: true,
-              patchEvent: true,
+              jokiPaket: {
+                include: {
+                  items: {
+                    include: {
+                      jokiItem: {
+                        select: {
+                          id: true,
+                          title: true,
+                          category: true,
+                          region: { select: { name: true } },
+                          questType: { select: { name: true, questKind: true } },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
               updates: { orderBy: { createdAt: "desc" } },
               dayProgress: { orderBy: { date: "asc" } },
               dayTasks: { orderBy: [{ date: "asc" }, { position: "asc" }] },
@@ -160,28 +94,31 @@ export default async function CustomerProgressPage({
   if (!customer) notFound();
 
   const activeOrders = customer.orders.filter((o) =>
-    ["MENUNGGU", "DIKERJAKAN", "FINISHING"].includes(o.status),
+    ["MENUNGGU", "DIKERJAKAN", "FINISHING"].includes(o.status)
   );
   const completedOrders = customer.orders.filter((o) => o.status === "SELESAI");
-  type CompletedHistoryItem =
-    | { kind: "order"; completedAt: Date; data: (typeof completedOrders)[number] }
-    | { kind: "manual"; completedAt: Date; data: (typeof customer.jokiHistoryEntries)[number] };
-  const completedHistory: CompletedHistoryItem[] = [
-    ...completedOrders.map((order): CompletedHistoryItem => ({
-      kind: "order",
-      completedAt: order.completedAt ?? order.updatedAt,
-      data: order,
-    })),
-    ...customer.jokiHistoryEntries.map((entry): CompletedHistoryItem => ({
-      kind: "manual",
-      completedAt: entry.completedAt,
-      data: entry,
-    })),
-  ].sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
-
-  const testimonialHistory = completedHistory.filter((item) =>
-    item.kind === "order" ? !item.data.testimonial : !item.data.testimonial,
-  );
+  const historyEntries = customer.jokiHistoryEntries;
+  const historyCount = completedOrders.length + historyEntries.length;
+  const testimonials = [
+    ...customer.orders
+      .filter((o) => o.testimonial)
+      .map((o) => ({
+        id: `order-${o.id}`,
+        customerName: o.testimonial!.customerName,
+        message: o.testimonial!.message,
+        rating: o.testimonial!.rating,
+        game: o.game,
+      })),
+    ...historyEntries
+      .filter((entry) => entry.testimonial)
+      .map((entry) => ({
+        id: `history-${entry.id}`,
+        customerName: entry.testimonial!.customerName,
+        message: entry.testimonial!.message,
+        rating: entry.testimonial!.rating,
+        game: entry.game,
+      })),
+  ];
 
   const accounts: AccountProgress[] = activeOrders.map((o) => ({
     orderId: o.id,
@@ -193,7 +130,76 @@ export default async function CustomerProgressPage({
     jokerName: o.jokerName,
     estimasiJoki: o.estimasiJoki,
     totalPrice: o.totalPrice,
-    lines: buildLineDetails(o.lines),
+    lines: o.lines.map((line) => {
+      const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;
+      return {
+        id: line.id,
+        jokiPaketId: line.jokiPaketId,
+        title:
+          (line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal") +
+          (line.characterName ? ` — ${line.characterName}` : ""),
+        jokiItem: line.jokiItem
+          ? { category: line.jokiItem.category, region: line.jokiItem.region, questType: line.jokiItem.questType }
+          : null,
+        explorationPercent: line.explorationPercent,
+        actFrom: line.actFrom,
+        actTo: line.actTo,
+        materialQuantity: line.materialQuantity,
+        rawatAkunQuantity: line.rawatAkunQuantity,
+        characterName: line.characterName,
+        levelFrom: line.levelFrom,
+        levelTo: line.levelTo,
+        progressPercent: line.progressPercent,
+        progressCurrent: line.progressCurrent,
+        calculatedPrice: line.calculatedPrice,
+        updates: line.updates.map((u) => ({
+          id: u.id,
+          note: u.note,
+          screenshotUrl: u.screenshotUrl,
+          resetLocation: u.resetLocation,
+          createdAt: u.createdAt.toISOString(),
+        })),
+        paketBreakdown:
+          line.jokiPaket?.items.map((it) => ({
+            id: it.jokiItem.id,
+            title: it.jokiItem.title,
+            categoryLabel: getJokiItemCategoryLabel(it.jokiItem),
+          })) ?? [],
+        paketItems:
+          line.jokiPaket?.items.map((it) => ({
+            id: it.jokiItem.id,
+            title: it.jokiItem.title,
+            actFrom: it.actFrom,
+            actTo: it.actTo,
+            jokiItem: {
+              category: it.jokiItem.category,
+              region: it.jokiItem.region,
+              questType: it.jokiItem.questType,
+            },
+          })) ?? [],
+        rawatAkun:
+          isRawatAkun && line.startDate && line.endDate
+            ? {
+              days: enumerateDays(line.startDate, line.endDate).map((d) => {
+                const iso = isoDay(d);
+                const dp = line.dayProgress.find((p) => isoDay(p.date) === iso);
+                return {
+                  date: iso,
+                  percent: dp?.percent ?? 0,
+                  note: dp?.note ?? null,
+                  screenshotUrls: dp?.screenshotUrls ?? [],
+                };
+              }),
+              tasks: line.dayTasks.map((t) => ({
+                date: isoDay(t.date),
+                category: t.category,
+                label: t.label,
+                status: t.status,
+              })),
+            }
+            : null,
+      };
+    }),
   }));
 
   return (
@@ -215,82 +221,118 @@ export default async function CustomerProgressPage({
           <CustomerAccountTabs accounts={accounts} />
         </div>
 
-        <div>
-          {testimonialHistory.length > 0 && (
-            <div className="mb-6 bg-[#241E38] border border-shihu-border rounded-2xl p-4">
-              <p className="font-display text-sm font-semibold text-shihu-text mb-1">
-                Kasih Testimoni
-              </p>
-              <p className="text-xs text-shihu-muted mb-3">
-                Pilih history joki yang ingin kamu beri testimoni.
-              </p>
-              <div className="flex flex-col gap-2">
-                {testimonialHistory.map((item) =>
-                  item.kind === "order" ? (
-                    <div key={`testimonial-order-${item.data.id}`} className="flex flex-col gap-1.5">
-                      <p className="text-xs text-shihu-text font-medium">
-                        {item.data.orderCode} · {buildOrderTitle(item.data.lines)}
-                      </p>
-                      <TestimonialPrompt
-                        orderId={item.data.id}
-                        defaultCustomerName={customer.name}
-                        existing={null}
-                      />
-                    </div>
-                  ) : (
-                    <a
-                      key={`testimonial-manual-${item.data.id}`}
-                      href={`/testimoni-lama/${item.data.shareToken}`}
-                      className="flex items-center justify-between gap-3 bg-shihu-card border border-shihu-borderSoft rounded-xl px-3.5 py-2.5 text-xs text-shihu-text hover:border-shihu-corona/50"
-                    >
-                      <span>{item.data.title}</span>
-                      <span className="text-shihu-corona font-display font-semibold shrink-0">
-                        Beri Testimoni →
-                      </span>
-                    </a>
-                  ),
-                )}
-              </div>
+        <div className="mb-10">
+          <p className="font-display text-sm font-semibold text-shihu-muted mb-3">
+            Testimoni kamu ({testimonials.length})
+          </p>
+          {testimonials.length === 0 ? (
+            <div className="bg-shihu-card border border-shihu-border rounded-2xl p-6 text-center">
+              <p className="text-shihu-muted text-sm">Belum ada testimoni.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {testimonials.map((testimonial) => (
+                <TestimoniCard key={testimonial.id} {...testimonial} />
+              ))}
             </div>
           )}
+        </div>
 
+        {(completedOrders.some((order) => !order.testimonial) || historyEntries.some((entry) => !entry.testimonial)) && (
+          <div className="mb-10 bg-shihu-card border border-shihu-border rounded-2xl p-5">
+            <p className="font-display text-base font-semibold mb-1">Kasih Testimoni</p>
+            <p className="text-sm text-shihu-muted mb-4">
+              Pilih history joki yang ingin kamu beri testimoni.
+            </p>
+            <div className="flex flex-col gap-2.5">
+              {completedOrders
+                .filter((order) => !order.testimonial)
+                .map((order) => (
+                  <TestimonialPrompt
+                    key={order.id}
+                    orderId={order.id}
+                    defaultCustomerName={customer.name}
+                    title={buildOrderTitle(order.lines)}
+                    existing={null}
+                    compact
+                  />
+                ))}
+              {historyEntries
+                .filter((entry) => !entry.testimonial)
+                .map((entry) => (
+                  <JokiHistoryTestimonialForm
+                    key={entry.id}
+                    shareToken={entry.shareToken}
+                    defaultCustomerName={customer.name}
+                    title={entry.title}
+                    existing={null}
+                    compact
+                  />
+                ))}
+            </div>
+          </div>
+        )}
+
+        <div>
           <p className="font-display text-sm font-semibold text-shihu-muted mb-3">
-            History pesanan selesai ({completedHistory.length})
+            History pengerjaan ({historyCount})
           </p>
-          {completedHistory.length === 0 ? (
+          {historyCount === 0 ? (
             <div className="bg-shihu-card border border-shihu-border rounded-2xl p-8 text-center">
-              <p className="text-shihu-muted text-sm">
-                Belum ada pesanan yang selesai.
-              </p>
+              <p className="text-shihu-muted text-sm">Belum ada history pengerjaan.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2.5">
-              {completedHistory.map((item) =>
-                item.kind === "order" ? (
-                  <div key={`order-${item.data.id}`} className="flex flex-col gap-2">
-                    <HistoryRow
-                      orderCode={item.data.orderCode}
-                      title={buildOrderTitle(item.data.lines)}
-                      customerName={customer.name}
-                      completedAt={item.data.completedAt ?? item.data.updatedAt}
-                      rating={item.data.testimonial?.rating ?? null}
-                      game={item.data.game}
-                      lines={buildLineDetails(item.data.lines)}
-                    />
-                  </div>
-                ) : (
-                  <JokiHistoryPublicRow
-                    key={`manual-${item.data.id}`}
-                    title={item.data.title}
+              {completedOrders.map((o) => (
+                <div key={o.id} className="flex flex-col gap-2">
+                  <HistoryRow
+                    orderCode={o.orderCode}
+                    title={buildOrderTitle(o.lines)}
                     customerName={customer.name}
-                    completedAt={item.data.completedAt}
-                    rating={item.data.rating}
-                    note={item.data.note}
-                    screenshotUrls={item.data.screenshotUrls}
-                    game={item.data.game}
+                    completedAt={o.completedAt ?? o.updatedAt}
+                    rating={o.testimonial?.rating ?? null}
+                    game={o.game}
                   />
-                ),
-              )}
+                  {o.testimonial && (
+                    <div className="pl-1">
+                      <TestimonialPrompt
+                        orderId={o.id}
+                        defaultCustomerName={customer.name}
+                        existing={{
+                          rating: o.testimonial.rating,
+                          message: o.testimonial.message,
+                          isPublished: o.testimonial.isPublished,
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+              {historyEntries.map((entry) => (
+                <div key={entry.id} className="flex flex-col gap-2">
+                  <HistoryRow
+                    orderCode="History lama"
+                    title={entry.title}
+                    customerName={customer.name}
+                    completedAt={entry.completedAt}
+                    rating={entry.testimonial?.rating ?? entry.rating}
+                    game={entry.game}
+                  />
+                  {entry.testimonial && (
+                    <div className="pl-1">
+                      <JokiHistoryTestimonialForm
+                        shareToken={entry.shareToken}
+                        defaultCustomerName={customer.name}
+                        existing={{
+                          rating: entry.testimonial.rating,
+                          message: entry.testimonial.message,
+                          isPublished: entry.testimonial.isPublished,
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>

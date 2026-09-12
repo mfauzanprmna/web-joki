@@ -47,6 +47,7 @@ interface JokiPaketFormFieldsProps {
     explorationItemIds?: string[];
     worldQuestItemIds?: string[];
     archonQuestItemIds?: string[];
+    questActRanges?: Record<string, { actFrom: number | null; actTo: number | null }>;
   };
   onPriceSuggestionChange?: (price: number) => void;
 }
@@ -73,6 +74,14 @@ export function JokiPaketFormFields({
   );
   const [selectedArchonQuestIds, setSelectedArchonQuestIds] = useState<Set<string>>(
     new Set(defaultValues?.archonQuestItemIds ?? [])
+  );
+  const [questActRanges, setQuestActRanges] = useState<Record<string, { actFrom: string; actTo: string }>>(
+    Object.fromEntries(
+      Object.entries(defaultValues?.questActRanges ?? {}).map(([id, range]) => [id, {
+        actFrom: String(range.actFrom ?? 1),
+        actTo: String(range.actTo ?? 1),
+      }])
+    )
   );
 
   const regionsForGame = useMemo(() => regions.filter((r) => r.gameId === gameId && r.isActive), [regions, gameId]);
@@ -110,6 +119,17 @@ export function JokiPaketFormFields({
     ]);
     return itemsForGame.filter((i) => !autoIncludedIds.has(i.id));
   }, [itemsForGame, isAllMapRegion, explorationItems, worldQuestItems]);
+
+  function isQuestItem(item: JokiItemOption) {
+    return categoriesForGame.some((category) => category.id === item.categoryId && category.requiresQuestType);
+  }
+
+  function updateQuestAct(itemId: string, field: "actFrom" | "actTo", value: string) {
+    setQuestActRanges((current) => ({
+      ...current,
+      [itemId]: { ...(current[itemId] ?? { actFrom: "1", actTo: "1" }), [field]: value },
+    }));
+  }
 
   // All Map ON -> World Quest ikut otomatis on (terkunci); saat toggle All Map
   // dimatikan, World Quest kembali ke pilihan manual (checklist).
@@ -200,6 +220,9 @@ export function JokiPaketFormFields({
                 onToggle={(id) => toggleSelection(selectedExplorationIds, setSelectedExplorationIds, id)}
                 inputName="itemIds"
                 emptyText="Belum ada Joki Item kategori Eksplorasi untuk region ini."
+                isQuestItem={isQuestItem}
+                questActRanges={questActRanges}
+                onQuestActChange={updateQuestAct}
               />
               <ItemChecklist
                 label="World Quest yang masuk"
@@ -208,6 +231,9 @@ export function JokiPaketFormFields({
                 onToggle={(id) => toggleSelection(selectedWorldQuestIds, setSelectedWorldQuestIds, id)}
                 inputName="itemIds"
                 emptyText="Belum ada World Quest untuk region ini."
+                isQuestItem={isQuestItem}
+                questActRanges={questActRanges}
+                onQuestActChange={updateQuestAct}
               />
             </>
           )}
@@ -219,9 +245,10 @@ export function JokiPaketFormFields({
               </p>
               <div className="flex flex-col gap-1 bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
                 {worldQuestItems.map((i) => (
-                  <p key={i.id} className="text-xs text-shihu-muted px-1 py-0.5">
-                    ✓ {i.title}
-                  </p>
+                  <div key={i.id}>
+                    <p className="text-xs text-shihu-muted px-1 py-0.5">✓ {i.title}</p>
+                    {isQuestItem(i) && <QuestActInputs itemId={i.id} ranges={questActRanges} onChange={updateQuestAct} />}
+                  </div>
                 ))}
               </div>
             </div>
@@ -234,6 +261,9 @@ export function JokiPaketFormFields({
             onToggle={(id) => toggleSelection(selectedArchonQuestIds, setSelectedArchonQuestIds, id)}
             inputName="archonQuestItemIds"
             emptyText="Belum ada Archon Quest untuk region ini."
+            isQuestItem={isQuestItem}
+            questActRanges={questActRanges}
+            onQuestActChange={updateQuestAct}
           />
         </div>
       )}
@@ -247,17 +277,15 @@ export function JokiPaketFormFields({
             <p className="text-[11px] text-shihu-faint px-1 py-1">Belum ada Joki Item untuk game ini.</p>
           )}
           {baseSelectableItems.map((i) => (
-            <label key={i.id} className="flex items-center gap-2 text-xs text-shihu-text px-1 py-1">
-              <input
-                type="checkbox"
-                name="itemIds"
-                value={i.id}
-                checked={selectedBaseIds.has(i.id)}
-                onChange={() => toggleSelection(selectedBaseIds, setSelectedBaseIds, i.id)}
-                className="accent-shihu-corona w-3.5 h-3.5 shrink-0"
-              />
-              {i.title}
-            </label>
+            <div key={i.id}>
+              <label className="flex items-center gap-2 text-xs text-shihu-text px-1 py-1">
+                <input type="checkbox" name="itemIds" value={i.id} checked={selectedBaseIds.has(i.id)} onChange={() => toggleSelection(selectedBaseIds, setSelectedBaseIds, i.id)} className="accent-shihu-corona w-3.5 h-3.5 shrink-0" />
+                {i.title}
+              </label>
+              {selectedBaseIds.has(i.id) && isQuestItem(i) && (
+                <QuestActInputs itemId={i.id} ranges={questActRanges} onChange={updateQuestAct} />
+              )}
+            </div>
           ))}
         </div>
       </div>
@@ -287,6 +315,9 @@ function ItemChecklist({
   onToggle,
   inputName,
   emptyText,
+  isQuestItem,
+  questActRanges,
+  onQuestActChange,
 }: {
   label: string;
   items: JokiItemOption[];
@@ -294,6 +325,9 @@ function ItemChecklist({
   onToggle: (id: string) => void;
   inputName: string;
   emptyText: string;
+  isQuestItem: (item: JokiItemOption) => boolean;
+  questActRanges: Record<string, { actFrom: string; actTo: string }>;
+  onQuestActChange: (itemId: string, field: "actFrom" | "actTo", value: string) => void;
 }) {
   return (
     <div>
@@ -301,19 +335,33 @@ function ItemChecklist({
       <div className="flex flex-col gap-1 bg-[#241E38] rounded-xl border border-shihu-border p-2.5 max-h-36 overflow-y-auto">
         {items.length === 0 && <p className="text-[11px] text-shihu-faint px-1 py-1">{emptyText}</p>}
         {items.map((i) => (
-          <label key={i.id} className="flex items-center gap-2 text-xs text-shihu-text px-1 py-0.5">
-            <input
-              type="checkbox"
-              name={inputName}
-              value={i.id}
-              checked={selected.has(i.id)}
-              onChange={() => onToggle(i.id)}
-              className="accent-shihu-corona w-3.5 h-3.5 shrink-0"
-            />
-            {i.title}
-          </label>
+          <div key={i.id}>
+            <label className="flex items-center gap-2 text-xs text-shihu-text px-1 py-0.5">
+              <input type="checkbox" name={inputName} value={i.id} checked={selected.has(i.id)} onChange={() => onToggle(i.id)} className="accent-shihu-corona w-3.5 h-3.5 shrink-0" />
+              {i.title}
+            </label>
+            {selected.has(i.id) && isQuestItem(i) && <QuestActInputs itemId={i.id} ranges={questActRanges} onChange={onQuestActChange} />}
+          </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function QuestActInputs({
+  itemId,
+  ranges,
+  onChange,
+}: {
+  itemId: string;
+  ranges: Record<string, { actFrom: string; actTo: string }>;
+  onChange: (itemId: string, field: "actFrom" | "actTo", value: string) => void;
+}) {
+  const range = ranges[itemId] ?? { actFrom: "1", actTo: "1" };
+  return (
+    <div className="grid grid-cols-2 gap-2 pl-6 pb-1">
+      <label className="text-[10px] text-shihu-muted">Act mulai<input type="number" min={1} name={`questActFrom:${itemId}`} value={range.actFrom} onChange={(e) => onChange(itemId, "actFrom", e.target.value)} className="admin-input mt-1" /></label>
+      <label className="text-[10px] text-shihu-muted">Act selesai<input type="number" min={1} name={`questActTo:${itemId}`} value={range.actTo} onChange={(e) => onChange(itemId, "actTo", e.target.value)} className="admin-input mt-1" /></label>
     </div>
   );
 }

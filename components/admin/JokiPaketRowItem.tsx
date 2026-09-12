@@ -23,7 +23,12 @@ interface JokiPaketRow {
   gameId: string;
   game: { name: string; accentColor: string };
   region: { name: string } | null;
-  items: { jokiItemId: string; jokiItem: { title: string } }[];
+  items: {
+    jokiItemId: string;
+    actFrom: number | null;
+    actTo: number | null;
+    jokiItem: { title: string; category: { requiresQuestType: boolean } };
+  }[];
 }
 
 interface JokiPaketRowItemProps {
@@ -98,6 +103,11 @@ export function JokiPaketRowItem({ paket, regions, categories, questTypes, items
     : [];
   const classifiedIds = new Set([...explorationIds, ...worldQuestIds, ...archonQuestIds]);
   const baseIds = paket.items.map((i) => i.jokiItemId).filter((id) => !classifiedIds.has(id));
+  const questActRanges = Object.fromEntries(
+    paket.items
+      .filter((item) => item.jokiItem.category.requiresQuestType)
+      .map((item) => [item.jokiItemId, { actFrom: item.actFrom, actTo: item.actTo }])
+  );
 
   return (
     <form
@@ -150,6 +160,7 @@ export function JokiPaketRowItem({ paket, regions, categories, questTypes, items
           explorationItemIds: explorationIds,
           worldQuestItemIds: worldQuestIds,
           archonQuestItemIds: archonQuestIds,
+          questActRanges,
         }}
         onPriceSuggestionChange={(suggested) => {
           if (!priceTouched) setPriceRupiah(suggested);

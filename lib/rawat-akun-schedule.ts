@@ -11,14 +11,34 @@
 
 import { addDays } from "./patch-schedule";
 
-export function startOfDay(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+const CALENDAR_TIME_ZONE = "Asia/Jakarta";
+
+function calendarParts(date: Date): Record<string, string> {
+  return Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: CALENDAR_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+      .formatToParts(date)
+      .map((part) => [part.type, part.value])
+  );
 }
 
-function isoDay(date: Date): string {
-  return startOfDay(date).toISOString().slice(0, 10);
+export function dateFromIsoDay(value: string): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return new Date(value);
+  return new Date(`${match[1]}-${match[2]}-${match[3]}T00:00:00+07:00`);
+}
+
+export function startOfDay(date: Date): Date {
+  return dateFromIsoDay(isoDay(date));
+}
+
+export function isoDay(date: Date): string {
+  const values = calendarParts(date);
+  return `${values.year}-${values.month}-${values.day}`;
 }
 
 function addMonths(date: Date, months: number): Date {
@@ -233,12 +253,13 @@ export function buildAutoTasks(
       const overlapStart = evStart > period.startDate ? evStart : period.startDate;
       const overlapEnd = evEnd < period.endDate ? evEnd : period.endDate;
       if (overlapStart.getTime() > overlapEnd.getTime()) continue;
+      const eventKey = `event:${ev.id}`;
       for (const d of enumerateDays(overlapStart, overlapEnd)) {
         tasks.push({
           date: d,
           category: "Event",
           label: ev.title,
-          sourceKey: `event:${ev.id}:${isoDay(d)}`,
+          sourceKey: eventKey,
         });
       }
     }

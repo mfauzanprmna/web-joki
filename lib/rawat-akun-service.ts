@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { computeRawatAkunPeriod, buildAutoTasks, enumerateDays, startOfDay } from "./rawat-akun-schedule";
+import { computeRawatAkunPeriod, buildAutoTasks, enumerateDays, isoDay, startOfDay } from "./rawat-akun-schedule";
 
 /**
  * Memastikan OrderLineDayProgress (satu baris per tanggal) dan
@@ -71,6 +71,48 @@ export async function ensureRawatAkunScheduleSynced(orderLineId: string): Promis
     line.jokiItem.includeEvent
   );
 
+  for (const event of events) {
+    const legacySourceKey = `event:${event.id}:`;
+    const sourceKey = `event:${event.id}`;
+    const eventTasks = await prisma.orderLineDayTask.findMany({
+      where: {
+        orderLineId,
+        category: "Event",
+        OR: [
+          { sourceKey },
+          { sourceKey: { startsWith: legacySourceKey } },
+        ],
+      },
+      select: { id: true, date: true, status: true, note: true, sourceKey: true },
+    });
+    const statusRank = { BELUM: 0, SEDANG: 1, SELESAI: 2 } as const;
+    const tasksByDate = new Map<string, typeof eventTasks>();
+    for (const task of eventTasks) {
+      const dateKey = isoDay(task.date);
+      const tasks = tasksByDate.get(dateKey) ?? [];
+      tasks.push(task);
+      tasksByDate.set(dateKey, tasks);
+    }
+
+    for (const tasks of tasksByDate.values()) {
+      const keeper = tasks.reduce((current, task) =>
+        statusRank[task.status] > statusRank[current.status] ? task : current
+      );
+      const duplicateIds = tasks.filter((task) => task.id !== keeper.id).map((task) => task.id);
+      if (duplicateIds.length > 0) {
+        await prisma.orderLineDayTask.deleteMany({ where: { id: { in: duplicateIds } } });
+      }
+      await prisma.orderLineDayTask.update({
+        where: { id: keeper.id },
+        data: {
+          sourceKey,
+          status: keeper.status,
+          note: keeper.note ?? tasks.find((task) => task.note)?.note ?? null,
+        },
+      });
+    }
+  }
+
   if (autoTasks.length > 0) {
     await prisma.orderLineDayTask.createMany({
       data: autoTasks.map((t) => ({
@@ -82,5 +124,37 @@ export async function ensureRawatAkunScheduleSynced(orderLineId: string): Promis
       })),
       skipDuplicates: true,
     });
+  }
+
+  const syncedTasks = await prisma.orderLineDayTask.findMany({
+    where: { orderLineId, sourceKey: { not: null } },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, date: true, category: true, label: true, status: true, note: true, createdAt: true },
+  });
+  const statusRank = { BELUM: 0, SEDANG: 1, SELESAI: 2 } as const;
+  const taskGroups = new Map<string, typeof syncedTasks>();
+  for (const task of syncedTasks) {
+    const key = `${isoDay(task.date)}:${task.category}:${task.label}`;
+    const group = taskGroups.get(key) ?? [];
+    group.push(task);
+    taskGroups.set(key, group);
+  }
+
+  for (const group of taskGroups.values()) {
+    if (group.length < 2) continue;
+    const keeper = group.reduce((current, task) => {
+      if (statusRank[task.status] > statusRank[current.status]) return task;
+      if (statusRank[task.status] < statusRank[current.status]) return current;
+      return task.createdAt > current.createdAt ? task : current;
+    });
+    const duplicateIds = group.filter((task) => task.id !== keeper.id).map((task) => task.id);
+    await prisma.orderLineDayTask.update({
+      where: { id: keeper.id },
+      data: {
+        status: keeper.status,
+        note: keeper.note ?? group.find((task) => task.note)?.note ?? null,
+      },
+    });
+    await prisma.orderLineDayTask.deleteMany({ where: { id: { in: duplicateIds } } });
   }
 }

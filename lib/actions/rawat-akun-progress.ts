@@ -2,7 +2,15 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { startOfDay } from "@/lib/rawat-akun-schedule";
+import { dateFromIsoDay, startOfDay } from "@/lib/rawat-akun-schedule";
+
+function parseDateOnly(value: string): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (match) {
+    return dateFromIsoDay(value);
+  }
+  return new Date(value);
+}
 
 async function revalidateForOrderLine(orderLineId: string) {
   const line = await prisma.orderLine.findUnique({
@@ -16,7 +24,7 @@ async function revalidateForOrderLine(orderLineId: string) {
 }
 
 function parseDayDate(formData: FormData): Date {
-  return startOfDay(new Date(String(formData.get("date") || "")));
+  return startOfDay(parseDateOnly(String(formData.get("date") || "")));
 }
 
 export interface DayUpdateActionState {

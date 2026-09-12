@@ -16,6 +16,8 @@ interface TestimonialPromptProps {
   orderId: string;
   defaultCustomerName: string;
   existing: ExistingTestimonial | null;
+  title?: string;
+  compact?: boolean;
 }
 
 function StarPicker({
@@ -56,6 +58,8 @@ export function TestimonialPrompt({
   orderId,
   defaultCustomerName,
   existing,
+  title = "History pesanan",
+  compact = false,
 }: TestimonialPromptProps) {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(0);
@@ -105,6 +109,21 @@ export function TestimonialPrompt({
           Terima kasih! Testimoni kamu sudah terkirim dan akan tayang setelah
           dicek admin.
         </p>
+      </div>
+    );
+  }
+
+  if (compact && !open) {
+    return (
+      <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-shihu-border bg-shihu-card">
+        <span className="text-sm font-medium text-shihu-text">{title}</span>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="text-sm font-display font-semibold text-shihu-corona whitespace-nowrap"
+        >
+          Beri Testimoni →
+        </button>
       </div>
     );
   }

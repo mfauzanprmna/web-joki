@@ -8,7 +8,7 @@ import { PaginatedList } from "@/components/PaginatedList";
 import { GameCountBadges } from "@/components/GameCountBadges";
 import { buildOrderTitle } from "@/lib/order-display";
 import type { OrderLineDetail } from "@/components/OrderLineDetailPanel";
-import { enumerateDays } from "@/lib/rawat-akun-schedule";
+import { enumerateDays, isoDay } from "@/lib/rawat-akun-schedule";
 
 export const revalidate = 60;
 
@@ -162,9 +162,9 @@ function buildLineDetails(
         isRawatAkun && line.startDate && line.endDate
           ? {
             days: enumerateDays(line.startDate, line.endDate).map((date) => {
-              const iso = date.toISOString().slice(0, 10);
+              const iso = isoDay(date);
               const dayProgress = line.dayProgress.find(
-                (progress) => progress.date.toISOString().slice(0, 10) === iso,
+                (progress) => isoDay(progress.date) === iso,
               );
               return {
                 date: iso,
@@ -174,7 +174,7 @@ function buildLineDetails(
               };
             }),
             tasks: line.dayTasks.map((task) => ({
-              date: task.date.toISOString().slice(0, 10),
+              date: isoDay(task.date),
               category: task.category,
               label: task.label,
               status: task.status as "BELUM" | "SEDANG" | "SELESAI",

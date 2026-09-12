@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { calculateJokiItemLinePrice } from "@/lib/order-pricing";
-import { computeRawatAkunPeriod } from "@/lib/rawat-akun-schedule";
+import { computeRawatAkunPeriod, dateFromIsoDay, isoDay } from "@/lib/rawat-akun-schedule";
 import { createUniqueCustomerSlug } from "./customer";
 import { notifyOrderCreated, notifyOrderProgress } from "@/lib/discord-notify";
 import { isPatchEventLive } from "@/lib/patch-schedule";
@@ -177,7 +177,14 @@ export async function createOrder(
       : [];
   const pakets =
     allPaketIds.size > 0
-      ? await prisma.jokiPaket.findMany({ where: { id: { in: Array.from(allPaketIds) } } })
+      ? await prisma.jokiPaket.findMany({
+          where: { id: { in: Array.from(allPaketIds) } },
+          include: {
+            items: {
+              include: { jokiItem: { select: { actNumber: true, category: { select: { requiresQuestType: true } } } } },
+            },
+          },
+        })
       : [];
   const events =
     allEventIds.size > 0
@@ -231,7 +238,9 @@ export async function createOrder(
         let endDate: Date | null = null;
         if (item.category.isRawatAkun) {
           const quantity = line.rawatAkunQuantity ?? 1;
-          const requestedStart = line.rawatAkunStartDate ? new Date(`${line.rawatAkunStartDate}T00:00:00`) : new Date();
+          const requestedStart = line.rawatAkunStartDate
+            ? dateFromIsoDay(line.rawatAkunStartDate)
+            : dateFromIsoDay(isoDay(new Date()));
           const period = computeRawatAkunPeriod(
             { isPatchWide: item.isPatchWide, durationDays: item.durationDays, patch: item.patch },
             quantity,

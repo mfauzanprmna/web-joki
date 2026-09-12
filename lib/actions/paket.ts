@@ -34,6 +34,16 @@ export async function createJokiPaket(
     : [];
 
   const allItemIds = Array.from(new Set([...itemIds, ...archonQuestItemIds]));
+  const questItems = await prisma.jokiItem.findMany({ where: { id: { in: allItemIds }, category: { requiresQuestType: true } }, select: { id: true } });
+  const questActRanges = new Map(questItems.map((item) => [item.id, {
+    actFrom: Number(formData.get(`questActFrom:${item.id}`)),
+    actTo: Number(formData.get(`questActTo:${item.id}`)),
+  }]));
+  for (const [itemId, range] of questActRanges) {
+    if (!Number.isInteger(range.actFrom) || !Number.isInteger(range.actTo) || range.actFrom < 1 || range.actTo < range.actFrom) {
+      return { error: `Konfigurasi Act untuk Quest (${itemId}) tidak valid.` };
+    }
+  }
 
   await prisma.jokiPaket.create({
     data: {
@@ -44,7 +54,7 @@ export async function createJokiPaket(
       regionId,
       isAllMapRegion,
       items: {
-        create: allItemIds.map((jokiItemId) => ({ jokiItemId })),
+        create: allItemIds.map((jokiItemId) => ({ jokiItemId, ...questActRanges.get(jokiItemId) })),
       },
     },
   });
@@ -80,6 +90,16 @@ export async function updateJokiPaket(
     ? formData.getAll("archonQuestItemIds").map(String).filter(Boolean)
     : [];
   const allItemIds = Array.from(new Set([...itemIds, ...archonQuestItemIds]));
+  const questItems = await prisma.jokiItem.findMany({ where: { id: { in: allItemIds }, category: { requiresQuestType: true } }, select: { id: true } });
+  const questActRanges = new Map(questItems.map((item) => [item.id, {
+    actFrom: Number(formData.get(`questActFrom:${item.id}`)),
+    actTo: Number(formData.get(`questActTo:${item.id}`)),
+  }]));
+  for (const [itemId, range] of questActRanges) {
+    if (!Number.isInteger(range.actFrom) || !Number.isInteger(range.actTo) || range.actFrom < 1 || range.actTo < range.actFrom) {
+      return { error: `Konfigurasi Act untuk Quest (${itemId}) tidak valid.` };
+    }
+  }
 
   const updated = await prisma.jokiPaket.update({
     where: { id },
@@ -92,7 +112,7 @@ export async function updateJokiPaket(
       isActive,
       items: {
         deleteMany: {},
-        create: allItemIds.map((jokiItemId) => ({ jokiItemId })),
+        create: allItemIds.map((jokiItemId) => ({ jokiItemId, ...questActRanges.get(jokiItemId) })),
       },
     },
     select: { game: { select: { slug: true } } },

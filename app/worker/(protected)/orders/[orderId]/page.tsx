@@ -2,13 +2,14 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentWorker } from "@/lib/actions/worker-auth";
-import { OrderProgressTabs } from "@/components/admin/OrderProgressTabs";
+import { OrderProgressTabs, type OrderLineData } from "@/components/admin/OrderProgressTabs";
 import { STATUS_LABEL } from "@/types/game";
 import { formatRupiah } from "@/lib/format";
 import { buildOrderTitle } from "@/lib/order-display";
 import { calculateWorkerCommission } from "@/lib/commission";
 import { ensureRawatAkunScheduleSynced } from "@/lib/rawat-akun-service";
-import { enumerateDays } from "@/lib/rawat-akun-schedule";
+import { enumerateDays, isoDay } from "@/lib/rawat-akun-schedule";
+import { getJokiItemCategoryLabel } from "@/lib/order-progress-grouping";
 
 export default async function WorkerOrderProgressPage({
     params,
@@ -50,12 +51,29 @@ export default async function WorkerOrderProgressPage({
                 include: {
                     jokiItem: {
                         include: {
-                            category: { select: { isRawatAkun: true } },
+                            category: true,
+                            region: { select: { name: true } },
+                            questType: { select: { name: true, questKind: true } },
                             endgameContent: { include: { endgameContent: { select: { resetCycle: true } } } },
                         },
                     },
-                    jokiPaket: true,
-                    patchEvent: true,
+                    jokiPaket: {
+                        include: {
+                            items: {
+                                include: {
+                                    jokiItem: {
+                                        select: {
+                                            id: true,
+                                            title: true,
+                                            category: true,
+                                            region: { select: { name: true } },
+                                            questType: { select: { name: true, questKind: true } },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
                     updates: { orderBy: { createdAt: "desc" } },
                     dayProgress: { orderBy: { date: "asc" } },
                     dayTasks: { orderBy: [{ date: "asc" }, { position: "asc" }] },
@@ -68,27 +86,53 @@ export default async function WorkerOrderProgressPage({
 
     const commission = calculateWorkerCommission(order.totalPrice);
 
-    const lines = order.lines.map((line) => {
+    const lines: OrderLineData[] = order.lines.map((line) => {
         const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;
-        const characterName =
-            "characterName" in line && typeof line.characterName === "string"
-                ? line.characterName
-                : null;
         return {
             id: line.id,
+            jokiPaketId: line.jokiPaketId,
             title:
-                (line.jokiItem?.title ?? line.jokiPaket?.title ?? line.patchEvent?.title ?? "Item tidak dikenal") +
-                (characterName ? ` — ${characterName}` : ""),
+                (line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal") +
+                (line.characterName ? ` — ${line.characterName}` : ""),
             jokiItem: line.jokiItem
-                ? { category: line.jokiItem.category, endgameContent: line.jokiItem.endgameContent }
+                ? {
+                    category: line.jokiItem.category,
+                    region: line.jokiItem.region,
+                    questType: line.jokiItem.questType,
+                    endgameContent: line.jokiItem.endgameContent,
+                }
                 : null,
+            actFrom: line.actFrom,
+            actTo: line.actTo,
+            materialQuantity: line.materialQuantity,
+            progressPercent: line.progressPercent,
+            progressCurrent: line.progressCurrent,
             updates: line.updates,
+            paketBreakdown:
+                line.jokiPaket?.items.map((it) => ({
+                    id: it.jokiItem.id,
+                    title: it.jokiItem.title,
+                    categoryLabel: getJokiItemCategoryLabel(it.jokiItem),
+                })) ?? [],
+            paketItems:
+                line.jokiPaket?.items.map((it) => ({
+                    id: it.jokiItem.id,
+                    title: it.jokiItem.title,
+                    actFrom: it.actFrom,
+                    actTo: it.actTo,
+                    jokiItem: {
+                        category: it.jokiItem.category,
+                        region: it.jokiItem.region,
+                        questType: it.jokiItem.questType,
+                        endgameContent: [],
+                    },
+                })) ?? [],
             rawatAkun:
                 isRawatAkun && line.startDate && line.endDate
                     ? {
                         days: enumerateDays(line.startDate, line.endDate).map((d) => {
-                            const iso = d.toISOString().slice(0, 10);
-                            const dp = line.dayProgress.find((p) => p.date.toISOString().slice(0, 10) === iso);
+                            const iso = isoDay(d);
+                            const dp = line.dayProgress.find((p) => isoDay(p.date) === iso);
                             return {
                                 date: iso,
                                 percent: dp?.percent ?? 0,
@@ -98,7 +142,7 @@ export default async function WorkerOrderProgressPage({
                         }),
                         tasks: line.dayTasks.map((t) => ({
                             id: t.id,
-                            date: t.date.toISOString().slice(0, 10),
+                            date: isoDay(t.date),
                             category: t.category,
                             label: t.label,
                             status: t.status,
