@@ -18,6 +18,14 @@ function isValidSlug(value: string | undefined): value is ValidSlug {
 
 type DisplayCard = JokiDisplayCard;
 
+function badgePriority(badge: string | null | undefined): number {
+  const normalized = badge?.toLowerCase().replace(/[\s_-]/g, "") ?? "";
+  if (normalized === "populer" || normalized === "popular") return 0;
+  if (normalized === "preorder") return 1;
+  if (normalized === "baru") return 2;
+  return 3;
+}
+
 export default async function JokiListPage({
   searchParams,
 }: {
@@ -56,7 +64,7 @@ export default async function JokiListPage({
         isPatchWide: true,
         ...(gameSlug ? { game: { slug: gameSlug } } : {}),
       },
-      include: { game: true, category: true, patch: true },
+      include: { game: true, category: true, region: true, questType: true, patch: true },
     }),
     prisma.jokiPaket.findMany({
       where: {
@@ -99,6 +107,10 @@ export default async function JokiListPage({
       badge: item.badge,
       game: item.game,
       categoryName: item.category.name,
+      regionName: item.region?.name,
+      questTypeName: item.questType?.name,
+      supportsRegionFilter: item.category.requiresRegion || item.category.requiresQuestType,
+      supportsQuestTypeFilter: item.category.requiresQuestType,
       metaTags: [
         item.category.name,
         item.questType?.name,
@@ -142,6 +154,10 @@ export default async function JokiListPage({
         badge: item.badge ?? "Rawat Akun",
         game: item.game,
         categoryName: item.category.name,
+        regionName: item.region?.name,
+        questTypeName: item.questType?.name,
+        supportsRegionFilter: item.category.requiresRegion || item.category.requiresQuestType,
+        supportsQuestTypeFilter: item.category.requiresQuestType,
         metaTags: [item.category.name, item.patch.name],
       });
     }
@@ -163,11 +179,17 @@ export default async function JokiListPage({
       badge: "Paket",
       game: paket.game,
       categoryName: "Paket",
+      regionName: paket.region?.name,
+      supportsRegionFilter: !!paket.region,
       metaTags: paketMetaTags,
     });
   }
 
-  cards.sort((a, b) => a.categoryName.localeCompare(b.categoryName));
+  cards.sort((a, b) => {
+    const priorityDifference = badgePriority(a.badge) - badgePriority(b.badge);
+    if (priorityDifference !== 0) return priorityDifference;
+    return a.categoryName.localeCompare(b.categoryName);
+  });
 
   return (
     <div className="min-h-screen relative">

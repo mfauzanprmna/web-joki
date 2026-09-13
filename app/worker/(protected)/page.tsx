@@ -9,6 +9,8 @@ import {
     calculateWorkerCommission,
     WORKER_COMMISSION_RATE,
 } from "@/lib/commission";
+import { getOrderNotifications } from "@/lib/order-notifications";
+import { OrderNotifications } from "@/components/OrderNotifications";
 
 export default async function WorkerDashboardPage() {
     const worker = await getCurrentWorker();
@@ -28,6 +30,7 @@ export default async function WorkerDashboardPage() {
         (o) => o.status !== "SELESAI" && o.status !== "DIBATALKAN",
     );
     const doneOrders = orders.filter((o) => o.status === "SELESAI");
+    const notifications = await getOrderNotifications(worker.id);
 
     const totalCommissionDone = doneOrders.reduce(
         (sum, o) => sum + calculateWorkerCommission(o.totalPrice),
@@ -72,6 +75,8 @@ export default async function WorkerDashboardPage() {
                     </p>
                 </div>
             </div>
+
+            <OrderNotifications notifications={notifications} role="worker" />
 
             <p className="font-display text-sm font-semibold text-shihu-muted mb-3">
                 Sedang dikerjakan ({activeOrders.length})

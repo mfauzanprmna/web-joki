@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getOrderNotifications } from "@/lib/order-notifications";
+import { OrderNotifications } from "@/components/OrderNotifications";
 
 export default async function AdminDashboardPage() {
   const [
@@ -41,6 +43,8 @@ export default async function AdminDashboardPage() {
     { label: "Total testimoni", value: totalTestimonials, href: "/admin/testimoni" },
   ];
 
+  const notifications = await getOrderNotifications();
+
   const masterData = [
     { label: "Game", value: totalGames, href: "/admin/game", desc: "Data game yang tersedia" },
     { label: "Kategori joki", value: totalCategories, href: "/admin/kategori", desc: "Kategori per game" },
@@ -71,6 +75,8 @@ export default async function AdminDashboardPage() {
           </Link>
         ))}
       </div>
+
+      <OrderNotifications notifications={notifications} role="admin" />
 
       <p className="font-display text-sm font-semibold text-shihu-muted mb-3">
         Data master (pondasi Joki Item)

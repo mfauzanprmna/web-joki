@@ -14,6 +14,10 @@ export interface JokiDisplayCard {
   badge?: string | null;
   game: GameLite;
   categoryName: string;
+  regionName?: string | null;
+  questTypeName?: string | null;
+  supportsRegionFilter?: boolean;
+  supportsQuestTypeFilter?: boolean;
   metaTags: (string | null | undefined)[];
 }
 
@@ -28,6 +32,8 @@ const PAGE_SIZE = 12;
 export function JokiListFilter({ cards }: { cards: JokiDisplayCard[] }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
+  const [region, setRegion] = useState("all");
+  const [questType, setQuestType] = useState("all");
   const [page, setPage] = useState(1);
 
   const categories = useMemo(() => {
@@ -35,11 +41,34 @@ export function JokiListFilter({ cards }: { cards: JokiDisplayCard[] }) {
     return Array.from(unique).sort((a, b) => a.localeCompare(b));
   }, [cards]);
 
+  const categoryCards = useMemo(
+    () => category === "all" ? cards : cards.filter((card) => card.categoryName === category),
+    [cards, category]
+  );
+  const showRegionFilter = category !== "all" && categoryCards.some((card) => card.supportsRegionFilter);
+  const showQuestTypeFilter = category !== "all" && categoryCards.some((card) => card.supportsQuestTypeFilter);
+
+  const regions = useMemo(
+    () => Array.from(new Set(categoryCards.filter((card) => card.supportsRegionFilter).map((card) => card.regionName).filter((value): value is string => !!value))).sort((a, b) => a.localeCompare(b)),
+    [categoryCards]
+  );
+  const questTypes = useMemo(
+    () => Array.from(new Set(categoryCards.filter((card) => card.supportsQuestTypeFilter).map((card) => card.questTypeName).filter((value): value is string => !!value))).sort((a, b) => a.localeCompare(b)),
+    [categoryCards]
+  );
+
+  useEffect(() => {
+    if (!showRegionFilter) setRegion("all");
+    if (!showQuestTypeFilter) setQuestType("all");
+  }, [showRegionFilter, showQuestTypeFilter]);
+
   const filtered = useMemo(() => {
     const keyword = query.trim().toLowerCase();
     return cards.filter((card) => {
       const matchesCategory = category === "all" || card.categoryName === category;
-      if (!matchesCategory) return false;
+      const matchesRegion = !showRegionFilter || region === "all" || card.regionName === region;
+      const matchesQuestType = !showQuestTypeFilter || questType === "all" || card.questTypeName === questType;
+      if (!matchesCategory || !matchesRegion || !matchesQuestType) return false;
 
       if (!keyword) return true;
       const haystack = [
@@ -53,11 +82,11 @@ export function JokiListFilter({ cards }: { cards: JokiDisplayCard[] }) {
         .toLowerCase();
       return haystack.includes(keyword);
     });
-  }, [cards, query, category]);
+  }, [cards, query, category, region, questType, showRegionFilter, showQuestTypeFilter]);
 
   useEffect(() => {
     setPage(1);
-  }, [query, category]);
+  }, [query, category, region, questType]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -65,7 +94,7 @@ export function JokiListFilter({ cards }: { cards: JokiDisplayCard[] }) {
   return (
     <div>
       <div className="flex flex-col sm:flex-row gap-2.5 mb-5">
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-0">
           <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-shihu-faint pointer-events-none" />
           <input
             type="text"
@@ -88,9 +117,35 @@ export function JokiListFilter({ cards }: { cards: JokiDisplayCard[] }) {
             </option>
           ))}
         </select>
+
+        {showRegionFilter && <select
+          value={region}
+          onChange={(e) => setRegion(e.target.value)}
+          className="bg-shihu-card border border-shihu-border rounded-xl px-3.5 py-2.5 text-sm text-shihu-text outline-none focus:border-shihu-corona transition-colors font-display sm:w-56"
+        >
+          <option value="all">Semua region</option>
+          {regions.map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </select>}
+
+        {showQuestTypeFilter && <select
+          value={questType}
+          onChange={(e) => setQuestType(e.target.value)}
+          className="bg-shihu-card border border-shihu-border rounded-xl px-3.5 py-2.5 text-sm text-shihu-text outline-none focus:border-shihu-corona transition-colors font-display sm:w-56"
+        >
+          <option value="all">Semua jenis quest</option>
+          {questTypes.map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </select>}
       </div>
 
-      {(query.trim() || category !== "all") && (
+      {(query.trim() || category !== "all" || (showRegionFilter && region !== "all") || (showQuestTypeFilter && questType !== "all")) && (
         <p className="text-shihu-faint text-xs mb-4">
           Menampilkan {filtered.length} dari {cards.length} paket
         </p>
