@@ -74,6 +74,8 @@ export default async function WorkerOrderProgressPage({
                             },
                         },
                     },
+                    endgameContent: { select: { title: true } },
+                    patchEvent: { select: { title: true } },
                     updates: { orderBy: { createdAt: "desc" } },
                     dayProgress: { orderBy: { date: "asc" } },
                     dayTasks: { orderBy: [{ date: "asc" }, { position: "asc" }] },
@@ -91,8 +93,10 @@ export default async function WorkerOrderProgressPage({
         return {
             id: line.id,
             jokiPaketId: line.jokiPaketId,
+            patchEvent: line.patchEvent,
+            endgameContent: line.endgameContent,
             title:
-                (line.jokiItem?.title ?? line.jokiPaket?.title ?? "Item tidak dikenal") +
+                (line.jokiItem?.title ?? line.jokiPaket?.title ?? line.patchEvent?.title ?? line.endgameContent?.title ?? "Item tidak dikenal") +
                 (line.characterName ? ` — ${line.characterName}` : ""),
             jokiItem: line.jokiItem
                 ? {

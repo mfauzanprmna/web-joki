@@ -4,7 +4,7 @@ import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { createOrder } from "@/lib/actions/order";
 import type { OrderActionState } from "@/lib/actions/order";
 import { formatRupiah } from "@/lib/format";
-import type { JokiItemOption, JokiPaketOption, PatchEventOption } from "./OrderLineSelector";
+import type { JokiItemOption, JokiPaketOption, PatchEventOption, EndgameContentOption } from "./OrderLineSelector";
 import { OrderSourceFields } from "./OrderSourceFields";
 import { CustomerSelector, type CustomerOption } from "./CustomerSelector";
 import { OrderAccountTab, type AccountData } from "./OrderAccountTab";
@@ -19,16 +19,17 @@ interface CreateOrderFormProps {
   items: JokiItemOption[];
   pakets: JokiPaketOption[];
   events: PatchEventOption[];
+  endgameContents: EndgameContentOption[];
   customers: CustomerOption[];
 }
 
 const MAX_ACCOUNTS = 10;
 
 function emptyAccount(): AccountData {
-  return { gameId: "", jokerName: "", estimasiJoki: "", lines: [], total: 0 };
+  return { accountId: "", accountName: "", accountUid: "", gameId: "", jokerName: "", estimasiJoki: "", lines: [], total: 0 };
 }
 
-export function CreateOrderForm({ games, items, pakets, events, customers }: CreateOrderFormProps) {
+export function CreateOrderForm({ games, items, pakets, events, endgameContents, customers }: CreateOrderFormProps) {
   const [state, formAction, pending] = useActionState<OrderActionState | undefined, FormData>(
     createOrder,
     undefined
@@ -81,6 +82,9 @@ export function CreateOrderForm({ games, items, pakets, events, customers }: Cre
       JSON.stringify(
         accounts.map((a) => ({
           gameId: a.gameId,
+          accountId: a.accountId || null,
+          accountName: a.accountName || null,
+          accountUid: a.accountUid || null,
           jokerName: a.jokerName || null,
           estimasiJoki: a.estimasiJoki || null,
           lines: a.lines,
@@ -159,12 +163,14 @@ export function CreateOrderForm({ games, items, pakets, events, customers }: Cre
       )}
 
       {Array.from({ length: accountCount }).map((_, i) => (
-        <div key={`${formKey}-${i}`} style={{ display: activeTab === i ? "block" : "none" }}>
+        <div key={`${formKey}-${selectedCustomer?.id ?? "new"}-${i}`} style={{ display: activeTab === i ? "block" : "none" }}>
           <OrderAccountTab
             games={games}
             items={items}
             pakets={pakets}
             events={events}
+            endgameContents={endgameContents}
+            accounts={selectedCustomer?.accounts ?? []}
             onChange={(data) => updateAccount(i, data)}
           />
         </div>

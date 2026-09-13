@@ -1,0 +1,1 @@
+-- Schema changes for category progress updates were already applied to the database via db push.

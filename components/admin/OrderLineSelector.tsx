@@ -32,8 +32,15 @@ export interface PatchEventOption {
   endDate: string;
 }
 
+export interface EndgameContentOption {
+  id: string;
+  gameId: string;
+  title: string;
+  priceRupiah: number;
+}
+
 interface LineState {
-  type: "item" | "paket" | "event";
+  type: "item" | "paket" | "event" | "endgame";
   id: string;
   explorationPercent: string;
   actFrom: string;
@@ -44,7 +51,7 @@ interface LineState {
 }
 
 export interface ExportedLine {
-  type: "item" | "paket" | "event";
+  type: "item" | "paket" | "event" | "endgame";
   id: string;
   explorationPercent: number | null;
   actFrom: number | null;
@@ -76,18 +83,21 @@ interface OrderLineSelectorProps {
   items: JokiItemOption[];
   pakets: JokiPaketOption[];
   events: PatchEventOption[];
+  endgameContents: EndgameContentOption[];
   onLinesChange?: (lines: ExportedLine[], total: number) => void;
 }
 
-export function OrderLineSelector({ gameId, items, pakets, events, onLinesChange }: OrderLineSelectorProps) {
+export function OrderLineSelector({ gameId, items, pakets, events, endgameContents, onLinesChange }: OrderLineSelectorProps) {
   const [selectedLines, setSelectedLines] = useState<Map<string, LineState>>(new Map());
   const [itemSearch, setItemSearch] = useState("");
   const [paketSearch, setPaketSearch] = useState("");
   const [eventSearch, setEventSearch] = useState("");
+  const [endgameSearch, setEndgameSearch] = useState("");
 
   const itemsForGame = useMemo(() => items.filter((i) => i.gameId === gameId), [items, gameId]);
   const paketsForGame = useMemo(() => pakets.filter((p) => p.gameId === gameId), [pakets, gameId]);
   const eventsForGame = useMemo(() => events.filter((event) => event.gameId === gameId), [events, gameId]);
+  const endgameContentsForGame = useMemo(() => endgameContents.filter((content) => content.gameId === gameId), [endgameContents, gameId]);
   const filteredItems = useMemo(
     () => itemsForGame.filter((item) => item.title.toLowerCase().includes(itemSearch.toLowerCase())),
     [itemsForGame, itemSearch]
@@ -100,8 +110,12 @@ export function OrderLineSelector({ gameId, items, pakets, events, onLinesChange
     () => eventsForGame.filter((event) => event.title.toLowerCase().includes(eventSearch.toLowerCase())),
     [eventsForGame, eventSearch]
   );
+  const filteredEndgameContents = useMemo(
+    () => endgameContentsForGame.filter((content) => content.title.toLowerCase().includes(endgameSearch.toLowerCase())),
+    [endgameContentsForGame, endgameSearch]
+  );
 
-  function makeKey(type: "item" | "paket" | "event", id: string) {
+  function makeKey(type: "item" | "paket" | "event" | "endgame", id: string) {
     return `${type}:${id}`;
   }
 
@@ -121,7 +135,7 @@ export function OrderLineSelector({ gameId, items, pakets, events, onLinesChange
   }
 
   function toggleLine(
-    type: "item" | "paket" | "event",
+    type: "item" | "paket" | "event" | "endgame",
     id: string,
     defaults?: Pick<JokiItemOption, "actNumber">
   ) {
@@ -169,6 +183,11 @@ export function OrderLineSelector({ gameId, items, pakets, events, onLinesChange
       if (line.type === "event") {
         const event = eventsForGame.find((candidate) => candidate.id === line.id);
         if (event) sum += event.priceRupiah;
+        continue;
+      }
+      if (line.type === "endgame") {
+        const content = endgameContentsForGame.find((candidate) => candidate.id === line.id);
+        if (content) sum += content.priceRupiah;
         continue;
       }
       const item = itemsForGame.find((i) => i.id === line.id);
@@ -359,6 +378,27 @@ export function OrderLineSelector({ gameId, items, pakets, events, onLinesChange
 
       <div>
         <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1.5">
+          Konten Endgame
+        </label>
+        <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
+          <input type="search" value={endgameSearch} onChange={(e) => setEndgameSearch(e.target.value)} className="admin-input" placeholder="Cari konten endgame..." aria-label="Cari konten endgame" />
+          {filteredEndgameContents.map((content) => {
+            const key = makeKey("endgame", content.id);
+            const checked = selectedLines.has(key);
+            return (
+              <label key={content.id} className="flex items-center gap-2 text-xs text-shihu-text px-1 py-1">
+                <input type="checkbox" checked={checked} onChange={() => toggleLine("endgame", content.id)} className="accent-shihu-corona w-3.5 h-3.5 shrink-0" />
+                <span className="flex-1">{content.title}</span>
+                <span className="text-shihu-corona font-display font-semibold text-[11px]">{formatRupiah(content.priceRupiah)}</span>
+              </label>
+            );
+          })}
+          {endgameContentsForGame.length === 0 && <p className="text-[11px] text-shihu-faint px-1 py-1">Belum ada konten endgame yang bisa dipesan.</p>}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1.5">
           Event Patch
         </label>
         <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
@@ -422,18 +462,18 @@ export function OrderLineSelector({ gameId, items, pakets, events, onLinesChange
             return (
               <div key={paket.id} className="px-1 py-1">
                 <label className="flex items-center gap-2 text-xs text-shihu-text">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => toggleLine("paket", paket.id)}
-                  className="accent-shihu-corona w-3.5 h-3.5 shrink-0"
-                />
-                <span className="flex-1">{paket.title}</span>
-                {checked && (
-                  <span className="text-shihu-corona font-display font-semibold text-[11px]">
-                    {formatRupiah(paket.priceRupiah)}
-                  </span>
-                )}
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleLine("paket", paket.id)}
+                    className="accent-shihu-corona w-3.5 h-3.5 shrink-0"
+                  />
+                  <span className="flex-1">{paket.title}</span>
+                  {checked && (
+                    <span className="text-shihu-corona font-display font-semibold text-[11px]">
+                      {formatRupiah(paket.priceRupiah)}
+                    </span>
+                  )}
                 </label>
               </div>
             );

@@ -50,6 +50,8 @@ export interface OrderLineData extends LineForGrouping {
     endgameContent: { endgameContent: { resetCycle: string } }[];
   }
   | null;
+  patchEvent: { title: string } | null;
+  endgameContent: { title: string } | null;
   actFrom: number | null;
   actTo: number | null;
   materialQuantity: number | null;
@@ -114,6 +116,8 @@ function PaketPanel({ line }: { line: OrderLineData }) {
   const itemLines: OrderLineData[] = line.paketItems.map((item) => ({
     id: `${line.id}:${item.id}`,
     jokiPaketId: null,
+    patchEvent: null,
+    endgameContent: null,
     title: item.title,
     jokiItem: item.jokiItem,
     actFrom: item.actFrom,

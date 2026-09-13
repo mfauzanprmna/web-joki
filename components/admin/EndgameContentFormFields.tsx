@@ -11,6 +11,7 @@ interface EndgameContentFormFieldsProps {
     resetCycle: ResetCycle;
     anchorStartDate: Date | null;
     daysAfterPatchStart: number | null;
+    isOrderable?: boolean;
   };
 }
 
@@ -20,6 +21,16 @@ export function EndgameContentFormFields({ defaultValues }: EndgameContentFormFi
 
   return (
     <>
+      <label className="flex items-center gap-2 text-xs text-shihu-muted font-display">
+        <input
+          type="checkbox"
+          name="isOrderable"
+          defaultChecked={defaultValues?.isOrderable ?? false}
+          className="accent-shihu-corona"
+        />
+        Tampilkan di halaman Joki dan bisa dipesan
+      </label>
+
       <div>
         <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1">
           Siklus reset <span className="text-red-400">*</span>

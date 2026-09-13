@@ -15,6 +15,7 @@ interface EndgameContentRow {
   anchorStartDate: Date | null;
   daysAfterPatchStart: number | null;
   isActive: boolean;
+  isOrderable: boolean;
   game: { name: string; accentColor: string };
 }
 
@@ -46,6 +47,11 @@ export function EndgameContentRowItem({ content }: { content: EndgameContentRow 
             {!content.isActive && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-400/15 text-red-400 font-display">
                 Nonaktif
+              </span>
+            )}
+            {content.isOrderable && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-400/15 text-emerald-300 font-display">
+                Tampil di Joki
               </span>
             )}
           </div>
@@ -120,6 +126,7 @@ export function EndgameContentRowItem({ content }: { content: EndgameContentRow 
           resetCycle: content.resetCycle,
           anchorStartDate: content.anchorStartDate,
           daysAfterPatchStart: content.daysAfterPatchStart,
+          isOrderable: content.isOrderable,
         }}
       />
 

@@ -4,7 +4,7 @@ import { OrderListFilter } from "@/components/admin/OrderListFilter";
 import { isPatchEventLive } from "@/lib/patch-schedule";
 
 export default async function AdminAntrianPage() {
-  const [games, items, pakets, events, customers, orders, workers] = await Promise.all([
+  const [games, items, pakets, events, endgameContents, customers, accounts, orders, workers] = await Promise.all([
     prisma.game.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.jokiItem.findMany({
       where: { isActive: true },
@@ -40,6 +40,11 @@ export default async function AdminAntrianPage() {
       include: { patch: { select: { gameId: true, name: true } } },
       orderBy: { startDate: "asc" },
     }),
+    prisma.endgameContent.findMany({
+      where: { isActive: true, isOrderable: true },
+      select: { id: true, gameId: true, title: true, priceRupiah: true },
+      orderBy: { createdAt: "asc" },
+    }),
     prisma.customer.findMany({
       orderBy: { name: "asc" },
       include: {
@@ -49,11 +54,15 @@ export default async function AdminAntrianPage() {
         },
       },
     }),
+    prisma.jokiAccount.findMany({
+      select: { id: true, customerId: true, gameId: true, name: true, uid: true },
+      orderBy: { createdAt: "asc" },
+    }),
     prisma.order.findMany({
       include: {
         game: true,
         customer: true,
-        lines: { include: { jokiItem: true, jokiPaket: true, patchEvent: true } },
+        lines: { include: { jokiItem: true, jokiPaket: true, patchEvent: true, endgameContent: true } },
       },
       orderBy: { createdAt: "desc" },
       take: 60,
@@ -84,6 +93,12 @@ export default async function AdminAntrianPage() {
   const customerOptions = customers.map(({ id, name, orders: customerOrders }) => ({
     id,
     name,
+    accounts: accounts.filter((account) => account.customerId === id).map(({ id: accountId, gameId, name: accountName, uid }) => ({
+      id: accountId,
+      gameId,
+      name: accountName,
+      uid,
+    })),
     sourceUsernames: customerOrders.reduce<Partial<Record<"DISCORD" | "INSTAGRAM" | "TIKTOK" | "WHATSAPP", string>>>(
       (usernames, order) => {
         if (!usernames[order.orderSource]) usernames[order.orderSource] = order.sourceUsername;
@@ -108,7 +123,7 @@ export default async function AdminAntrianPage() {
           </span>
         </summary>
 
-        <CreateOrderForm games={games} items={itemOptions} pakets={paketOptions} events={eventOptions} customers={customerOptions} />
+        <CreateOrderForm games={games} items={itemOptions} pakets={paketOptions} events={eventOptions} endgameContents={endgameContents} customers={customerOptions} />
       </details>
 
       <OrderListFilter orders={orders} games={games} workers={workers} />

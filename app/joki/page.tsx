@@ -38,7 +38,7 @@ export default async function JokiListPage({
 
   const games = await prisma.game.findMany({ orderBy: { createdAt: "asc" } });
 
-  const [regularItems, patches, patchWideItems, pakets] = await Promise.all([
+  const [regularItems, patches, patchWideItems, pakets, endgameContents] = await Promise.all([
     prisma.jokiItem.findMany({
       where: {
         isActive: true,
@@ -72,6 +72,15 @@ export default async function JokiListPage({
         ...(gameSlug ? { game: { slug: gameSlug } } : {}),
       },
       include: { game: true, region: true, items: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.endgameContent.findMany({
+      where: {
+        isActive: true,
+        isOrderable: true,
+        ...(gameSlug ? { game: { slug: gameSlug } } : {}),
+      },
+      include: { game: true },
       orderBy: { createdAt: "asc" },
     }),
   ]);
@@ -182,6 +191,21 @@ export default async function JokiListPage({
       regionName: paket.region?.name,
       supportsRegionFilter: !!paket.region,
       metaTags: paketMetaTags,
+    });
+  }
+
+  // Konten endgame yang diaktifkan admin untuk dijual langsung.
+  for (const content of endgameContents) {
+    cards.push({
+      key: `endgame-${content.id}`,
+      title: content.title,
+      description: content.description,
+      priceLabel: formatRupiah(content.priceRupiah),
+      etaLabel: "sesuai siklus reset",
+      badge: "Endgame",
+      game: content.game,
+      categoryName: "Endgame",
+      metaTags: ["Endgame"],
     });
   }
 

@@ -9,17 +9,34 @@
  * ini -- paket selalu tampil sebagai tab tersendiri di luar struktur ini.
  */
 
-export type ProgressCategoryKind = "RAWAT_AKUN" | "EKSPLORASI" | "QUEST" | "MATERIAL" | "OTHER";
+export type ProgressCategoryKind =
+  | "RAWAT_AKUN"
+  | "EKSPLORASI"
+  | "QUEST"
+  | "MATERIAL"
+  | "EVENT"
+  | "ENDGAME"
+  | "OTHER";
 
 export const CATEGORY_KIND_LABEL: Record<ProgressCategoryKind, string> = {
   RAWAT_AKUN: "Rawat Akun",
   EKSPLORASI: "Eksplorasi",
   QUEST: "Quest",
   MATERIAL: "Material",
+  EVENT: "Event",
+  ENDGAME: "Endgame",
   OTHER: "Lainnya",
 };
 
-const CATEGORY_ORDER: ProgressCategoryKind[] = ["RAWAT_AKUN", "EKSPLORASI", "QUEST", "MATERIAL", "OTHER"];
+const CATEGORY_ORDER: ProgressCategoryKind[] = [
+  "RAWAT_AKUN",
+  "EKSPLORASI",
+  "QUEST",
+  "MATERIAL",
+  "EVENT",
+  "ENDGAME",
+  "OTHER",
+];
 
 export interface LineForGrouping {
   id: string;
@@ -34,9 +51,13 @@ export interface LineForGrouping {
     region: { name: string } | null;
     questType: { name: string; questKind: string } | null;
   } | null;
+  patchEvent?: { title: string } | null;
+  endgameContent?: { title: string } | null;
 }
 
 export function getCategoryKind(line: LineForGrouping): ProgressCategoryKind {
+  if (line.patchEvent) return "EVENT";
+  if (line.endgameContent) return "ENDGAME";
   const cat = line.jokiItem?.category;
   if (!cat) return "OTHER";
   if (cat.isRawatAkun) return "RAWAT_AKUN";

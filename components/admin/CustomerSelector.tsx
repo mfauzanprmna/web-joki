@@ -6,6 +6,14 @@ export interface CustomerOption {
   id: string;
   name: string;
   sourceUsernames?: Partial<Record<"DISCORD" | "INSTAGRAM" | "TIKTOK" | "WHATSAPP", string>>;
+  accounts?: AccountOption[];
+}
+
+export interface AccountOption {
+  id: string;
+  gameId: string;
+  name: string;
+  uid: string | null;
 }
 
 interface CustomerSelectorProps {

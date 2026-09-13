@@ -70,6 +70,7 @@ interface LineDetail extends LineForGrouping {
 
 export interface AccountProgress {
   orderId: string;
+  accountName: string;
   orderCode: string;
   gameName: string;
   gameAccent: string;
@@ -373,7 +374,7 @@ export function CustomerAccountTabs({ accounts }: { accounts: AccountProgress[] 
                 border: `1px solid ${activeTab === i ? "#FFB23855" : "#3D3557"}`,
               }}
             >
-              Akun {i + 1} · {acc.gameName}
+              {acc.accountName} · {acc.gameName}
             </button>
           ))}
         </div>
@@ -385,7 +386,7 @@ export function CustomerAccountTabs({ accounts }: { accounts: AccountProgress[] 
             <RingProgress value={account.progressPct} accent={account.gameAccent} size={64} />
             <div className="flex-1 min-w-[200px]">
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className="text-[11px] text-shihu-faint font-display">{account.orderCode}</span>
+                <span className="text-[11px] text-shihu-faint font-display">{account.accountName} · {account.orderCode}</span>
                 <span
                   className="text-[11px] px-2 py-0.5 rounded-full font-display"
                   style={{ backgroundColor: `${account.gameAccent}1F`, color: account.gameAccent }}

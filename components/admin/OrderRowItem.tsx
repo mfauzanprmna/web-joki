@@ -29,6 +29,7 @@ interface OrderLineRow {
   jokiItem: { title: string } | null;
   jokiPaket: { title: string } | null;
   patchEvent: { title: string } | null;
+  endgameContent: { title: string } | null;
 }
 
 interface WorkerOption {
@@ -69,7 +70,7 @@ const SOURCE_LABEL: Record<string, string> = {
 };
 
 function describeLine(line: OrderLineRow): string {
-  const title = line.jokiItem?.title ?? line.jokiPaket?.title ?? line.patchEvent?.title ?? "Item tidak dikenal";
+  const title = line.jokiItem?.title ?? line.jokiPaket?.title ?? line.patchEvent?.title ?? line.endgameContent?.title ?? "Item tidak dikenal";
   const details: string[] = [];
   if (line.explorationPercent != null) details.push(`${line.explorationPercent}% sudah dikerjakan`);
   if (line.actFrom != null && line.actTo != null) details.push(`Act ${line.actFrom}-${line.actTo}`);

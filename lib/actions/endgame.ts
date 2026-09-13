@@ -23,12 +23,13 @@ export async function createEndgameContent(
   const description = String(formData.get("description"));
   const priceRupiah = Number(formData.get("priceRupiah"));
   const resetCycle = String(formData.get("resetCycle")) as ResetCycle;
+  const isOrderable = formData.get("isOrderable") === "on";
 
   const data = buildCycleFields(resetCycle, formData);
   if ("error" in data) return { error: data.error };
 
   await prisma.endgameContent.create({
-    data: { gameId, title, description, priceRupiah, resetCycle, ...data },
+    data: { gameId, title, description, priceRupiah, resetCycle, isOrderable, ...data },
   });
 
   revalidatePath("/admin/endgame");
@@ -47,13 +48,14 @@ export async function updateEndgameContent(
   const priceRupiah = Number(formData.get("priceRupiah"));
   const resetCycle = String(formData.get("resetCycle")) as ResetCycle;
   const isActive = formData.get("isActive") === "on";
+  const isOrderable = formData.get("isOrderable") === "on";
 
   const data = buildCycleFields(resetCycle, formData);
   if ("error" in data) return { error: data.error };
 
   await prisma.endgameContent.update({
     where: { id },
-    data: { title, description, priceRupiah, resetCycle, isActive, ...data },
+    data: { title, description, priceRupiah, resetCycle, isActive, isOrderable, ...data },
   });
 
   revalidatePath("/admin/endgame");

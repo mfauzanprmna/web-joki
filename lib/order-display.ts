@@ -2,6 +2,7 @@ interface LineForDisplay {
   jokiItem: { title: string } | null;
   jokiPaket: { title: string } | null;
   patchEvent?: { title: string } | null;
+  endgameContent?: { title: string } | null;
 }
 
 /**
@@ -12,7 +13,7 @@ interface LineForDisplay {
  * - 0 baris (seharusnya tidak terjadi) -> fallback "Pesanan kustom".
  */
 export function buildOrderTitle(lines: LineForDisplay[]): string {
-  const titles = lines.map((l) => l.jokiItem?.title ?? l.jokiPaket?.title ?? l.patchEvent?.title ?? "Item tidak dikenal");
+  const titles = lines.map((l) => l.jokiItem?.title ?? l.jokiPaket?.title ?? l.patchEvent?.title ?? l.endgameContent?.title ?? "Item tidak dikenal");
 
   if (titles.length === 0) return "Pesanan kustom";
   if (titles.length === 1) return titles[0];

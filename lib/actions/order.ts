@@ -23,7 +23,7 @@ function generateOrderCode(usedCodes: Set<string>): string {
 }
 
 interface LineInputRaw {
-  type: "item" | "paket" | "event";
+  type: "item" | "paket" | "event" | "endgame";
   id: string;
   explorationPercent: number | null;
   actFrom: number | null;
@@ -34,6 +34,9 @@ interface LineInputRaw {
 }
 
 interface AccountInputRaw {
+  accountId: string | null;
+  accountName: string | null;
+  accountUid: string | null;
   gameId: string;
   jokerName: string | null;
   estimasiJoki: string | null;
@@ -50,7 +53,7 @@ function parseLine(raw: unknown): LineInputRaw | { error: string } {
     return { error: "Data baris order tidak valid." };
   }
   const e = raw as Record<string, unknown>;
-  if (e.type !== "item" && e.type !== "paket" && e.type !== "event") {
+  if (e.type !== "item" && e.type !== "paket" && e.type !== "event" && e.type !== "endgame") {
     return { error: "Data baris order tidak valid." };
   }
   return {
@@ -94,8 +97,14 @@ function parseAccountsJson(formData: FormData): { accounts: AccountInputRaw[] } 
     }
     const e = entry as Record<string, unknown>;
     const gameId = String(e.gameId || "");
+    const accountId = e.accountId ? String(e.accountId) : null;
+    const accountName = e.accountName ? String(e.accountName).trim() || null : null;
+    const accountUid = e.accountUid ? String(e.accountUid).trim() || null : null;
     if (!gameId) {
       return { error: "Setiap akun wajib memilih game." };
+    }
+    if (!accountId && !accountName) {
+      return { error: "Setiap akun wajib memilih akun existing atau mengisi nama akun baru." };
     }
     if (!Array.isArray(e.lines) || e.lines.length === 0) {
       return { error: "Setiap akun wajib memilih minimal satu Joki Item atau Paket Joki." };
@@ -109,6 +118,9 @@ function parseAccountsJson(formData: FormData): { accounts: AccountInputRaw[] } 
       lines.push(parsedLine);
     }
     accounts.push({
+      accountId,
+      accountName,
+      accountUid,
       gameId,
       jokerName: e.jokerName ? String(e.jokerName).trim() || null : null,
       estimasiJoki: e.estimasiJoki ? String(e.estimasiJoki).trim() || null : null,
@@ -160,45 +172,75 @@ export async function createOrder(
   const allItemIds = new Set<string>();
   const allPaketIds = new Set<string>();
   const allEventIds = new Set<string>();
+  const allEndgameContentIds = new Set<string>();
+  const allAccountIds = new Set<string>();
   for (const acc of parsedAccounts.accounts) {
+    if (acc.accountId) allAccountIds.add(acc.accountId);
     for (const line of acc.lines) {
       if (line.type === "item") allItemIds.add(line.id);
       else if (line.type === "paket") allPaketIds.add(line.id);
-      else allEventIds.add(line.id);
+      else if (line.type === "event") allEventIds.add(line.id);
+      else allEndgameContentIds.add(line.id);
     }
   }
 
   const items =
     allItemIds.size > 0
       ? await prisma.jokiItem.findMany({
-          where: { id: { in: Array.from(allItemIds) } },
-          include: { category: true, patch: { select: { startDate: true, endDate: true } } },
-        })
+        where: { id: { in: Array.from(allItemIds) } },
+        include: { category: true, patch: { select: { startDate: true, endDate: true } } },
+      })
       : [];
   const pakets =
     allPaketIds.size > 0
       ? await prisma.jokiPaket.findMany({
-          where: { id: { in: Array.from(allPaketIds) } },
-          include: {
-            items: {
-              include: { jokiItem: { select: { actNumber: true, category: { select: { requiresQuestType: true } } } } },
-            },
+        where: { id: { in: Array.from(allPaketIds) } },
+        include: {
+          items: {
+            include: { jokiItem: { select: { actNumber: true, category: { select: { requiresQuestType: true } } } } },
           },
-        })
+        },
+      })
       : [];
   const events =
     allEventIds.size > 0
       ? await prisma.patchEvent.findMany({
-          where: { id: { in: Array.from(allEventIds) } },
-          include: { patch: { select: { gameId: true } } },
-        })
+        where: { id: { in: Array.from(allEventIds) } },
+        include: { patch: { select: { gameId: true } } },
+      })
+      : [];
+  const endgameContents =
+    allEndgameContentIds.size > 0
+      ? await prisma.endgameContent.findMany({
+        where: { id: { in: Array.from(allEndgameContentIds) }, isActive: true, isOrderable: true },
+      })
+      : [];
+  const existingAccounts =
+    allAccountIds.size > 0 && customerId
+      ? await prisma.jokiAccount.findMany({
+        where: { id: { in: Array.from(allAccountIds) }, customerId },
+        select: { id: true, gameId: true },
+      })
       : [];
 
   const itemMap = new Map(items.map((i) => [i.id, i]));
   const paketMap = new Map(pakets.map((p) => [p.id, p]));
   const eventMap = new Map(events.map((event) => [event.id, event]));
+  const endgameContentMap = new Map(endgameContents.map((content) => [content.id, content]));
+  const accountMap = new Map(existingAccounts.map((account) => [account.id, account]));
+
+  for (const acc of parsedAccounts.accounts) {
+    if (acc.accountId) {
+      const account = accountMap.get(acc.accountId);
+      if (!account) return { error: "Akun yang dipilih tidak ditemukan untuk customer ini." };
+      if (account.gameId !== acc.gameId) return { error: "Akun yang dipilih tidak sesuai dengan game akun ini." };
+    }
+  }
 
   interface ResolvedAccount {
+    accountId: string | null;
+    accountName: string | null;
+    accountUid: string | null;
     gameId: string;
     jokerName: string | null;
     estimasiJoki: string | null;
@@ -207,6 +249,7 @@ export async function createOrder(
       jokiItemId: string | null;
       jokiPaketId: string | null;
       patchEventId: string | null;
+      endgameContentId: string | null;
       explorationPercent: number | null;
       actFrom: number | null;
       actTo: number | null;
@@ -259,6 +302,7 @@ export async function createOrder(
           jokiItemId: item.id,
           jokiPaketId: null,
           patchEventId: null,
+          endgameContentId: null,
           explorationPercent: line.explorationPercent,
           actFrom: line.actFrom,
           actTo: line.actTo,
@@ -277,6 +321,7 @@ export async function createOrder(
           jokiItemId: null,
           jokiPaketId: paket.id,
           patchEventId: null,
+          endgameContentId: null,
           explorationPercent: null,
           actFrom: null,
           actTo: null,
@@ -286,7 +331,7 @@ export async function createOrder(
           endDate: null,
           calculatedPrice: paket.priceRupiah,
         });
-      } else {
+      } else if (line.type === "event") {
         const event = eventMap.get(line.id);
         if (!event || !isPatchEventLive(event)) {
           return { error: "Salah satu event yang dipilih sudah tidak sedang berjalan." };
@@ -298,6 +343,7 @@ export async function createOrder(
           jokiItemId: null,
           jokiPaketId: null,
           patchEventId: event.id,
+          endgameContentId: null,
           explorationPercent: null,
           actFrom: null,
           actTo: null,
@@ -307,10 +353,35 @@ export async function createOrder(
           endDate: null,
           calculatedPrice: event.priceRupiah,
         });
+      } else {
+        const content = endgameContentMap.get(line.id);
+        if (!content) {
+          return { error: "Salah satu konten endgame tidak ditemukan atau sedang tidak tersedia." };
+        }
+        if (content.gameId !== acc.gameId) {
+          return { error: "Konten endgame yang dipilih tidak sesuai dengan game akun ini." };
+        }
+        linesToCreate.push({
+          jokiItemId: null,
+          jokiPaketId: null,
+          patchEventId: null,
+          endgameContentId: content.id,
+          explorationPercent: null,
+          actFrom: null,
+          actTo: null,
+          materialQuantity: null,
+          rawatAkunQuantity: null,
+          startDate: null,
+          endDate: null,
+          calculatedPrice: content.priceRupiah,
+        });
       }
     }
 
     resolvedAccounts.push({
+      accountId: acc.accountId,
+      accountName: acc.accountName,
+      accountUid: acc.accountUid,
       gameId: acc.gameId,
       jokerName: acc.jokerName,
       estimasiJoki: acc.estimasiJoki,
@@ -348,11 +419,21 @@ export async function createOrder(
 
     for (const acc of resolvedAccounts) {
       const orderCode = generateOrderCode(usedCodes);
+      const accountId = acc.accountId ?? (await tx.jokiAccount.create({
+        data: {
+          customerId: resolvedCustomerId,
+          gameId: acc.gameId,
+          name: acc.accountName!,
+          uid: acc.accountUid,
+        },
+        select: { id: true },
+      })).id;
       await tx.order.create({
         data: {
           orderCode,
           gameId: acc.gameId,
           customerId: resolvedCustomerId,
+          accountId,
           jokerName: acc.jokerName,
           estimasiJoki: acc.estimasiJoki,
           status: "MENUNGGU",
@@ -376,7 +457,9 @@ export async function createOrder(
                 ? paketMap.get(l.jokiPaketId)?.title
                 : l.patchEventId
                   ? eventMap.get(l.patchEventId)?.title
-                  : null,
+                  : l.endgameContentId
+                    ? endgameContentMap.get(l.endgameContentId)?.title
+                    : null,
           )
           .filter((title): title is string => !!title)
           .join(", ") || "Pesanan kustom",

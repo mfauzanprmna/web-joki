@@ -19,6 +19,7 @@ model Game {
   regions            GameRegion[]
   categories         JokiCategory[]
   jokiHistoryEntries JokiHistoryEntry[]
+  jokiAccounts       JokiAccount[]
   jokiItems          JokiItem[]
   jokiPakets         JokiPaket[]
   orders             Order[]
@@ -156,10 +157,12 @@ model EndgameContent {
   anchorStartDate     DateTime?
   daysAfterPatchStart Int?
   isActive            Boolean                  @default(true)
+  isOrderable         Boolean                  @default(false)
   createdAt           DateTime                 @default(now())
   updatedAt           DateTime                 @updatedAt
   game                Game                     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   rawatAkunItems      JokiItemEndgameContent[]
+  orderLines          OrderLine[]
 
   @@index([gameId])
 }
@@ -292,6 +295,25 @@ model Customer {
   updatedAt        DateTime           @updatedAt
   jokiHistoryEntries JokiHistoryEntry[]
   orders           Order[]
+  jokiAccounts     JokiAccount[]
+}
+
+/// Identitas akun game milik Customer. Satu akun dapat memiliki beberapa
+/// Order terpisah tanpa mencampur akun lain milik customer yang sama.
+model JokiAccount {
+  id         String   @id @default(cuid())
+  customerId String
+  gameId     String
+  name       String
+  uid        String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  game       Game     @relation(fields: [gameId], references: [id])
+  orders     Order[]
+
+  @@index([customerId])
+  @@index([gameId])
 }
 
 model Worker {
@@ -309,6 +331,7 @@ model Order {
   orderCode      String       @unique
   gameId         String
   customerId     String
+  accountId      String?
   /// Label nama joki bebas teks (legacy/manual, dipakai kalau belum ada akun
   /// Worker-nya). Kalau workerId terisi, tampilan sebaiknya pakai worker.name.
   jokerName      String?
@@ -334,6 +357,7 @@ model Order {
   /// dan cuma bisa lihat/update progress order yang workerId-nya cocok.
   workerId       String?
   customer       Customer     @relation(fields: [customerId], references: [id])
+  account        JokiAccount? @relation(fields: [accountId], references: [id])
   game           Game         @relation(fields: [gameId], references: [id])
   worker         Worker?      @relation(fields: [workerId], references: [id])
   lines          OrderLine[]
@@ -342,6 +366,7 @@ model Order {
   @@index([status])
   @@index([gameId])
   @@index([customerId])
+  @@index([accountId])
   @@index([workerId])
 }
 
@@ -384,8 +409,10 @@ model OrderLine {
   levelFrom          Int?
   levelTo            Int?
   patchEventId       String?
+  endgameContentId   String?
   jokiItem           JokiItem?              @relation(fields: [jokiItemId], references: [id])
   jokiPaket          JokiPaket?             @relation(fields: [jokiPaketId], references: [id])
+  endgameContent     EndgameContent?        @relation(fields: [endgameContentId], references: [id])
   order              Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   patchEvent         PatchEvent?            @relation(fields: [patchEventId], references: [id])
   dayProgress        OrderLineDayProgress[]
@@ -403,6 +430,7 @@ model OrderLine {
   @@index([jokiItemId])
   @@index([jokiPaketId])
   @@index([patchEventId])
+  @@index([endgameContentId])
 }
 
 /// Log/riwayat update progres untuk SATU OrderLine (satu item dalam satu

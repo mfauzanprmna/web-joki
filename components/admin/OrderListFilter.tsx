@@ -25,6 +25,7 @@ interface OrderLineRow {
     jokiItem: { title: string } | null;
     jokiPaket: { title: string } | null;
     patchEvent: { title: string } | null;
+    endgameContent: { title: string } | null;
 }
 
 interface WorkerOption {
@@ -69,7 +70,7 @@ export function OrderListFilter({ orders, games, workers }: { orders: OrderRow[]
                 o.customer.name,
                 o.jokerName ?? "",
                 o.sourceUsername,
-                ...o.lines.map((l) => l.jokiItem?.title ?? l.jokiPaket?.title ?? ""),
+                ...o.lines.map((l) => l.jokiItem?.title ?? l.jokiPaket?.title ?? l.patchEvent?.title ?? l.endgameContent?.title ?? ""),
             ]
                 .join(" ")
                 .toLowerCase();
