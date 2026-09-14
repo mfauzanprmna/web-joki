@@ -5,6 +5,7 @@ import { SectionHeading } from "@/components/SectionHeading";
 import { TestimoniCard } from "@/components/TestimoniCard";
 import { PaginatedList } from "@/components/PaginatedList";
 import { GameCountBadges } from "@/components/GameCountBadges";
+import { buildOrderTitle } from "@/lib/order-display";
 
 export const revalidate = 60;
 
@@ -15,41 +16,38 @@ export default async function TestimoniPage() {
       where: { isPublished: true },
       include: {
         game: true,
-        order: { select: { customerId: true } },
-        jokiHistoryEntry: { select: { customerId: true } },
+        order: {
+          select: {
+            completedAt: true,
+            lines: {
+              select: {
+                jokiItem: { select: { title: true } },
+                jokiPaket: { select: { title: true } },
+                patchEvent: { select: { title: true } },
+                endgameContent: { select: { title: true } },
+              },
+            },
+          },
+        },
+        jokiHistoryEntry: { select: { completedAt: true, title: true } },
       },
       orderBy: { createdAt: "desc" },
     }),
   ]);
 
-  const bestTestimonials = testimonials.reduce<typeof testimonials>((selected, testimonial) => {
-    const customerKey =
-      testimonial.order?.customerId ??
-      testimonial.jokiHistoryEntry?.customerId ??
-      `name:${testimonial.customerName.trim().toLocaleLowerCase()}`;
-    const existingIndex = selected.findIndex((item) => {
-      const itemKey =
-        item.order?.customerId ??
-        item.jokiHistoryEntry?.customerId ??
-        `name:${item.customerName.trim().toLocaleLowerCase()}`;
-      return itemKey === customerKey;
-    });
-
-    if (existingIndex === -1) {
-      selected.push(testimonial);
-    } else {
-      const existing = selected[existingIndex];
-      if (testimonial.rating > existing.rating) {
-        selected[existingIndex] = testimonial;
-      }
-    }
-
-    return selected;
-  }, []);
+  const allTestimonials = testimonials
+    .map((testimonial) => ({
+      ...testimonial,
+      completedAt: testimonial.order?.completedAt ?? testimonial.jokiHistoryEntry?.completedAt,
+      jokiTitle: testimonial.order
+        ? buildOrderTitle(testimonial.order.lines)
+        : testimonial.jokiHistoryEntry?.title ?? "Joki history",
+    }))
+    .sort((a, b) => (b.completedAt?.getTime() ?? b.createdAt.getTime()) - (a.completedAt?.getTime() ?? a.createdAt.getTime()));
 
   const gameCounts = games.map((g) => ({
     ...g,
-    count: bestTestimonials.filter((t) => t.gameId === g.id).length,
+    count: allTestimonials.filter((t) => t.gameId === g.id).length,
   }));
 
   return (
@@ -64,7 +62,7 @@ export default async function TestimoniPage() {
           desc="Pengalaman langsung dari customer yang sudah menggunakan jasa joki Shihu Service."
         />
 
-        {bestTestimonials.length === 0 ? (
+        {allTestimonials.length === 0 ? (
           <EmptyState />
         ) : (
           <>
@@ -72,13 +70,15 @@ export default async function TestimoniPage() {
             <PaginatedList
               className="grid grid-cols-1 sm:grid-cols-2 gap-3.5"
               pageSize={12}
-              items={bestTestimonials.map((t) => (
+              items={allTestimonials.map((t) => (
                 <TestimoniCard
                   key={t.id}
                   customerName={t.customerName}
                   message={t.message}
                   rating={t.rating}
                   game={t.game}
+                  jokiTitle={t.jokiTitle}
+                  completedAt={t.completedAt}
                 />
               ))}
             />

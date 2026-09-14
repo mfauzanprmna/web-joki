@@ -140,94 +140,94 @@ export default async function CustomerProgressPage({
     return Array.from(accountGroups.entries()).map(([accountKey, accountOrders]) => {
       const firstOrder = accountOrders[0];
       return {
-      orderId: accountKey,
-      accountName: firstOrder.account?.name ?? `Akun ${firstOrder.orderCode}`,
-      orderCode: accountOrders.map((order) => order.orderCode).join(" · "),
-      gameName: firstOrder.game.name,
-      gameAccent: firstOrder.game.accentColor,
-      status: accountOrders.some((order) => order.status === "SELESAI")
-        ? "SELESAI"
-        : accountOrders.some((order) => order.status === "FINISHING")
-          ? "FINISHING"
-          : accountOrders.some((order) => order.status === "DIKERJAKAN")
-            ? "DIKERJAKAN"
-            : "MENUNGGU",
-      progressPct: Math.round(accountOrders.reduce((sum, order) => sum + order.progressPct, 0) / accountOrders.length),
-      jokerName: accountOrders.find((order) => order.jokerName)?.jokerName ?? null,
-      estimasiJoki: accountOrders.find((order) => order.estimasiJoki)?.estimasiJoki ?? null,
-      totalPrice: accountOrders.reduce((sum, order) => sum + order.totalPrice, 0),
-      lines: accountOrders.flatMap((o) => o.lines.map((line) => {
-        const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;
-        return {
-          id: line.id,
-          jokiPaketId: line.jokiPaketId,
-          patchEvent: line.patchEvent,
-          endgameContent: line.endgameContent,
-          title:
-            (line.jokiItem?.title ?? line.jokiPaket?.title ?? line.patchEvent?.title ?? line.endgameContent?.title ?? "Item tidak dikenal") +
-            (line.characterName ? ` — ${line.characterName}` : ""),
-          jokiItem: line.jokiItem
-            ? { category: line.jokiItem.category, region: line.jokiItem.region, questType: line.jokiItem.questType }
-            : null,
-          explorationPercent: line.explorationPercent,
-          actFrom: line.actFrom,
-          actTo: line.actTo,
-          materialQuantity: line.materialQuantity,
-          rawatAkunQuantity: line.rawatAkunQuantity,
-          characterName: line.characterName,
-          levelFrom: line.levelFrom,
-          levelTo: line.levelTo,
-          progressPercent: line.progressPercent,
-          progressCurrent: line.progressCurrent,
-          calculatedPrice: line.calculatedPrice,
-          updates: line.updates.map((u) => ({
-            id: u.id,
-            note: u.note,
-            screenshotUrl: u.screenshotUrl,
-            resetLocation: u.resetLocation,
-            createdAt: u.createdAt.toISOString(),
-          })),
-          paketBreakdown:
-            line.jokiPaket?.items.map((it) => ({
-              id: it.jokiItem.id,
-              title: it.jokiItem.title,
-              categoryLabel: getJokiItemCategoryLabel(it.jokiItem),
-            })) ?? [],
-          paketItems:
-            line.jokiPaket?.items.map((it) => ({
-              id: it.jokiItem.id,
-              title: it.jokiItem.title,
-              actFrom: it.actFrom,
-              actTo: it.actTo,
-              jokiItem: {
-                category: it.jokiItem.category,
-                region: it.jokiItem.region,
-                questType: it.jokiItem.questType,
-              },
-            })) ?? [],
-          rawatAkun:
-            isRawatAkun && line.startDate && line.endDate
-              ? {
-                days: enumerateDays(line.startDate, line.endDate).map((d) => {
-                  const iso = isoDay(d);
-                  const dp = line.dayProgress.find((p) => isoDay(p.date) === iso);
-                  return {
-                    date: iso,
-                    percent: dp?.percent ?? 0,
-                    note: dp?.note ?? null,
-                    screenshotUrls: dp?.screenshotUrls ?? [],
-                  };
-                }),
-                tasks: line.dayTasks.map((t) => ({
-                  date: isoDay(t.date),
-                  category: t.category,
-                  label: t.label,
-                  status: t.status,
-                })),
-              }
+        orderId: accountKey,
+        accountName: firstOrder.account?.name ?? `Akun ${firstOrder.orderCode}`,
+        orderCode: accountOrders.map((order) => order.orderCode).join(" · "),
+        gameName: firstOrder.game.name,
+        gameAccent: firstOrder.game.accentColor,
+        status: accountOrders.some((order) => order.status === "SELESAI")
+          ? "SELESAI"
+          : accountOrders.some((order) => order.status === "FINISHING")
+            ? "FINISHING"
+            : accountOrders.some((order) => order.status === "DIKERJAKAN")
+              ? "DIKERJAKAN"
+              : "MENUNGGU",
+        progressPct: Math.round(accountOrders.reduce((sum, order) => sum + order.progressPct, 0) / accountOrders.length),
+        jokerName: accountOrders.find((order) => order.jokerName)?.jokerName ?? null,
+        estimasiJoki: accountOrders.find((order) => order.estimasiJoki)?.estimasiJoki ?? null,
+        totalPrice: accountOrders.reduce((sum, order) => sum + order.totalPrice, 0),
+        lines: accountOrders.flatMap((o) => o.lines.map((line) => {
+          const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;
+          return {
+            id: line.id,
+            jokiPaketId: line.jokiPaketId,
+            patchEvent: line.patchEvent,
+            endgameContent: line.endgameContent,
+            title:
+              (line.jokiItem?.title ?? line.jokiPaket?.title ?? line.patchEvent?.title ?? line.endgameContent?.title ?? "Item tidak dikenal") +
+              (line.characterName ? ` — ${line.characterName}` : ""),
+            jokiItem: line.jokiItem
+              ? { category: line.jokiItem.category, region: line.jokiItem.region, questType: line.jokiItem.questType }
               : null,
-        };
-      })),
+            explorationPercent: line.explorationPercent,
+            actFrom: line.actFrom,
+            actTo: line.actTo,
+            materialQuantity: line.materialQuantity,
+            rawatAkunQuantity: line.rawatAkunQuantity,
+            characterName: line.characterName,
+            levelFrom: line.levelFrom,
+            levelTo: line.levelTo,
+            progressPercent: line.progressPercent,
+            progressCurrent: line.progressCurrent,
+            calculatedPrice: line.calculatedPrice,
+            updates: line.updates.map((u) => ({
+              id: u.id,
+              note: u.note,
+              screenshotUrl: u.screenshotUrl,
+              resetLocation: u.resetLocation,
+              createdAt: u.createdAt.toISOString(),
+            })),
+            paketBreakdown:
+              line.jokiPaket?.items.map((it) => ({
+                id: it.jokiItem.id,
+                title: it.jokiItem.title,
+                categoryLabel: getJokiItemCategoryLabel(it.jokiItem),
+              })) ?? [],
+            paketItems:
+              line.jokiPaket?.items.map((it) => ({
+                id: it.jokiItem.id,
+                title: it.jokiItem.title,
+                actFrom: it.actFrom,
+                actTo: it.actTo,
+                jokiItem: {
+                  category: it.jokiItem.category,
+                  region: it.jokiItem.region,
+                  questType: it.jokiItem.questType,
+                },
+              })) ?? [],
+            rawatAkun:
+              isRawatAkun && line.startDate && line.endDate
+                ? {
+                  days: enumerateDays(line.startDate, line.endDate).map((d) => {
+                    const iso = isoDay(d);
+                    const dp = line.dayProgress.find((p) => isoDay(p.date) === iso);
+                    return {
+                      date: iso,
+                      percent: dp?.percent ?? 0,
+                      note: dp?.note ?? null,
+                      screenshotUrls: dp?.screenshotUrls ?? [],
+                    };
+                  }),
+                  tasks: line.dayTasks.map((t) => ({
+                    date: isoDay(t.date),
+                    category: t.category,
+                    label: t.label,
+                    status: t.status,
+                  })),
+                }
+                : null,
+          };
+        })),
       };
     });
   };

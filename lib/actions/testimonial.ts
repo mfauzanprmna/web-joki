@@ -59,6 +59,17 @@ export async function updateTestimonial(formData: FormData) {
   }
 }
 
+export async function publishAllTestimonials() {
+  await prisma.testimonial.updateMany({
+    where: { isPublished: false },
+    data: { isPublished: true },
+  });
+
+  revalidatePath("/admin/testimoni");
+  revalidatePath("/testimoni");
+  revalidatePath("/");
+}
+
 export async function deleteTestimonial(formData: FormData) {
   const id = String(formData.get("id"));
   await prisma.testimonial.delete({ where: { id } });

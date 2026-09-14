@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { createTestimonial } from "@/lib/actions/testimonial";
+import { createTestimonial, publishAllTestimonials } from "@/lib/actions/testimonial";
 import { TestimoniListFilter } from "@/components/admin/TestimoniListFilter";
 
 export default async function AdminTestimoniPage() {
@@ -18,6 +18,15 @@ export default async function AdminTestimoniPage() {
       <p className="text-shihu-muted text-sm mb-6">
         Tambah testimoni manual, sembunyikan yang tidak relevan, atau hapus.
       </p>
+
+      <form action={publishAllTestimonials} className="mb-7">
+        <button
+          type="submit"
+          className="px-4 py-2.5 rounded-xl font-display font-semibold text-sm border border-shihu-corona/40 text-shihu-corona hover:bg-shihu-corona/10"
+        >
+          Tampilkan semua testimoni
+        </button>
+      </form>
 
       <details className="bg-shihu-card border border-shihu-border rounded-2xl p-5 mb-7 group">
         <summary className="font-display text-sm font-semibold cursor-pointer list-none flex items-center justify-between">

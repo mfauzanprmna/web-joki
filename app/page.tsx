@@ -6,11 +6,60 @@ import { ShihuMark } from "@/components/ShihuMark";
 import { SectionHeading } from "@/components/SectionHeading";
 import { GameBanner } from "@/components/GameBanner";
 import { QuickAccessCard } from "@/components/QuickAccessCard";
+import { TestimoniCard } from "@/components/TestimoniCard";
+import { buildOrderTitle } from "@/lib/order-display";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const games = await prisma.game.findMany({ orderBy: { createdAt: "asc" } });
+  const [games, testimonials] = await Promise.all([
+    prisma.game.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.testimonial.findMany({
+      where: { isPublished: true },
+      include: {
+        game: true,
+        order: {
+          select: {
+            completedAt: true,
+            customerId: true,
+            lines: {
+              select: {
+                jokiItem: { select: { title: true } },
+                jokiPaket: { select: { title: true } },
+                patchEvent: { select: { title: true } },
+                endgameContent: { select: { title: true } },
+              },
+            },
+          },
+        },
+        jokiHistoryEntry: { select: { completedAt: true, title: true, customerId: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
+  const sortedTestimonials = testimonials
+    .map((testimonial) => ({
+      ...testimonial,
+      customerKey:
+        testimonial.order?.customerId ??
+        testimonial.jokiHistoryEntry?.customerId ??
+        `name:${testimonial.customerName.trim().toLocaleLowerCase()}`,
+      completedAt: testimonial.order?.completedAt ?? testimonial.jokiHistoryEntry?.completedAt,
+      jokiTitle: testimonial.order
+        ? buildOrderTitle(testimonial.order.lines)
+        : testimonial.jokiHistoryEntry?.title ?? "Joki history",
+    }))
+    .sort((a, b) => (b.completedAt?.getTime() ?? b.createdAt.getTime()) - (a.completedAt?.getTime() ?? a.createdAt.getTime()));
+
+  const homepageTestimonials = sortedTestimonials.reduce<typeof sortedTestimonials>((selected, testimonial) => {
+      const existingIndex = selected.findIndex((item) => item.customerKey === testimonial.customerKey);
+      if (existingIndex === -1 || testimonial.rating > selected[existingIndex].rating) {
+        if (existingIndex === -1) selected.push(testimonial);
+        else selected[existingIndex] = testimonial;
+      }
+      return selected;
+    }, []);
 
   return (
     <div className="min-h-screen relative">
@@ -63,6 +112,37 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+
+        {homepageTestimonials.length > 0 && (
+          <section className="py-2 pb-12">
+            <SectionHeading
+              eyebrow="Dari customer"
+              title="Testimoni"
+              desc="Pengalaman customer setelah menyelesaikan order atau history joki."
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {homepageTestimonials.map((testimonial) => (
+                <TestimoniCard
+                  key={testimonial.id}
+                  customerName={testimonial.customerName}
+                  message={testimonial.message}
+                  rating={testimonial.rating}
+                  game={testimonial.game}
+                  jokiTitle={testimonial.jokiTitle}
+                  completedAt={testimonial.completedAt}
+                />
+              ))}
+            </div>
+            <div className="flex justify-center mt-5">
+              <Link
+                href="/testimoni"
+                className="px-4 py-2.5 rounded-xl font-display font-semibold text-sm border border-shihu-corona/40 text-shihu-corona hover:bg-shihu-corona/10"
+              >
+                Lihat semua testimoni
+              </Link>
+            </div>
+          </section>
+        )}
 
         <section className="py-2 pb-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">

@@ -1,11 +1,14 @@
 import { Stars } from "./Stars";
 import type { GameLite } from "@/types/game";
+import { formatDate } from "@/lib/format";
 
 interface TestimoniCardProps {
   customerName: string;
   message: string;
   rating: number;
   game: GameLite;
+  jokiTitle?: string;
+  completedAt?: Date | string;
 }
 
 export function TestimoniCard({
@@ -13,6 +16,8 @@ export function TestimoniCard({
   message,
   rating,
   game,
+  jokiTitle,
+  completedAt,
 }: TestimoniCardProps) {
   return (
     <div className="bg-shihu-card border border-shihu-border rounded-2xl p-5">
@@ -33,6 +38,8 @@ export function TestimoniCard({
           <div>
             <p className="font-display text-sm font-semibold">{customerName}</p>
             <p className="text-[11px] text-shihu-faint">{game.name}</p>
+            {jokiTitle && <p className="text-[11px] text-shihu-corona mt-0.5">{jokiTitle}</p>}
+            {completedAt && <p className="text-[11px] text-shihu-faint mt-0.5">Selesai {formatDate(completedAt)}</p>}
           </div>
         </div>
         <Stars rating={rating} />

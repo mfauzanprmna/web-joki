@@ -16,6 +16,7 @@ interface CustomerRow {
     id: string;
     name: string;
     notes: string | null;
+    publicSlug: string;
     orders: OrderSummary[];
 }
 

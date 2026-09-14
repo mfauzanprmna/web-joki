@@ -4,7 +4,11 @@ import { CustomerListFilter } from "@/components/admin/CustomerListFilter";
 
 export default async function AdminCustomerPage() {
   const customers = await prisma.customer.findMany({
-    include: {
+    select: {
+      id: true,
+      name: true,
+      notes: true,
+      publicSlug: true,
       orders: {
         select: {
           id: true,

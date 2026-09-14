@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { updateCustomer, deleteCustomer } from "@/lib/actions/customer";
 import { formatRupiah } from "@/lib/format";
 import { STATUS_LABEL } from "@/types/game";
@@ -17,6 +18,7 @@ interface CustomerRow {
   id: string;
   name: string;
   notes: string | null;
+  publicSlug: string;
   orders: OrderSummary[];
 }
 
@@ -113,6 +115,12 @@ export function CustomerRowItem({ customer }: { customer: CustomerRow }) {
         >
           Edit
         </button>
+        <Link
+          href={`/progress/${customer.publicSlug}`}
+          className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-corona/40 text-shihu-corona hover:bg-shihu-corona/10"
+        >
+          Progress
+        </Link>
       </div>
 
       {expanded && (
