@@ -5,6 +5,7 @@ import { OrderLineProgressPanel } from "./OrderLineProgressPanel";
 import { ExplorationProgressPanel } from "./ExplorationProgressPanel";
 import { CountProgressPanel } from "./CountProgressPanel";
 import { RawatAkunProgressPanel, type DayProgressItem, type DayTaskItem } from "./RawatAkunProgressPanel";
+import { toggleOrderLineCompletion } from "@/lib/actions/line-progress";
 import {
   groupLinesByCategory,
   getPaketLines,
@@ -57,6 +58,7 @@ export interface OrderLineData extends LineForGrouping {
   materialQuantity: number | null;
   progressPercent: number | null;
   progressCurrent: number | null;
+  isCompleted: boolean;
   updates: UpdateEntry[];
   rawatAkun: { days: DayProgressItem[]; tasks: DayTaskItem[] } | null;
   paketBreakdown: PaketBreakdownItem[];
@@ -67,39 +69,30 @@ export interface OrderLineData extends LineForGrouping {
 function LinePanel({ line }: { line: OrderLineData }) {
   const kind = getCategoryKind(line);
   const progressLineId = line.progressLineId ?? line.id;
+  const panel = kind === "RAWAT_AKUN" && line.rawatAkun
+    ? <RawatAkunProgressPanel orderLineId={progressLineId} days={line.rawatAkun.days} tasks={line.rawatAkun.tasks} />
+    : kind === "EKSPLORASI"
+      ? <ExplorationProgressPanel orderLineId={progressLineId} title={line.title} currentPercent={line.progressPercent ?? 0} jokiItem={line.jokiItem} updates={line.updates} />
+      : kind === "QUEST" || kind === "MATERIAL"
+        ? <CountProgressPanel orderLineId={progressLineId} title={line.title} currentCount={line.progressCurrent ?? 0} target={getLineProgressTarget(line)} unitLabel={kind === "QUEST" ? "Act" : "item"} jokiItem={line.jokiItem} updates={line.updates} />
+        : <OrderLineProgressPanel orderLineId={progressLineId} jokiItem={line.jokiItem} updates={line.updates} />;
 
-  if (kind === "RAWAT_AKUN" && line.rawatAkun) {
-    return <RawatAkunProgressPanel orderLineId={progressLineId} days={line.rawatAkun.days} tasks={line.rawatAkun.tasks} />;
-  }
-
-  if (kind === "EKSPLORASI") {
-    return (
-      <ExplorationProgressPanel
-        orderLineId={progressLineId}
-        title={line.title}
-        currentPercent={line.progressPercent ?? 0}
-        jokiItem={line.jokiItem}
-        updates={line.updates}
-      />
-    );
-  }
-
-  if (kind === "QUEST" || kind === "MATERIAL") {
-    const target = getLineProgressTarget(line);
-    return (
-      <CountProgressPanel
-        orderLineId={progressLineId}
-        title={line.title}
-        currentCount={line.progressCurrent ?? 0}
-        target={target}
-        unitLabel={kind === "QUEST" ? "Act" : "item"}
-        jokiItem={line.jokiItem}
-        updates={line.updates}
-      />
-    );
-  }
-
-  return <OrderLineProgressPanel orderLineId={progressLineId} jokiItem={line.jokiItem} updates={line.updates} />;
+  return (
+    <div className="flex flex-col gap-3">
+      <form action={toggleOrderLineCompletion} className="flex items-center justify-between gap-3 bg-[#241E38] border border-shihu-border rounded-xl p-3.5">
+        <div>
+          <p className="font-display text-xs font-semibold">Status item</p>
+          <p className="text-[11px] text-shihu-faint">Tandai selesai jika joki item ini sudah rampung.</p>
+        </div>
+        <input type="hidden" name="orderLineId" value={progressLineId} />
+        <input type="hidden" name="isCompleted" value={String(!line.isCompleted)} />
+        <button type="submit" className={`px-3.5 py-2 rounded-lg text-xs font-display font-semibold shrink-0 ${line.isCompleted ? "border border-shihu-borderSoft text-shihu-muted" : "bg-corona text-[#1A1206]"}`}>
+          {line.isCompleted ? "Batalkan selesai" : "Tandai selesai"}
+        </button>
+      </form>
+      {panel}
+    </div>
+  );
 }
 
 /** Konten tab Paket: breakdown isi paket per kategori (read-only) + 1 form update biasa. */
@@ -125,6 +118,7 @@ function PaketPanel({ line }: { line: OrderLineData }) {
     materialQuantity: line.materialQuantity,
     progressPercent: line.progressPercent,
     progressCurrent: line.progressCurrent,
+    isCompleted: line.isCompleted,
     updates: line.updates,
     rawatAkun: line.rawatAkun,
     paketBreakdown: [],

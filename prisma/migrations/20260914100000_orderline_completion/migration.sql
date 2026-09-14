@@ -1,0 +1,1 @@
+ALTER TABLE "OrderLine" ADD COLUMN "isCompleted" BOOLEAN NOT NULL DEFAULT false;

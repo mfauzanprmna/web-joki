@@ -100,6 +100,11 @@ export default async function CustomerProgressPage({
     ["MENUNGGU", "DIKERJAKAN", "FINISHING"].includes(o.status)
   );
   const completedOrders = customer.orders.filter((o) => o.status === "SELESAI");
+  const recentCompletedCutoff = new Date();
+  recentCompletedCutoff.setDate(recentCompletedCutoff.getDate() - 7);
+  const recentCompletedOrders = completedOrders.filter((order) =>
+    (order.completedAt ?? order.updatedAt) >= recentCompletedCutoff
+  );
   const historyEntries = customer.jokiHistoryEntries;
   const historyCount = completedOrders.length + historyEntries.length;
   const testimonials = [
@@ -123,27 +128,30 @@ export default async function CustomerProgressPage({
       })),
   ];
 
-  const accountGroups = new Map<string, typeof activeOrders>();
-  for (const order of activeOrders) {
-    const key = order.accountId ?? `order:${order.id}`;
-    const group = accountGroups.get(key) ?? [];
-    group.push(order);
-    accountGroups.set(key, group);
-  }
+  const buildAccounts = (orders: typeof activeOrders): AccountProgress[] => {
+    const accountGroups = new Map<string, typeof activeOrders>();
+    for (const order of orders) {
+      const key = order.accountId ?? `order:${order.id}`;
+      const group = accountGroups.get(key) ?? [];
+      group.push(order);
+      accountGroups.set(key, group);
+    }
 
-  const accounts: AccountProgress[] = Array.from(accountGroups.entries()).map(([accountKey, accountOrders]) => {
-    const firstOrder = accountOrders[0];
-    return {
+    return Array.from(accountGroups.entries()).map(([accountKey, accountOrders]) => {
+      const firstOrder = accountOrders[0];
+      return {
       orderId: accountKey,
       accountName: firstOrder.account?.name ?? `Akun ${firstOrder.orderCode}`,
       orderCode: accountOrders.map((order) => order.orderCode).join(" · "),
       gameName: firstOrder.game.name,
       gameAccent: firstOrder.game.accentColor,
-      status: accountOrders.some((order) => order.status === "FINISHING")
-        ? "FINISHING"
-        : accountOrders.some((order) => order.status === "DIKERJAKAN")
-          ? "DIKERJAKAN"
-          : "MENUNGGU",
+      status: accountOrders.some((order) => order.status === "SELESAI")
+        ? "SELESAI"
+        : accountOrders.some((order) => order.status === "FINISHING")
+          ? "FINISHING"
+          : accountOrders.some((order) => order.status === "DIKERJAKAN")
+            ? "DIKERJAKAN"
+            : "MENUNGGU",
       progressPct: Math.round(accountOrders.reduce((sum, order) => sum + order.progressPct, 0) / accountOrders.length),
       jokerName: accountOrders.find((order) => order.jokerName)?.jokerName ?? null,
       estimasiJoki: accountOrders.find((order) => order.estimasiJoki)?.estimasiJoki ?? null,
@@ -220,8 +228,12 @@ export default async function CustomerProgressPage({
               : null,
         };
       })),
-    };
-  });
+      };
+    });
+  };
+
+  const accounts = buildAccounts(activeOrders);
+  const recentCompletedAccounts = buildAccounts(recentCompletedOrders);
 
   return (
     <div className="min-h-screen relative">
@@ -241,6 +253,16 @@ export default async function CustomerProgressPage({
           </p>
           <CustomerAccountTabs accounts={accounts} />
         </div>
+
+        {recentCompletedAccounts.length > 0 && (
+          <div className="mb-10">
+            <p className="font-display text-sm font-semibold text-shihu-muted mb-1">
+              Orderan baru selesai ({recentCompletedOrders.length})
+            </p>
+            <p className="text-xs text-shihu-faint mb-3">Pesanan yang selesai dalam 7 hari terakhir.</p>
+            <CustomerAccountTabs accounts={recentCompletedAccounts} />
+          </div>
+        )}
 
         <div className="mb-10">
           <p className="font-display text-sm font-semibold text-shihu-muted mb-3">

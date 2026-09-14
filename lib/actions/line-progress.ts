@@ -14,6 +14,53 @@ async function revalidateForOrderLine(orderLineId: string) {
   revalidatePath(`/progress/${line.order.customer.publicSlug}`);
 }
 
+async function recalculateOrderProgress(orderLineId: string) {
+  const line = await prisma.orderLine.findUnique({
+    where: { id: orderLineId },
+    select: {
+      orderId: true,
+      order: { select: { customer: { select: { publicSlug: true } } } },
+    },
+  });
+  if (!line) return;
+
+  const lines = await prisma.orderLine.findMany({
+    where: { orderId: line.orderId },
+    select: { isCompleted: true, progressPercent: true, progressCurrent: true, actFrom: true, actTo: true, materialQuantity: true },
+  });
+
+  const percentages = lines.map((item) => {
+    if (item.isCompleted) return 100;
+    if (item.progressPercent != null) return Math.max(0, Math.min(100, item.progressPercent));
+    const target = item.actFrom != null && item.actTo != null
+      ? item.actTo - item.actFrom + 1
+      : item.materialQuantity;
+    return target && target > 0
+      ? Math.max(0, Math.min(100, Math.round(((item.progressCurrent ?? 0) / target) * 100)))
+      : 0;
+  });
+  const progressPct = percentages.length > 0
+    ? Math.round(percentages.reduce((sum, percent) => sum + percent, 0) / percentages.length)
+    : 0;
+
+  await prisma.order.update({ where: { id: line.orderId }, data: { progressPct } });
+  revalidatePath("/admin/antrian");
+  revalidatePath(`/admin/progress/${line.orderId}`);
+  revalidatePath(`/progress/${line.order.customer.publicSlug}`);
+}
+
+export async function toggleOrderLineCompletion(formData: FormData) {
+  const orderLineId = String(formData.get("orderLineId") || "").trim();
+  const isCompleted = String(formData.get("isCompleted") || "false") === "true";
+  if (!orderLineId) return;
+
+  await prisma.orderLine.update({
+    where: { id: orderLineId },
+    data: { isCompleted },
+  });
+  await recalculateOrderProgress(orderLineId);
+}
+
 /** Update progress Eksplorasi (persen area yang sudah dieksplor sejauh ini, 0-100). */
 export async function updateExplorationProgress(formData: FormData) {
   const orderLineId = String(formData.get("orderLineId") || "").trim();
@@ -25,6 +72,7 @@ export async function updateExplorationProgress(formData: FormData) {
     data: { progressPercent: percent },
   });
 
+  await recalculateOrderProgress(orderLineId);
   await revalidateForOrderLine(orderLineId);
 }
 
@@ -46,5 +94,6 @@ export async function updateCountProgress(formData: FormData) {
     data: { progressCurrent: current },
   });
 
+  await recalculateOrderProgress(orderLineId);
   await revalidateForOrderLine(orderLineId);
 }

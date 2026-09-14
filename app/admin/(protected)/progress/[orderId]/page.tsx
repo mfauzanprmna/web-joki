@@ -101,6 +101,7 @@ export default async function AdminOrderProgressPage({
       materialQuantity: line.materialQuantity,
       progressPercent: line.progressPercent,
       progressCurrent: line.progressCurrent,
+      isCompleted: line.isCompleted,
       updates: line.updates,
       paketBreakdown:
         line.jokiPaket?.items.map((it) => ({

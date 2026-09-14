@@ -425,6 +425,8 @@ model OrderLine {
   /// Quest & Material: jumlah yang sudah selesai/diambil dari total target
   /// (target Quest = actTo-actFrom+1, target Material = materialQuantity).
   progressCurrent Int? @default(0)
+  /// Menandai bahwa pengerjaan item ini sudah selesai.
+  isCompleted     Boolean  @default(false)
 
   @@index([orderId])
   @@index([jokiItemId])
