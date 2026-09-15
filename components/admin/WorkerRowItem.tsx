@@ -93,6 +93,7 @@ export function WorkerRowItem({ item }: { item: WorkerRow }) {
                 <button
                     type="submit"
                     disabled={pending}
+                    aria-busy={pending}
                     className="px-4 py-2 rounded-lg bg-corona text-[#1A1206] text-xs font-display font-semibold disabled:opacity-60"
                 >
                     {pending ? "Menyimpan..." : "Simpan"}

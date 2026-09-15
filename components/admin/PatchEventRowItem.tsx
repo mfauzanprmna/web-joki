@@ -133,6 +133,7 @@ export function PatchEventRowItem({ event }: { event: PatchEventRow }) {
         <button
           type="submit"
           disabled={pending}
+          aria-busy={pending}
           className="px-3 py-1.5 rounded-lg font-display font-semibold text-[11px] text-[#1A1206] bg-corona disabled:opacity-60"
         >
           {pending ? "Menyimpan..." : "Simpan"}

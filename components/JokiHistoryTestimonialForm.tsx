@@ -183,6 +183,7 @@ export function JokiHistoryTestimonialForm({
             <button
                 type="submit"
                 disabled={pending || rating === 0}
+                aria-busy={pending}
                 className="self-start px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona disabled:opacity-60"
             >
                 {pending ? "Mengirim..." : "Kirim Testimoni"}

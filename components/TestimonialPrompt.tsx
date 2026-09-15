@@ -194,6 +194,7 @@ export function TestimonialPrompt({
         <button
           type="submit"
           disabled={pending || rating === 0}
+          aria-busy={pending}
           className="text-xs font-display font-semibold px-4 py-1.5 rounded-lg bg-corona text-[#1A1206] disabled:opacity-60"
         >
           {pending ? "Mengirim..." : "Kirim Testimoni"}

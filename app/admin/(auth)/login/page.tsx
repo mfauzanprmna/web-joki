@@ -60,6 +60,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={pending}
+            aria-busy={pending}
             className="w-full py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona disabled:opacity-60"
           >
             {pending ? "Memeriksa..." : "Masuk"}

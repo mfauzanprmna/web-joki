@@ -74,6 +74,7 @@ export function CreatePatchForm({ games }: { games: GameOption[] }) {
       <button
         type="submit"
         disabled={pending}
+        aria-busy={pending}
         className="self-start px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona mt-1 disabled:opacity-60"
       >
         {pending ? "Menyimpan..." : "Tambah patch"}

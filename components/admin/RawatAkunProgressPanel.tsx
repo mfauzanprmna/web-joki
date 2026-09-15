@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState, useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   setDayPercent,
   saveDayUpdate,
@@ -64,6 +66,41 @@ function statusOf(percent: number): "SELESAI" | "SEDANG" | "BELUM" {
   return "BELUM";
 }
 
+function QuickUpdateButton({ label, className }: { label: string; className?: string }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      aria-busy={pending}
+      className={className ?? "w-full px-2 py-2 rounded-lg border border-shihu-border text-[11px] text-shihu-text hover:border-shihu-corona/40 disabled:opacity-60"}
+    >
+      {label}
+    </button>
+  );
+}
+
+function TaskStatusSelect({ status }: { status: DayTaskItem["status"] }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <div className="flex items-center gap-1">
+      <select
+        name="status"
+        defaultValue={status}
+        disabled={pending}
+        className="admin-input !py-1 !text-[11px] !w-auto disabled:opacity-60"
+      >
+        <option value="BELUM">Belum</option>
+        <option value="SEDANG">Sedang Dikerjakan</option>
+        <option value="SELESAI">Selesai</option>
+      </select>
+      {pending && <Spinner size={14} className="text-shihu-corona shrink-0" />}
+    </div>
+  );
+}
+
 export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunProgressPanelProps) {
   const todayIso = localDateKey();
   const defaultDay = days.find((d) => d.date === todayIso)?.date ?? days[days.length - 1]?.date ?? days[0]?.date;
@@ -74,7 +111,7 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
   const [newTaskLabel, setNewTaskLabel] = useState("");
   const [showAddTask, setShowAddTask] = useState(false);
 
-  const [saveState, saveAction] = useActionState<DayUpdateActionState, FormData>(saveDayUpdate, {});
+  const [saveState, saveAction, savePending] = useActionState<DayUpdateActionState, FormData>(saveDayUpdate, {});
 
   const selectedDay = days.find((d) => d.date === selectedDate) ?? days[0];
   const selectedTasks = tasks.filter((t) => t.date === selectedDate);
@@ -199,9 +236,11 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
 
                 <button
                   type="submit"
+                  disabled={savePending}
+                  aria-busy={savePending}
                   className="self-end px-4 py-2 rounded-lg bg-corona text-[#1A1206] text-xs font-display font-semibold"
                 >
-                  Simpan Update
+                  {savePending ? "Menyimpan..." : "Simpan Update"}
                 </button>
               </form>
             </div>
@@ -274,15 +313,7 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
                     >
                       <input type="hidden" name="id" value={t.id} />
                       <input type="hidden" name="orderLineId" value={orderLineId} />
-                      <select
-                        name="status"
-                        defaultValue={t.status}
-                        className="admin-input !py-1 !text-[11px] !w-auto"
-                      >
-                        <option value="BELUM">Belum</option>
-                        <option value="SEDANG">Sedang Dikerjakan</option>
-                        <option value="SELESAI">Selesai</option>
-                      </select>
+                      <TaskStatusSelect status={t.status} />
                     </form>
                     <form action={deleteDayTask}>
                       <input type="hidden" name="id" value={t.id} />
@@ -340,12 +371,7 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
                   <input type="hidden" name="orderLineId" value={orderLineId} />
                   <input type="hidden" name="date" value={selectedDate} />
                   <input type="hidden" name="percent" value={btn.percent} />
-                  <button
-                    type="submit"
-                    className="w-full px-2 py-2 rounded-lg border border-shihu-border text-[11px] text-shihu-text hover:border-shihu-corona/40"
-                  >
-                    {btn.label}
-                  </button>
+                  <QuickUpdateButton label={btn.label} />
                 </form>
               ))}
             </div>
@@ -362,12 +388,10 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
                 placeholder="mis. 70"
                 className="admin-input flex-1"
               />
-              <button
-                type="submit"
-                className="px-3 py-2 rounded-lg bg-corona text-[#1A1206] text-xs font-display font-semibold shrink-0"
-              >
-                Terapkan
-              </button>
+              <QuickUpdateButton
+                label="Terapkan"
+                className="px-3 py-2 rounded-lg bg-corona text-[#1A1206] text-xs font-display font-semibold shrink-0 disabled:opacity-60"
+              />
             </form>
           </div>
         </div>

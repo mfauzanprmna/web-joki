@@ -220,6 +220,7 @@ export function JokiItemRowItem({
         <button
           type="submit"
           disabled={pending}
+          aria-busy={pending}
           className="px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona disabled:opacity-60"
         >
           {pending ? "Menyimpan..." : "Simpan"}

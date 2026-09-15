@@ -53,13 +53,13 @@ export default async function HomePage() {
     .sort((a, b) => (b.completedAt?.getTime() ?? b.createdAt.getTime()) - (a.completedAt?.getTime() ?? a.createdAt.getTime()));
 
   const homepageTestimonials = sortedTestimonials.reduce<typeof sortedTestimonials>((selected, testimonial) => {
-      const existingIndex = selected.findIndex((item) => item.customerKey === testimonial.customerKey);
-      if (existingIndex === -1 || testimonial.rating > selected[existingIndex].rating) {
-        if (existingIndex === -1) selected.push(testimonial);
-        else selected[existingIndex] = testimonial;
-      }
-      return selected;
-    }, []);
+    const existingIndex = selected.findIndex((item) => item.customerKey === testimonial.customerKey);
+    if (existingIndex === -1 || testimonial.rating > selected[existingIndex].rating) {
+      if (existingIndex === -1) selected.push(testimonial);
+      else selected[existingIndex] = testimonial;
+    }
+    return selected;
+  }, []);
 
   return (
     <div className="min-h-screen relative">

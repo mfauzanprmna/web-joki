@@ -11,6 +11,50 @@ body {
   color: #fbf9ff;
 }
 
+/* Scrollbar mengikuti permukaan panel dark Shihu, bukan warna default browser. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4a3d62 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #4a3d62;
+  border: 3px solid transparent;
+  border-radius: 9999px;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #6a5688;
+  border-width: 2px;
+}
+
+button[aria-busy="true"] {
+  position: relative;
+}
+
+button[aria-busy="true"]::before {
+  content: "";
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 9999px;
+  animation: shihu-spin 0.7s linear infinite;
+}
+
 ::selection {
   background-color: rgba(255, 178, 56, 0.32);
   color: #fbf9ff;
