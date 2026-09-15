@@ -153,8 +153,8 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
                 type="button"
                 onClick={() => setSelectedDate(d.date)}
                 className={`shrink-0 w-[84px] rounded-xl border px-2 py-2.5 text-center transition-colors ${active
-                    ? "border-shihu-corona bg-shihu-corona/10"
-                    : "border-shihu-border bg-[#241E38] hover:border-shihu-corona/40"
+                  ? "border-shihu-corona bg-shihu-corona/10"
+                  : "border-shihu-border bg-[#241E38] hover:border-shihu-corona/40"
                   }`}
               >
                 <p className="text-[10px] text-shihu-faint">{dayName(d.date)}</p>

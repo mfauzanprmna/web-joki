@@ -87,11 +87,10 @@ export function TestimonialPrompt({
               ))}
             </div>
             <span
-              className={`text-[10px] px-2 py-0.5 rounded-full border ${
-                existing.isPublished
+              className={`text-[10px] px-2 py-0.5 rounded-full border ${existing.isPublished
                   ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
                   : "bg-white/5 text-shihu-muted border-shihu-border"
-              }`}
+                }`}
             >
               {existing.isPublished ? "Sudah tayang" : "Menunggu moderasi"}
             </span>

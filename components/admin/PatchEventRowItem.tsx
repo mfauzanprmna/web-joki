@@ -35,9 +35,8 @@ export function PatchEventRowItem({ event }: { event: PatchEventRow }) {
     return (
       <div className="bg-[#241E38] border border-shihu-border rounded-xl p-3.5 flex items-center gap-3 flex-wrap">
         <span
-          className={`text-[10px] px-1.5 py-0.5 rounded font-display shrink-0 ${
-            live ? "bg-shihu-corona/15 text-shihu-corona" : "bg-shihu-faint/15 text-shihu-faint"
-          }`}
+          className={`text-[10px] px-1.5 py-0.5 rounded font-display shrink-0 ${live ? "bg-shihu-corona/15 text-shihu-corona" : "bg-shihu-faint/15 text-shihu-faint"
+            }`}
         >
           {live ? "Tampil di customer" : "Tidak tampil"}
         </span>
