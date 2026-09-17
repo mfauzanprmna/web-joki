@@ -2,7 +2,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { ShihuMark } from "@/components/ShihuMark";
 import { SectionHeading } from "@/components/SectionHeading";
 import { GameBanner } from "@/components/GameBanner";
 import { QuickAccessCard } from "@/components/QuickAccessCard";
@@ -62,50 +61,66 @@ export default async function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative overflow-hidden home-grid">
       <div className="shihu-glow-top" />
       <div className="shihu-glow-bottom" />
       <Navbar />
 
-      <main className="max-w-5xl mx-auto px-6 pb-20 relative z-10">
-        <section className="pt-14 pb-10 text-center">
-          <div className="flex justify-center mb-5">
-            <ShihuMark size={64} />
-          </div>
-          <h1 className="font-display text-[clamp(32px,5vw,48px)] font-bold tracking-tight leading-[1.1] mb-3.5">
-            Joki game yang jelas prosesnya,
-            <br />
-            bukan yang menghilang saat dibutuhkan
-          </h1>
-          <p className="text-shihu-muted text-[15.5px] max-w-md mx-auto mb-7 leading-relaxed">
-            Pantau antrian secara langsung, lihat siapa yang mengerjakan
-            akunmu, dan cek riwayat joki yang sudah selesai — semua dalam
-            satu tempat.
-          </p>
-          <div className="flex gap-2.5 justify-center flex-wrap">
-            <Link
-              href="/joki"
-              className="px-5.5 py-3 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona"
-              style={{ padding: "12px 22px" }}
-            >
-              Lihat list joki
-            </Link>
-            <Link
-              href="/antrian"
-              className="rounded-xl font-display font-medium text-sm border border-shihu-borderSoft text-shihu-text"
-              style={{ padding: "12px 22px" }}
-            >
-              Cek status antrian
-            </Link>
+      <main className="relative z-10">
+        <section className="hero-character min-h-[560px] border-b border-shihu-border">
+          <div className="site-container py-16 sm:py-20 flex items-center min-h-[500px] lg:min-h-[530px]">
+            <div className="max-w-xl">
+              <p className="inline-flex items-center gap-2 rounded-full border border-shihu-corona/35 bg-shihu-corona/10 px-3 py-1.5 text-[11px] font-display font-semibold text-shihu-corona mb-5">
+                <span className="w-1.5 h-1.5 rounded-full bg-shihu-corona" /> Joki game & game service terpercaya
+              </p>
+              <h1 className="font-display text-[clamp(36px,6vw,66px)] font-bold tracking-tight leading-[1.02] mb-5">
+                Solusi lengkap
+                <br />
+                untuk kebutuhan
+                <br />
+                <span className="text-shihu-corona">game kamu.</span>
+              </h1>
+              <p className="text-shihu-muted text-[15px] max-w-md mb-8 leading-relaxed">
+                Dari joki eksplorasi hingga rawat akun, semua bisa di sini.
+                Proses cepat, aman, dan dikerjakan oleh tim berpengalaman.
+              </p>
+              <div className="flex gap-2.5 flex-wrap">
+                <Link
+                  href="/joki"
+                  className="rounded-xl font-display font-semibold text-sm text-white bg-corona shadow-lg shadow-blue-950/40"
+                  style={{ padding: "12px 22px" }}
+                >
+                  Lihat layanan <span className="ml-1">→</span>
+                </Link>
+                <Link
+                  href="/antrian"
+                  className="rounded-xl font-display font-medium text-sm border border-shihu-borderSoft text-shihu-text hover:bg-white/5"
+                  style={{ padding: "12px 22px" }}
+                >
+                  Cek status antrian
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-12 max-w-2xl">
+                {[["◈", "Aman & Terpercaya", "Data kamu aman"], ["ϟ", "Proses Cepat", "Sesuai estimasi"], ["♧", "Tim Profesional", "Berpengalaman"], ["✦", "Harga Terjangkau", "Kualitas tetap utama"]].map(([icon, title, desc]) => (
+                  <div key={title} className="flex items-start gap-2">
+                    <span className="text-shihu-corona text-lg leading-none">{icon}</span>
+                    <div><p className="font-display text-[11px] font-semibold text-shihu-text">{title}</p><p className="text-[10px] text-shihu-faint mt-0.5">{desc}</p></div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="py-5 pb-12">
-          <SectionHeading
-            eyebrow="Game yang tersedia"
-            title="Pilih game kamu"
-            desc="Setiap game punya tim joki berpengalaman sendiri, sesuai karakteristik masing-masing."
-          />
+        <section className="site-container py-12 sm:py-14">
+          <div className="flex items-end justify-between gap-4 mb-7">
+            <SectionHeading
+              eyebrow="Pilihan layanan"
+              title={<>Game & layanan <span className="text-shihu-corona">kami</span></>}
+              desc="Pilih game dan layanan yang kamu butuhkan. Semua tersedia dengan harga terbaik."
+            />
+            <Link href="/joki" className="hidden sm:block text-xs font-display font-semibold text-shihu-corona">Lihat semua layanan →</Link>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {games.map((g) => (
               <GameBanner key={g.id} game={g} tagline={g.tagline} />
@@ -113,8 +128,17 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <section className="border-y border-shihu-border bg-[#091727]">
+          <div className="site-container py-10 sm:py-12 grid grid-cols-1 lg:grid-cols-[1.15fr_2fr] gap-8 items-center">
+            <SectionHeading eyebrow="Kenapa pilih kami?" title={<>Kenapa pilih <span className="text-shihu-corona">Shihu Service?</span></>} desc="Kami berkomitmen memberikan layanan terbaik untuk pengalaman gaming kamu." />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[['◈', 'Aman & Terpercaya', 'Data dan akun kamu selalu aman'], ['ϟ', 'Proses Cepat', 'Pengerjaan sesuai estimasi'], ['✦', 'Harga Terjangkau', 'Kualitas tetap jadi prioritas'], ['♧', 'Customer Support', 'Siap membantu kapan saja']].map(([icon, title, desc]) => <div key={title} className="border-l border-shihu-border pl-4"><span className="text-shihu-corona text-xl">{icon}</span><p className="font-display text-xs font-semibold mt-2">{title}</p><p className="text-[10px] text-shihu-faint mt-1 leading-relaxed">{desc}</p></div>)}
+            </div>
+          </div>
+        </section>
+
         {homepageTestimonials.length > 0 && (
-          <section className="py-2 pb-12">
+          <section className="site-container py-12 sm:py-14 pb-10">
             <SectionHeading
               eyebrow="Dari customer"
               title="Testimoni"
@@ -144,7 +168,7 @@ export default async function HomePage() {
           </section>
         )}
 
-        <section className="py-2 pb-5">
+        <section className="site-container py-2 pb-14">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <QuickAccessCard
               href="/joki"

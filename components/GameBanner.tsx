@@ -2,9 +2,9 @@ import Link from "next/link";
 import type { GameLite } from "@/types/game";
 
 const BG_GRADIENT: Record<string, string> = {
-  genshin: "linear-gradient(160deg, #3a2c14 0%, #15111f 75%)",
-  wuwa: "linear-gradient(160deg, #123138 0%, #15111f 75%)",
-  neverness: "linear-gradient(160deg, #281c42 0%, #15111f 75%)",
+  genshin: "linear-gradient(160deg, #173c68 0%, #0b1829 75%)",
+  wuwa: "linear-gradient(160deg, #124d68 0%, #0b1829 75%)",
+  neverness: "linear-gradient(160deg, #293b74 0%, #0b1829 75%)",
 };
 
 export function GameBanner({
@@ -25,24 +25,15 @@ export function GameBanner({
         borderColor: `${game.accentColor}2E`,
       }}
     >
-      <div
-        className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-30 border"
-        style={{ borderColor: game.accentColor, borderWidth: 1.5 }}
-        aria-hidden="true"
-      />
-      <div
-        className="absolute -top-2 -right-2 w-[90px] h-[90px] rounded-full bg-shihu-bg border"
-        style={{ borderColor: `${game.accentColor}55`, borderWidth: 1.5 }}
-        aria-hidden="true"
-      />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#07111f] via-transparent to-white/5 opacity-80" aria-hidden="true" />
       <p
-        className="text-xs font-medium font-display mb-1.5"
+        className="relative text-xs font-medium font-display mb-1.5"
         style={{ color: game.accentColor }}
       >
         {tagline}
       </p>
-      <h3 className="font-display text-xl font-semibold mb-3">{game.name}</h3>
-      <span className="text-sm text-[#C9C5D6] font-medium">
+      <h3 className="relative font-display text-xl font-semibold mb-3">{game.name}</h3>
+      <span className="relative text-sm text-[#C2D0E3] font-medium">
         Lihat layanan joki →
       </span>
     </Link>

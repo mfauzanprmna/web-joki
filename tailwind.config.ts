@@ -8,24 +8,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Palet "Shihu" — masih dark-mode, tapi lebih terang & lebih hangat
-        // dibanding tema sebelumnya (base ungu-charcoal, aksen amber-coral).
+        // Palet Shihu: navy gelap dengan aksen biru elektrik.
         shihu: {
-          bg: "#15111F",
-          card: "#211B32",
-          border: "#362D4C",
-          borderSoft: "#413759",
-          text: "#FBF9FF",
-          muted: "#B7ADD1",
-          faint: "#867BA0",
-          corona: "#FFB238",
-          coronaTo: "#FF7A45",
-          violet: "#A385FF",
+          bg: "#07111F",
+          card: "#0D1B2D",
+          border: "#1C3553",
+          borderSoft: "#2C4C72",
+          text: "#F4F8FF",
+          muted: "#A8BAD2",
+          faint: "#7187A5",
+          corona: "#4D9CFF",
+          coronaTo: "#236DE3",
+          violet: "#79B7FF",
         },
         game: {
-          genshin: "#FFB238",
-          wuwa: "#4FE0FF",
-          neverness: "#C2A3FF",
+          genshin: "#8CC8FF",
+          wuwa: "#62D9FF",
+          neverness: "#A8B8FF",
         },
       },
       fontFamily: {
@@ -33,7 +32,7 @@ const config: Config = {
         body: ["var(--font-inter)", "sans-serif"],
       },
       backgroundImage: {
-        corona: "linear-gradient(135deg, #FFB238, #FF7A45)",
+        corona: "linear-gradient(135deg, #54A7FF, #236DE3)",
       },
     },
   },
