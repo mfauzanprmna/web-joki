@@ -1,10 +1,11 @@
 export type GameSlug = "genshin" | "wuwa" | "neverness";
 
-export interface GameLite {
+export type GameLite = {
   slug: string;
   name: string;
   accentColor: string;
-}
+  bannerImage?: string; // path ke gambar, misal "/games/genshin-banner.jpg"
+};
 
 export const STATUS_LABEL: Record<string, string> = {
   MENUNGGU: "Menunggu giliran",

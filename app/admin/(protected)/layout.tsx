@@ -99,7 +99,7 @@ export default function AdminLayout({
             </button>
           </form>
         </header>
-        <main className="p-6 md:p-8 max-w-5xl">{children}</main>
+        <main className="site-container py-6 md:py-8">{children}</main>
       </div>
     </div>
   );

@@ -23,7 +23,7 @@ export function JokiCard({
   const tags = metaTags.filter((t): t is string => !!t);
 
   return (
-    <div className="bg-shihu-card border border-shihu-border rounded-2xl p-5">
+    <div className="h-full bg-shihu-card border border-shihu-border rounded-2xl p-5 flex flex-col">
       <div className="flex items-start justify-between gap-2 mb-3 flex-wrap">
         <GameBadge game={game} />
         {badge && (
@@ -49,7 +49,7 @@ export function JokiCard({
           </span>
         ))}
       </div>
-      <div className="flex items-center justify-between pt-3.5 border-t border-shihu-border">
+      <div className="mt-auto flex items-center justify-between pt-3.5 border-t border-shihu-border">
         <div>
           <p
             className="font-display text-[17px] font-bold"

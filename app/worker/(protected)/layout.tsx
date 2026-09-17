@@ -18,7 +18,7 @@ export default async function WorkerProtectedLayout({
         <div className="min-h-screen bg-shihu-bg relative">
             <div className="shihu-glow-top" />
             <header className="border-b border-shihu-border bg-shihu-card/40 relative z-10">
-                <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div className="site-container py-4 flex items-center justify-between">
                     <Link href="/worker" className="flex items-center gap-2.5">
                         <ShihuMark size={26} />
                         <div>
@@ -44,7 +44,7 @@ export default async function WorkerProtectedLayout({
                 </div>
             </header>
 
-            <main className="max-w-3xl mx-auto px-6 py-8 relative z-10">
+            <main className="site-container py-8 relative z-10">
                 {children}
             </main>
         </div>

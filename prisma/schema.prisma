@@ -14,6 +14,7 @@ model Game {
   name               String
   tagline            String
   accentColor        String
+  bannerImage        String?  // nullable, kolom baru
   createdAt          DateTime           @default(now())
   endgameContent     EndgameContent[]
   regions            GameRegion[]

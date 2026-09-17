@@ -14,25 +14,46 @@ export function GameBanner({
   game: GameLite;
   tagline: string;
 }) {
-  const bg = BG_GRADIENT[game.slug] ?? BG_GRADIENT.genshin;
+  const fallbackGradient = BG_GRADIENT[game.slug] ?? BG_GRADIENT.genshin;
 
   return (
     <Link
       href={`/joki?game=${game.slug}`}
       className="group relative rounded-[18px] p-7 overflow-hidden min-h-[170px] flex flex-col justify-end border transition-transform hover:-translate-y-1"
       style={{
-        background: bg,
         borderColor: `${game.accentColor}2E`,
       }}
     >
-      <div className="absolute inset-0 bg-gradient-to-t from-[#07111f] via-transparent to-white/5 opacity-80" aria-hidden="true" />
+      {/* Layer gambar background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+        style={{
+          backgroundImage: game.bannerImage
+            ? `url(${game.bannerImage})`
+            : fallbackGradient,
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Overlay gradient supaya teks tetap kebaca di atas gambar */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(0deg, #07111f 0%, rgba(7,17,31,0.85) 35%, rgba(7,17,31,0.15) 70%, rgba(7,17,31,0.4) 100%)",
+        }}
+        aria-hidden="true"
+      />
+
       <p
         className="relative text-xs font-medium font-display mb-1.5"
         style={{ color: game.accentColor }}
       >
         {tagline}
       </p>
-      <h3 className="relative font-display text-xl font-semibold mb-3">{game.name}</h3>
+      <h3 className="relative font-display text-xl font-semibold mb-3">
+        {game.name}
+      </h3>
       <span className="relative text-sm text-[#C2D0E3] font-medium">
         Lihat layanan joki →
       </span>

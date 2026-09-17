@@ -220,7 +220,7 @@ export default async function JokiListPage({
       <div className="shihu-glow-top" />
       <Navbar />
 
-      <main className="max-w-5xl mx-auto px-6 pb-20 pt-8 relative z-10">
+      <main className="site-container pb-20 pt-8 relative z-10">
         <SectionHeading
           eyebrow="Katalog layanan"
           title="List joki"
