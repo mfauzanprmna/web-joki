@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createQuestType } from "@/lib/actions/joki";
 import { QuestTypeRowItem } from "@/components/admin/QuestTypeRowItem";
+import { PaginatedList } from "@/components/PaginatedList";
 
 export default async function AdminQuestPage() {
   const [games, questTypes] = await Promise.all([
@@ -84,11 +85,7 @@ export default async function AdminQuestPage() {
         </form>
       </details>
 
-      <div className="flex flex-col gap-2.5">
-        {questTypes.map((q) => (
-          <QuestTypeRowItem key={q.id} questType={q} />
-        ))}
-      </div>
+      <PaginatedList pageSize={15} className="flex flex-col gap-2.5" items={questTypes.map((q) => <QuestTypeRowItem key={q.id} questType={q} />)} />
     </div>
   );
 }

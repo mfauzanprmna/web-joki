@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createGameRegion } from "@/lib/actions/joki";
 import { GameRegionRowItem } from "@/components/admin/GameRegionRowItem";
+import { PaginatedList } from "@/components/PaginatedList";
 
 export default async function AdminRegionPage() {
   const [games, regions] = await Promise.all([
@@ -56,11 +57,7 @@ export default async function AdminRegionPage() {
         </form>
       </details>
 
-      <div className="flex flex-col gap-2.5">
-        {regions.map((r) => (
-          <GameRegionRowItem key={r.id} region={r} />
-        ))}
-      </div>
+      <PaginatedList pageSize={15} className="flex flex-col gap-2.5" items={regions.map((r) => <GameRegionRowItem key={r.id} region={r} />)} />
     </div>
   );
 }

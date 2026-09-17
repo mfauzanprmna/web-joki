@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createGame } from "@/lib/actions/game";
 import { GameRowItem } from "@/components/admin/GameRowItem";
+import { PaginatedList } from "@/components/PaginatedList";
 
 const ALL_SLUGS = ["genshin", "wuwa", "neverness"] as const;
 
@@ -70,11 +71,7 @@ export default async function AdminGamePage() {
         </details>
       )}
 
-      <div className="flex flex-col gap-2.5">
-        {games.map((g) => (
-          <GameRowItem key={g.id} game={g} />
-        ))}
-      </div>
+      <PaginatedList pageSize={15} className="flex flex-col gap-2.5" items={games.map((g) => <GameRowItem key={g.id} game={g} />)} />
     </div>
   );
 }

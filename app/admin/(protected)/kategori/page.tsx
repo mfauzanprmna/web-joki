@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createJokiCategory } from "@/lib/actions/joki";
 import { JokiCategoryRowItem } from "@/components/admin/JokiCategoryRowItem";
+import { PaginatedList } from "@/components/PaginatedList";
 
 export default async function AdminKategoriPage() {
   const [games, categories] = await Promise.all([
@@ -127,11 +128,7 @@ export default async function AdminKategoriPage() {
         </form>
       </details>
 
-      <div className="flex flex-col gap-2.5">
-        {categories.map((c) => (
-          <JokiCategoryRowItem key={c.id} category={c} />
-        ))}
-      </div>
+      <PaginatedList pageSize={15} className="flex flex-col gap-2.5" items={categories.map((c) => <JokiCategoryRowItem key={c.id} category={c} />)} />
     </div>
   );
 }

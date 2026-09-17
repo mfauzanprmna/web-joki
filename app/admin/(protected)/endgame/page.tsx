@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { CreateEndgameContentForm } from "@/components/admin/CreateEndgameContentForm";
 import { EndgameContentRowItem } from "@/components/admin/EndgameContentRowItem";
+import { PaginatedList } from "@/components/PaginatedList";
 
 export default async function AdminEndgamePage() {
   const [games, contents] = await Promise.all([
@@ -29,11 +30,7 @@ export default async function AdminEndgamePage() {
         <CreateEndgameContentForm games={games} />
       </details>
 
-      <div className="flex flex-col gap-2.5">
-        {contents.map((c) => (
-          <EndgameContentRowItem key={c.id} content={c} />
-        ))}
-      </div>
+      <PaginatedList pageSize={15} className="flex flex-col gap-2.5" items={contents.map((c) => <EndgameContentRowItem key={c.id} content={c} />)} />
     </div>
   );
 }

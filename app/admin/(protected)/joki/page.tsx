@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { CreateJokiItemForm } from "@/components/admin/CreateJokiItemForm";
 import { JokiItemRowItem } from "@/components/admin/JokiItemRowItem";
+import { PaginatedList } from "@/components/PaginatedList";
 
 export default async function AdminJokiPage() {
   const [games, categories, regions, questTypes, patches, endgameContents, items] = await Promise.all([
@@ -75,8 +76,10 @@ export default async function AdminJokiPage() {
         </details>
       )}
 
-      <div className="flex flex-col gap-2.5">
-        {items.map((item) => (
+      <PaginatedList
+        pageSize={15}
+        className="flex flex-col gap-2.5"
+        items={items.map((item) => (
           <JokiItemRowItem
             key={item.id}
             item={item}
@@ -88,7 +91,7 @@ export default async function AdminJokiPage() {
             endgameContents={endgameContents}
           />
         ))}
-      </div>
+      />
     </div>
   );
 }

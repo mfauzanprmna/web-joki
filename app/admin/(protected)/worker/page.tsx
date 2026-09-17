@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { CreateWorkerForm } from "@/components/admin/CreateWorkerForm";
 import { WorkerRowItem } from "@/components/admin/WorkerRowItem";
+import { PaginatedList } from "@/components/PaginatedList";
 
 export default async function AdminWorkerPage() {
     const workers = await prisma.worker.findMany({
@@ -32,14 +33,16 @@ export default async function AdminWorkerPage() {
                     <p className="text-shihu-muted text-sm">Tambahkan lewat form di atas.</p>
                 </div>
             ) : (
-                <div className="flex flex-col gap-2.5">
-                    {workers.map((w) => (
+                <PaginatedList
+                    pageSize={15}
+                    className="flex flex-col gap-2.5"
+                    items={workers.map((w) => (
                         <WorkerRowItem
                             key={w.id}
                             item={{ id: w.id, name: w.name, username: w.username, isActive: w.isActive, orderCount: w._count.orders }}
                         />
                     ))}
-                </div>
+                />
             )}
         </div>
     );
