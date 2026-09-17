@@ -4,7 +4,7 @@ export type GameLite = {
   slug: string;
   name: string;
   accentColor: string;
-  bannerImage?: string; // path ke gambar, misal "/games/genshin-banner.jpg"
+  bannerImage?: string | null; // terima null (dari Prisma) dan undefined
 };
 
 export const STATUS_LABEL: Record<string, string> = {
