@@ -341,10 +341,24 @@ model Order {
   /// Estimasi waktu pengerjaan khusus order ini (custom per order, bukan
   /// diambil otomatis dari etaLabel Joki Item).
   estimasiJoki   String?
-  /// Jumlah calculatedPrice seluruh OrderLine — disimpan (bukan dihitung
-  /// ulang setiap render) supaya harga order tetap konsisten meski admin
-  /// mengubah harga Joki Item/Paket di kemudian hari.
+  /// Jumlah calculatedPrice seluruh OrderLine, DIKURANGI diskon (jika ada) --
+  /// ini harga FINAL yang dipakai di semua tempat lain (notifikasi, komisi
+  /// worker, tampilan customer/admin). Disimpan (bukan dihitung ulang setiap
+  /// render) supaya harga order tetap konsisten meski admin mengubah harga
+  /// Joki Item/Paket di kemudian hari.
   totalPrice     Int          @default(0)
+  /// Persentase diskon yang diinput admin saat membuat pesanan (0-100),
+  /// opsional. Disimpan terpisah dari totalPrice supaya riwayat "harga asli
+  /// vs setelah diskon" tetap terlihat, bukan cuma totalPrice yang sudah
+  /// dipotong tanpa jejak.
+  discountPercent Int?
+  /// Nominal potongan hasil kalkulasi (harga asli x discountPercent / 100),
+  /// dibulatkan. Disimpan langsung (bukan dihitung ulang dari persen) supaya
+  /// tetap akurat meski ada pembulatan per-akun. Null kalau tidak ada diskon.
+  discountAmount Int?
+  /// Catatan/label bebas untuk diskon (mis. "Promo lebaran", "Loyal customer"),
+  /// opsional, cuma relevan kalau discountAmount terisi.
+  discountLabel  String?
   /// Platform tempat order masuk. sourceUsername wajib untuk semua platform;
   /// sourceWhatsapp hanya diisi jika orderSource = WHATSAPP.
   orderSource    OrderSource
@@ -428,6 +442,14 @@ model OrderLine {
   progressCurrent Int? @default(0)
   /// Menandai bahwa pengerjaan item ini sudah selesai.
   isCompleted     Boolean  @default(false)
+  /// Timestamp terakhir kali ensureRawatAkunScheduleSynced() berhasil
+  /// membangun kalender OrderLineDayProgress/OrderLineDayTask untuk baris
+  /// ini. Dipakai sebagai guard supaya proses berat itu (beberapa query +
+  /// loop per event) tidak dijalankan ulang di SETIAP page load -- cukup
+  /// sekali di awal, lalu dianggap sinkron selamanya (baris day progress
+  /// sudah dibuat idempotent, dan admin/worker update lewat form terpisah,
+  /// bukan lewat fungsi sync ini). Null berarti belum pernah disinkronkan.
+  scheduleSyncedAt DateTime?
 
   @@index([orderId])
   @@index([jokiItemId])

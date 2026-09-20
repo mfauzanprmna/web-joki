@@ -13,7 +13,15 @@ import { ensureRawatAkunScheduleSynced } from "@/lib/rawat-akun-service";
 import { enumerateDays, isoDay } from "@/lib/rawat-akun-schedule";
 import { getJokiItemCategoryLabel } from "@/lib/order-progress-grouping";
 
-export const revalidate = 0;
+// OPTIMASI: sebelumnya revalidate = 0 (selalu render dinamis penuh dari DB
+// setiap kunjungan). Semua Server Action yang mengubah data halaman ini
+// SUDAH memanggil revalidatePath(`/progress/${publicSlug}`) (lihat
+// lib/actions/order-progress.ts, rawat-akun-progress.ts, line-progress.ts,
+// testimonial.ts), jadi perubahan tetap langsung terlihat lewat on-demand
+// revalidation -- angka di sini cuma jaring pengaman tambahan (cache
+// singkat) untuk kunjungan berulang dalam rentang waktu pendek, bukan
+// andalan utama kesegaran data.
+export const revalidate = 30;
 
 export default async function CustomerProgressPage({
   params,
@@ -28,7 +36,13 @@ export default async function CustomerProgressPage({
       orders: {
         select: {
           lines: {
-            select: { id: true, startDate: true, endDate: true, jokiItem: { select: { category: { select: { isRawatAkun: true } } } } },
+            select: {
+              id: true,
+              startDate: true,
+              endDate: true,
+              scheduleSyncedAt: true,
+              jokiItem: { select: { category: { select: { isRawatAkun: true } } } },
+            },
           },
         },
       },
@@ -36,79 +50,182 @@ export default async function CustomerProgressPage({
   });
   if (!customerPreview) notFound();
 
-  await Promise.all(
-    customerPreview.orders
-      .flatMap((o) => o.lines)
-      .filter((l) => l.jokiItem?.category.isRawatAkun && l.startDate && l.endDate)
-      .map((l) => ensureRawatAkunScheduleSynced(l.id))
-  );
+  // OPTIMASI: cuma jalankan sync (proses berat, lihat catatan di
+  // lib/rawat-akun-service.ts) untuk baris yang BELUM pernah disinkronkan.
+  // Setelah order berjalan beberapa hari, biasanya array ini kosong, jadi
+  // Promise.all langsung selesai tanpa kerja tambahan sama sekali.
+  const unsyncedLineIds = customerPreview.orders
+    .flatMap((o) => o.lines)
+    .filter((l) => l.jokiItem?.category.isRawatAkun && l.startDate && l.endDate && !l.scheduleSyncedAt)
+    .map((l) => l.id);
 
-  const customer = await prisma.customer.findUnique({
-    where: { publicSlug: slug },
-    include: {
-      orders: {
-        include: {
-          game: true,
-          account: true,
-          lines: {
-            include: {
-              jokiItem: {
-                include: {
-                  category: true,
-                  region: { select: { name: true } },
-                  questType: { select: { name: true, questKind: true } },
+  if (unsyncedLineIds.length > 0) {
+    await Promise.all(unsyncedLineIds.map((id) => ensureRawatAkunScheduleSynced(id)));
+  }
+
+  const recentCompletedCutoff = new Date();
+  recentCompletedCutoff.setDate(recentCompletedCutoff.getDate() - 7);
+
+  // OPTIMASI: dulu SATU query menarik nested lengkap (updates, dayProgress,
+  // dayTasks, breakdown paket, dst) untuk SEMUA order milik customer --
+  // termasuk order lama yang sudah SELESAI berbulan-bulan lalu, padahal di
+  // bagian History bawah cuma judulnya saja yang ditampilkan (lihat
+  // buildOrderTitle). Sekarang dipisah: order yang butuh detail penuh
+  // (aktif + baru selesai) vs order lama (select minimal untuk History).
+  const [customer, oldCompletedOrders] = await Promise.all([
+    prisma.customer.findUnique({
+      where: { publicSlug: slug },
+      include: {
+        orders: {
+          where: {
+            OR: [
+              { status: { in: ["MENUNGGU", "DIKERJAKAN", "FINISHING"] } },
+              { status: "SELESAI", completedAt: { gte: recentCompletedCutoff } },
+              // completedAt bisa null di data lama -- fallback ke updatedAt
+              // supaya order yang sebenarnya baru tidak salah kelompok jadi
+              // "lama" gara-gara completedAt belum pernah diisi.
+              { status: "SELESAI", completedAt: null, updatedAt: { gte: recentCompletedCutoff } },
+            ],
+          },
+          include: {
+            game: true,
+            account: true,
+            lines: {
+              include: {
+                jokiItem: {
+                  include: {
+                    category: true,
+                    region: { select: { name: true } },
+                    questType: { select: { name: true, questKind: true } },
+                  },
                 },
-              },
-              jokiPaket: {
-                include: {
-                  items: {
-                    include: {
-                      jokiItem: {
-                        select: {
-                          id: true,
-                          title: true,
-                          category: true,
-                          region: { select: { name: true } },
-                          questType: { select: { name: true, questKind: true } },
+                jokiPaket: {
+                  include: {
+                    items: {
+                      include: {
+                        jokiItem: {
+                          select: {
+                            id: true,
+                            title: true,
+                            category: true,
+                            region: { select: { name: true } },
+                            questType: { select: { name: true, questKind: true } },
+                          },
                         },
                       },
                     },
                   },
                 },
+                patchEvent: { select: { title: true } },
+                endgameContent: { select: { title: true } },
+                updates: { orderBy: { createdAt: "desc" } },
+                dayProgress: { orderBy: { date: "asc" } },
+                dayTasks: { orderBy: [{ date: "asc" }, { position: "asc" }] },
               },
-              patchEvent: { select: { title: true } },
-              endgameContent: { select: { title: true } },
-              updates: { orderBy: { createdAt: "desc" } },
-              dayProgress: { orderBy: { date: "asc" } },
-              dayTasks: { orderBy: [{ date: "asc" }, { position: "asc" }] },
             },
+            testimonial: true,
           },
-          testimonial: true,
+          orderBy: { createdAt: "desc" },
         },
-        orderBy: { createdAt: "desc" },
+        jokiHistoryEntries: {
+          include: { game: true, testimonial: true },
+          orderBy: { completedAt: "desc" },
+        },
       },
-      jokiHistoryEntries: {
-        include: { game: true, testimonial: true },
-        orderBy: { completedAt: "desc" },
+    }),
+    // Order SELESAI yang sudah lama -- cuma untuk daftar History ringkas,
+    // jadi select seperlunya saja (bukan nested lengkap seperti di atas).
+    prisma.order.findMany({
+      where: {
+        customer: { publicSlug: slug },
+        status: "SELESAI",
+        NOT: {
+          OR: [
+            { completedAt: { gte: recentCompletedCutoff } },
+            { completedAt: null, updatedAt: { gte: recentCompletedCutoff } },
+          ],
+        },
       },
-    },
-  });
+      select: {
+        id: true,
+        orderCode: true,
+        completedAt: true,
+        updatedAt: true,
+        game: true,
+        testimonial: true,
+        lines: {
+          select: {
+            jokiItem: { select: { title: true } },
+            jokiPaket: { select: { title: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   if (!customer) notFound();
 
   const activeOrders = customer.orders.filter((o) =>
     ["MENUNGGU", "DIKERJAKAN", "FINISHING"].includes(o.status)
   );
-  const completedOrders = customer.orders.filter((o) => o.status === "SELESAI");
-  const recentCompletedCutoff = new Date();
-  recentCompletedCutoff.setDate(recentCompletedCutoff.getDate() - 7);
-  const recentCompletedOrders = completedOrders.filter((order) =>
-    (order.completedAt ?? order.updatedAt) >= recentCompletedCutoff
-  );
+  const recentCompletedOrders = customer.orders.filter((o) => o.status === "SELESAI");
+
+  // Normalisasi eksplisit ke satu shape seragam (cuma field yang benar-benar
+  // dipakai render History di bawah) -- recentCompletedOrders datang dari
+  // query lengkap, oldCompletedOrders dari query select minimal; keduanya
+  // dipetakan ke bentuk yang sama supaya digabung dengan tipe yang jelas,
+  // bukan mengandalkan union implisit dari dua shape Prisma yang berbeda.
+  interface HistoryOrderSummary {
+    id: string;
+    orderCode: string;
+    completedAt: Date | null;
+    updatedAt: Date;
+    game: (typeof recentCompletedOrders)[number]["game"];
+    testimonial: (typeof recentCompletedOrders)[number]["testimonial"];
+    lines: { jokiItem: { title: string } | null; jokiPaket: { title: string } | null }[];
+  }
+  const toHistorySummary = (o: {
+    id: string;
+    orderCode: string;
+    completedAt: Date | null;
+    updatedAt: Date;
+    game: HistoryOrderSummary["game"];
+    testimonial: HistoryOrderSummary["testimonial"];
+    lines: { jokiItem: { title: string } | null; jokiPaket: { title: string } | null }[];
+  }): HistoryOrderSummary => ({
+    id: o.id,
+    orderCode: o.orderCode,
+    completedAt: o.completedAt,
+    updatedAt: o.updatedAt,
+    game: o.game,
+    testimonial: o.testimonial,
+    lines: o.lines,
+  });
+
+  // "completedOrders" dipakai di bagian History bawah: gabungan yang baru
+  // selesai (detail penuh dari query utama, tapi cukup diakses field
+  // dasarnya) + yang lama (select minimal dari query kedua).
+  const completedOrders = [
+    ...recentCompletedOrders.map(toHistorySummary),
+    ...oldCompletedOrders.map(toHistorySummary),
+  ];
   const historyEntries = customer.jokiHistoryEntries;
   const historyCount = completedOrders.length + historyEntries.length;
   const testimonials = [
     ...customer.orders
+      .filter((o) => o.testimonial)
+      .map((o) => ({
+        id: `order-${o.id}`,
+        customerName: o.testimonial!.customerName,
+        message: o.testimonial!.message,
+        rating: o.testimonial!.rating,
+        game: o.game,
+      })),
+    // oldCompletedOrders TIDAK termasuk di customer.orders (lihat query
+    // terpisah di atas), jadi testimoni dari order lama perlu ditambahkan
+    // manual di sini supaya tetap tampil seperti sebelum dipecah.
+    ...oldCompletedOrders
       .filter((o) => o.testimonial)
       .map((o) => ({
         id: `order-${o.id}`,

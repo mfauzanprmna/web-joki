@@ -44,6 +44,8 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
   const [accounts, setAccounts] = useState<AccountData[]>([emptyAccount()]);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(null);
   const [confirmFormData, setConfirmFormData] = useState<FormData | null>(null);
+  const [discountPercent, setDiscountPercent] = useState("");
+  const [discountLabel, setDiscountLabel] = useState("");
 
   useEffect(() => {
     if (hasSubmittedRef.current && !pending && !state?.error) {
@@ -53,6 +55,8 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
       setActiveTab(0);
       setAccounts([emptyAccount()]);
       setSelectedCustomer(null);
+      setDiscountPercent("");
+      setDiscountLabel("");
       hasSubmittedRef.current = false;
     }
   }, [pending, state]);
@@ -77,7 +81,36 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
     });
   }
 
-  const grandTotal = useMemo(() => accounts.reduce((sum, a) => sum + a.total, 0), [accounts]);
+  const subtotal = useMemo(() => accounts.reduce((sum, a) => sum + a.total, 0), [accounts]);
+
+  // Validasi ringan di sisi client: cuma terima 0-100, kosong dianggap 0
+  // (tidak ada diskon). Validasi ulang yang lebih ketat tetap dilakukan di
+  // server (lib/actions/order.ts) -- ini cuma untuk pratinjau harga real-time.
+  const discountPercentValue = useMemo(() => {
+    const n = Number(discountPercent);
+    if (!discountPercent || Number.isNaN(n)) return 0;
+    return Math.min(100, Math.max(0, n));
+  }, [discountPercent]);
+
+  const discountAmountTotal = useMemo(
+    () => Math.round((subtotal * discountPercentValue) / 100),
+    [subtotal, discountPercentValue]
+  );
+
+  const grandTotal = subtotal - discountAmountTotal;
+
+  /**
+   * Hitung potongan untuk satu akun secara proporsional terhadap subtotal-nya
+   * (bukan dibagi rata flat) -- supaya akun dengan harga lebih besar dapat
+   * potongan nominal lebih besar juga, sebanding dengan porsinya di
+   * keseluruhan pesanan. Dipakai untuk pratinjau di modal konfirmasi; server
+   * menghitung ulang dengan logika yang sama untuk nilai yang benar-benar
+   * disimpan.
+   */
+  function accountDiscountAmount(accountTotal: number): number {
+    if (subtotal <= 0 || discountPercentValue <= 0) return 0;
+    return Math.round((accountTotal * discountPercentValue) / 100);
+  }
 
   function lineLabel(line: ExportedLine, account: AccountData): { title: string; price: number } {
     const gameItems = items.filter((item) => item.gameId === account.gameId);
@@ -170,6 +203,39 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
           </p>
         </div>
 
+        <div className="grid grid-cols-2 gap-2.5">
+          <div>
+            <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1">
+              Diskon (%) <span className="text-shihu-faint font-normal">— opsional</span>
+            </label>
+            <input
+              type="number"
+              name="discountPercent"
+              min={0}
+              max={100}
+              step="0.01"
+              placeholder="0"
+              value={discountPercent}
+              onChange={(e) => setDiscountPercent(e.target.value)}
+              className="admin-input"
+            />
+          </div>
+          <div>
+            <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1">
+              Catatan diskon <span className="text-shihu-faint font-normal">— opsional</span>
+            </label>
+            <input
+              type="text"
+              name="discountLabel"
+              placeholder="mis. Promo lebaran"
+              value={discountLabel}
+              onChange={(e) => setDiscountLabel(e.target.value)}
+              disabled={discountPercentValue <= 0}
+              className="admin-input disabled:opacity-50"
+            />
+          </div>
+        </div>
+
         <p className="font-display text-xs font-semibold text-shihu-muted uppercase tracking-wide mt-2">
           Detail jokian per akun
         </p>
@@ -211,11 +277,25 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
           </div>
         ))}
 
-        <div className="flex items-center justify-between bg-[#241E38] border border-shihu-corona/30 rounded-xl px-4 py-3">
-          <span className="text-xs font-display font-medium text-shihu-muted">
-            Total keseluruhan ({accountCount} akun)
-          </span>
-          <span className="font-display font-bold text-shihu-corona text-base">{formatRupiah(grandTotal)}</span>
+        <div className="flex flex-col gap-1 bg-[#241E38] border border-shihu-corona/30 rounded-xl px-4 py-3">
+          {discountAmountTotal > 0 && (
+            <div className="flex items-center justify-between text-[11.5px] text-shihu-muted">
+              <span>Subtotal ({accountCount} akun)</span>
+              <span>{formatRupiah(subtotal)}</span>
+            </div>
+          )}
+          {discountAmountTotal > 0 && (
+            <div className="flex items-center justify-between text-[11.5px] text-red-300">
+              <span>Diskon ({discountPercentValue}%)</span>
+              <span>-{formatRupiah(discountAmountTotal)}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-display font-medium text-shihu-muted">
+              {discountAmountTotal > 0 ? "Total setelah diskon" : `Total keseluruhan (${accountCount} akun)`}
+            </span>
+            <span className="font-display font-bold text-shihu-corona text-base">{formatRupiah(grandTotal)}</span>
+          </div>
         </div>
 
         {state?.error && (
@@ -253,6 +333,7 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
             <div className="flex flex-col gap-3">
               {accounts.map((account, index) => {
                 const gameName = games.find((game) => game.id === account.gameId)?.name ?? "Game belum dipilih";
+                const accDiscount = accountDiscountAmount(account.total);
                 return (
                   <section key={index} className="border border-shihu-border rounded-xl p-3">
                     <div className="flex items-start justify-between gap-3 mb-2">
@@ -261,7 +342,14 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
                         {account.accountUid && <p className="text-[11px] text-shihu-faint">UID: {account.accountUid}</p>}
                         <p className="text-[11px] text-shihu-muted mt-1">{gameName}</p>
                       </div>
-                      <p className="font-display font-bold text-sm text-shihu-corona">{formatRupiah(account.total)}</p>
+                      <div className="text-right">
+                        {accDiscount > 0 && (
+                          <p className="text-[11px] text-shihu-faint line-through">{formatRupiah(account.total)}</p>
+                        )}
+                        <p className="font-display font-bold text-sm text-shihu-corona">
+                          {formatRupiah(account.total - accDiscount)}
+                        </p>
+                      </div>
                     </div>
                     {account.lines.length === 0 ? (
                       <p className="text-xs text-red-300">Belum ada item joki.</p>
@@ -287,9 +375,23 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
               })}
             </div>
 
-            <div className="flex items-center justify-between border-t border-shihu-border mt-4 pt-4">
-              <span className="font-display font-semibold text-sm">Total keseluruhan</span>
-              <span className="font-display font-bold text-lg text-shihu-corona">{formatRupiah(grandTotal)}</span>
+            <div className="flex flex-col gap-1 border-t border-shihu-border mt-4 pt-4">
+              {discountAmountTotal > 0 && (
+                <>
+                  <div className="flex items-center justify-between text-xs text-shihu-muted">
+                    <span>Subtotal</span>
+                    <span>{formatRupiah(subtotal)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-red-300">
+                    <span>Diskon ({discountPercentValue}%{discountLabel ? ` — ${discountLabel}` : ""})</span>
+                    <span>-{formatRupiah(discountAmountTotal)}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="font-display font-semibold text-sm">Total keseluruhan</span>
+                <span className="font-display font-bold text-lg text-shihu-corona">{formatRupiah(grandTotal)}</span>
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 mt-5">

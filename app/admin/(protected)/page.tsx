@@ -17,6 +17,7 @@ export default async function AdminDashboardPage() {
     totalCustomers,
     totalTestimonials,
     completedOrders,
+    notifications,
   ] = await Promise.all([
     prisma.order.count({
       where: { status: { in: ["MENUNGGU", "DIKERJAKAN", "FINISHING"] } },
@@ -32,6 +33,10 @@ export default async function AdminDashboardPage() {
     prisma.customer.count(),
     prisma.testimonial.count(),
     prisma.order.count({ where: { status: "SELESAI" } }),
+    // OPTIMASI: sebelumnya dipanggil TERPISAH setelah Promise.all di atas
+    // selesai (nunggu berurutan), padahal query-nya independen -- sekarang
+    // ikut dijalankan paralel bareng semua count() lainnya.
+    getOrderNotifications(),
   ]);
 
   const stats = [
@@ -42,8 +47,6 @@ export default async function AdminDashboardPage() {
     { label: "Pesanan selesai", value: completedOrders, href: "/admin/antrian" },
     { label: "Total testimoni", value: totalTestimonials, href: "/admin/testimoni" },
   ];
-
-  const notifications = await getOrderNotifications();
 
   const masterData = [
     { label: "Game", value: totalGames, href: "/admin/game", desc: "Data game yang tersedia" },

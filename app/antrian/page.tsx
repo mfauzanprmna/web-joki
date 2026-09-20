@@ -10,10 +10,26 @@ export const revalidate = 15;
 export default async function AntrianPage() {
   const orders = await prisma.order.findMany({
     where: { status: { in: ["MENUNGGU", "DIKERJAKAN", "FINISHING"] } },
-    include: {
+    select: {
+      id: true,
+      orderCode: true,
+      jokerName: true,
+      status: true,
+      progressPct: true,
       game: true,
-      customer: true,
-      lines: { include: { jokiItem: true, jokiPaket: true, patchEvent: true, endgameContent: true } },
+      customer: { select: { name: true } },
+      // OPTIMASI: dulu `include` penuh (semua kolom jokiItem/jokiPaket/dst)
+      // padahal buildOrderTitle di bawah cuma pakai field `title`. Halaman
+      // ini di-refresh tiap 15 detik (revalidate) dan menampilkan SEMUA
+      // order aktif sekaligus, jadi pemangkasan ini cukup berarti.
+      lines: {
+        select: {
+          jokiItem: { select: { title: true } },
+          jokiPaket: { select: { title: true } },
+          patchEvent: { select: { title: true } },
+          endgameContent: { select: { title: true } },
+        },
+      },
     },
     orderBy: [{ status: "asc" }, { createdAt: "asc" }],
   });

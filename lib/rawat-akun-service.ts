@@ -5,8 +5,16 @@ import { computeRawatAkunPeriod, buildAutoTasks, enumerateDays, isoDay, startOfD
  * Memastikan OrderLineDayProgress (satu baris per tanggal) dan
  * OrderLineDayTask (task otomatis dari konten endgame/event) sudah ada untuk
  * sebuah OrderLine Rawat Akun, berdasarkan rentang OrderLine.startDate..endDate
- * yang tersimpan. Idempotent -- aman dipanggil berulang kali (mis. tiap kali
- * halaman progress admin dibuka); tidak menimpa data yang sudah ada.
+ * yang tersimpan. Idempotent -- aman dipanggil berulang kali.
+ *
+ * OPTIMASI: proses ini cukup berat (beberapa query tambahan + loop
+ * update/delete per event), padahal hasilnya nyaris selalu sama setelah
+ * sinkronisasi pertama (baris day progress/day task sudah pasti ada, admin
+ * update via form terpisah, bukan lewat fungsi ini). Jadi begitu berhasil
+ * jalan sekali, kita catat di OrderLine.scheduleSyncedAt dan skip proses
+ * berat ini di pemanggilan berikutnya -- penting karena fungsi ini dipanggil
+ * dari Server Component di halaman yang sering di-refresh (progress
+ * customer, admin, worker).
  *
  * Dipanggil dari Server Component (bukan dari client), sebelum data
  * OrderLineDayProgress/OrderLineDayTask dibaca untuk ditampilkan.
@@ -27,6 +35,7 @@ export async function ensureRawatAkunScheduleSynced(orderLineId: string): Promis
 
   if (!line || !line.jokiItem || !line.jokiItem.category.isRawatAkun) return;
   if (!line.startDate || !line.endDate) return;
+  if (line.scheduleSyncedAt) return;
 
   const period = { startDate: startOfDay(line.startDate), endDate: startOfDay(line.endDate) };
 
@@ -157,4 +166,12 @@ export async function ensureRawatAkunScheduleSynced(orderLineId: string): Promis
     });
     await prisma.orderLineDayTask.deleteMany({ where: { id: { in: duplicateIds } } });
   }
+
+  // Tandai baris ini sudah disinkronkan, supaya pemanggilan berikutnya
+  // (page load selanjutnya) langsung skip di awal fungsi (lihat guard di
+  // atas) -- ini inti optimasinya.
+  await prisma.orderLine.update({
+    where: { id: orderLineId },
+    data: { scheduleSyncedAt: new Date() },
+  });
 }

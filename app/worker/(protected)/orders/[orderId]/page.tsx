@@ -26,7 +26,13 @@ export default async function WorkerOrderProgressPage({
         select: {
             workerId: true,
             lines: {
-                select: { id: true, startDate: true, endDate: true, jokiItem: { select: { category: { select: { isRawatAkun: true } } } } },
+                select: {
+                    id: true,
+                    startDate: true,
+                    endDate: true,
+                    scheduleSyncedAt: true,
+                    jokiItem: { select: { category: { select: { isRawatAkun: true } } } },
+                },
             },
         },
     });
@@ -36,11 +42,17 @@ export default async function WorkerOrderProgressPage({
     // bocor informasi keberadaan order tsb.
     if (!orderPreview || orderPreview.workerId !== worker.id) notFound();
 
-    await Promise.all(
-        orderPreview.lines
-            .filter((l) => l.jokiItem?.category.isRawatAkun && l.startDate && l.endDate)
-            .map((l) => ensureRawatAkunScheduleSynced(l.id))
-    );
+    // OPTIMASI: cuma sync baris yang BELUM pernah disinkronkan (lihat catatan
+    // lengkap di lib/rawat-akun-service.ts) -- worker sering buka halaman ini
+    // berkali-kali per hari, jadi setelah sinkron pertama biasanya tidak ada
+    // kerja tambahan sama sekali di sini.
+    const unsyncedLineIds = orderPreview.lines
+        .filter((l) => l.jokiItem?.category.isRawatAkun && l.startDate && l.endDate && !l.scheduleSyncedAt)
+        .map((l) => l.id);
+
+    if (unsyncedLineIds.length > 0) {
+        await Promise.all(unsyncedLineIds.map((id) => ensureRawatAkunScheduleSynced(id)));
+    }
 
     const order = await prisma.order.findUnique({
         where: { id: orderId },

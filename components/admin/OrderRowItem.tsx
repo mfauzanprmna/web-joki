@@ -46,6 +46,9 @@ interface OrderRow {
   progressPct: number;
   estimasiJoki: string | null;
   totalPrice: number;
+  discountPercent: number | null;
+  discountAmount: number | null;
+  discountLabel: string | null;
   orderSource: string;
   sourceUsername: string;
   sourceWhatsapp: string | null;
@@ -113,9 +116,19 @@ export function OrderRowItem({ order, workers }: { order: OrderRow; workers: Wor
             </p>
           </div>
           <div className="text-right">
+            {order.discountAmount != null && order.discountAmount > 0 && (
+              <p className="text-[10.5px] text-shihu-faint line-through whitespace-nowrap">
+                {formatRupiah(order.totalPrice + order.discountAmount)}
+              </p>
+            )}
             <p className="font-display font-bold text-shihu-corona text-sm whitespace-nowrap">
               {formatRupiah(order.totalPrice)}
             </p>
+            {order.discountAmount != null && order.discountAmount > 0 && (
+              <p className="text-[10.5px] text-red-300 whitespace-nowrap">
+                Diskon {order.discountPercent}%{order.discountLabel ? ` · ${order.discountLabel}` : ""}
+              </p>
+            )}
             <p className="text-[10.5px] text-shihu-faint whitespace-nowrap">
               Komisi worker: {formatRupiah(commission)}
             </p>

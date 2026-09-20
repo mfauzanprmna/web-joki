@@ -42,6 +42,9 @@ interface OrderRow {
     progressPct: number;
     estimasiJoki: string | null;
     totalPrice: number;
+    discountPercent: number | null;
+    discountAmount: number | null;
+    discountLabel: string | null;
     orderSource: string;
     sourceUsername: string;
     sourceWhatsapp: string | null;

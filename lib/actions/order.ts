@@ -162,6 +162,20 @@ export async function createOrder(
     return { error: "Nomor WhatsApp wajib diisi untuk order dari WhatsApp." };
   }
 
+  // Diskon bersifat OPSIONAL -- field kosong/tidak dikirim dianggap 0% (tidak
+  // ada diskon), bukan error. Validasi ulang di sini (bukan cuma percaya
+  // hitungan client) karena Server Action bisa dipanggil langsung.
+  const discountPercentRaw = String(formData.get("discountPercent") || "").trim();
+  const discountLabelRaw = String(formData.get("discountLabel") || "").trim();
+  let discountPercent = 0;
+  if (discountPercentRaw) {
+    const parsed = Number(discountPercentRaw);
+    if (Number.isNaN(parsed) || parsed < 0 || parsed > 100) {
+      return { error: "Diskon harus berupa angka antara 0 dan 100." };
+    }
+    discountPercent = parsed;
+  }
+
   const parsedAccounts = parseAccountsJson(formData);
   if ("error" in parsedAccounts) {
     return { error: parsedAccounts.error };
@@ -245,6 +259,9 @@ export async function createOrder(
     jokerName: string | null;
     estimasiJoki: string | null;
     totalPrice: number;
+    /// Nominal potongan diskon untuk akun ini (0 kalau tidak ada diskon).
+    /// Diisi SETELAH loop resolve selesai -- lihat kode setelah loop utama.
+    discountAmount: number;
     lines: {
       jokiItemId: string | null;
       jokiPaketId: string | null;
@@ -386,8 +403,24 @@ export async function createOrder(
       jokerName: acc.jokerName,
       estimasiJoki: acc.estimasiJoki,
       totalPrice: linesToCreate.reduce((sum, l) => sum + l.calculatedPrice, 0),
+      discountAmount: 0, // diisi setelah loop ini selesai, lihat di bawah
       lines: linesToCreate,
     });
+  }
+
+  // Terapkan diskon (kalau ada) SETELAH semua akun selesai di-resolve, supaya
+  // proporsi tiap akun dihitung terhadap subtotal keseluruhan pesanan --
+  // bukan dibagi rata flat, jadi akun dengan harga lebih besar mendapat
+  // potongan nominal yang sebanding lebih besar juga. Logika ini SENGAJA
+  // sama persis dengan pratinjau di CreateOrderForm.tsx (accountDiscountAmount)
+  // supaya angka yang admin lihat di modal konfirmasi = angka yang tersimpan.
+  const subtotalAllAccounts = resolvedAccounts.reduce((sum, a) => sum + a.totalPrice, 0);
+  if (subtotalAllAccounts > 0 && discountPercent > 0) {
+    for (const acc of resolvedAccounts) {
+      const originalPrice = acc.totalPrice;
+      acc.discountAmount = Math.round((originalPrice * discountPercent) / 100);
+      acc.totalPrice = originalPrice - acc.discountAmount; // jadi harga FINAL
+    }
   }
 
   // Generate publicSlug DI LUAR transaksi (butuh query findUnique tersendiri
@@ -439,6 +472,9 @@ export async function createOrder(
           status: "MENUNGGU",
           progressPct: 0,
           totalPrice: acc.totalPrice,
+          discountPercent: acc.discountAmount > 0 ? discountPercent : null,
+          discountAmount: acc.discountAmount > 0 ? acc.discountAmount : null,
+          discountLabel: acc.discountAmount > 0 && discountLabelRaw ? discountLabelRaw : null,
           orderSource: orderSource as "DISCORD" | "INSTAGRAM" | "TIKTOK" | "WHATSAPP",
           sourceUsername,
           sourceWhatsapp: orderSource === "WHATSAPP" ? sourceWhatsapp : null,

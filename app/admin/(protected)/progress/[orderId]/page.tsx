@@ -20,18 +20,28 @@ export default async function AdminOrderProgressPage({
     where: { id: orderId },
     select: {
       lines: {
-        select: { id: true, startDate: true, endDate: true, jokiItem: { select: { category: { select: { isRawatAkun: true } } } } },
+        select: {
+          id: true,
+          startDate: true,
+          endDate: true,
+          scheduleSyncedAt: true,
+          jokiItem: { select: { category: { select: { isRawatAkun: true } } } },
+        },
       },
     },
   });
   if (!orderPreview) notFound();
 
-  // Sinkronkan kalender & task otomatis untuk setiap baris Rawat Akun sebelum dibaca.
-  await Promise.all(
-    orderPreview.lines
-      .filter((l) => l.jokiItem?.category.isRawatAkun && l.startDate && l.endDate)
-      .map((l) => ensureRawatAkunScheduleSynced(l.id))
-  );
+  // OPTIMASI: cuma sync baris yang BELUM pernah disinkronkan (lihat catatan
+  // lengkap di lib/rawat-akun-service.ts) -- setelah order berjalan
+  // beberapa hari, biasanya tidak ada kerja tambahan sama sekali di sini.
+  const unsyncedLineIds = orderPreview.lines
+    .filter((l) => l.jokiItem?.category.isRawatAkun && l.startDate && l.endDate && !l.scheduleSyncedAt)
+    .map((l) => l.id);
+
+  if (unsyncedLineIds.length > 0) {
+    await Promise.all(unsyncedLineIds.map((id) => ensureRawatAkunScheduleSynced(id)));
+  }
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },

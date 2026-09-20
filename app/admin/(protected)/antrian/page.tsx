@@ -48,8 +48,15 @@ export default async function AdminAntrianPage() {
     prisma.customer.findMany({
       orderBy: { name: "asc" },
       include: {
+        // OPTIMASI: dulu tanpa `take`, jadi menarik SEMUA order tiap
+        // customer (bisa jadi ribuan baris gabungan untuk toko yang sudah
+        // lama jalan), padahal cuma dipakai untuk autofill
+        // sourceUsername per platform (lihat customerOptions di bawah) --
+        // beberapa order terbaru per customer sudah lebih dari cukup untuk
+        // menangkap variasi source yang pernah dipakai.
         orders: {
           orderBy: { createdAt: "desc" },
+          take: 20,
           select: { orderSource: true, sourceUsername: true },
         },
       },
@@ -90,10 +97,20 @@ export default async function AdminAntrianPage() {
       endDate: event.endDate.toISOString(),
     }));
 
+  // OPTIMASI: sebelumnya `accounts.filter(...)` dijalankan ULANG di dalam
+  // .map() customers (kompleksitas O(customers x accounts)). Di-groupBy
+  // sekali di sini jadi O(accounts), lookup per customer jadi O(1).
+  const accountsByCustomerId = new Map<string, typeof accounts>();
+  for (const account of accounts) {
+    const list = accountsByCustomerId.get(account.customerId) ?? [];
+    list.push(account);
+    accountsByCustomerId.set(account.customerId, list);
+  }
+
   const customerOptions = customers.map(({ id, name, orders: customerOrders }) => ({
     id,
     name,
-    accounts: accounts.filter((account) => account.customerId === id).map(({ id: accountId, gameId, name: accountName, uid }) => ({
+    accounts: (accountsByCustomerId.get(id) ?? []).map(({ id: accountId, gameId, name: accountName, uid }) => ({
       id: accountId,
       gameId,
       name: accountName,

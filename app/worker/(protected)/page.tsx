@@ -16,21 +16,42 @@ export default async function WorkerDashboardPage() {
     const worker = await getCurrentWorker();
     if (!worker) redirect("/worker/login");
 
-    const orders = await prisma.order.findMany({
-        where: { workerId: worker.id },
-        include: {
-            game: true,
-            customer: { select: { name: true } },
-            lines: { include: { jokiItem: true, jokiPaket: true, patchEvent: true, endgameContent: true } },
-        },
-        orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-    });
+    const [orders, notifications] = await Promise.all([
+        // OPTIMASI: sebelumnya `include` penuh (semua kolom jokiItem/
+        // jokiPaket/patchEvent/endgameContent), padahal render di bawah
+        // (lihat komponen OrderCard) cuma pakai title & characterName.
+        prisma.order.findMany({
+            where: { workerId: worker.id },
+            select: {
+                id: true,
+                orderCode: true,
+                status: true,
+                progressPct: true,
+                totalPrice: true,
+                estimasiJoki: true,
+                game: { select: { name: true, accentColor: true } },
+                customer: { select: { name: true } },
+                lines: {
+                    select: {
+                        jokiItem: { select: { title: true } },
+                        jokiPaket: { select: { title: true } },
+                        patchEvent: { select: { title: true } },
+                        endgameContent: { select: { title: true } },
+                        characterName: true,
+                    },
+                },
+            },
+            orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+        }),
+        // Independen dari query di atas -- dijalankan paralel, bukan
+        // menunggu orders selesai lebih dulu.
+        getOrderNotifications(worker.id),
+    ]);
 
     const activeOrders = orders.filter(
         (o) => o.status !== "SELESAI" && o.status !== "DIBATALKAN",
     );
     const doneOrders = orders.filter((o) => o.status === "SELESAI");
-    const notifications = await getOrderNotifications(worker.id);
 
     const totalCommissionDone = doneOrders.reduce(
         (sum, o) => sum + calculateWorkerCommission(o.totalPrice),
