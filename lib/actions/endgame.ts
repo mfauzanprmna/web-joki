@@ -33,7 +33,7 @@ export async function createEndgameContent(
   });
 
   revalidatePath("/admin/endgame");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
 
   return {};
 }
@@ -59,7 +59,7 @@ export async function updateEndgameContent(
   });
 
   revalidatePath("/admin/endgame");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
 
   return {};
 }
@@ -69,7 +69,7 @@ export async function deleteEndgameContent(formData: FormData) {
   await prisma.endgameContent.delete({ where: { id } });
 
   revalidatePath("/admin/endgame");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
 }
 
 function buildCycleFields(

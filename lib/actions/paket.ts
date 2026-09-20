@@ -60,7 +60,7 @@ export async function createJokiPaket(
   });
 
   revalidatePath("/admin/paket");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
   revalidatePath("/");
 
   const game = await prisma.game.findUnique({ where: { id: gameId }, select: { slug: true } });
@@ -119,7 +119,7 @@ export async function updateJokiPaket(
   });
 
   revalidatePath("/admin/paket");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
   revalidatePath("/");
 
   notifyPriceListChanged(updated.game.slug);
@@ -135,7 +135,7 @@ export async function deleteJokiPaket(formData: FormData) {
   });
 
   revalidatePath("/admin/paket");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
   revalidatePath("/");
 
   notifyPriceListChanged(deleted.game.slug);

@@ -86,11 +86,11 @@ export default async function HomePage() {
               </p>
               <div className="flex gap-2.5 flex-wrap">
                 <Link
-                  href="/joki"
+                  href="#games"
                   className="rounded-xl font-display font-semibold text-sm text-white bg-corona shadow-lg shadow-blue-950/40"
                   style={{ padding: "12px 22px" }}
                 >
-                  Lihat layanan <span className="ml-1">→</span>
+                  Pilih game <span className="ml-1">→</span>
                 </Link>
                 <Link
                   href="/antrian"
@@ -112,16 +112,13 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="site-container py-12 sm:py-14">
-          <div className="flex items-end justify-between gap-4 mb-7">
-            <SectionHeading
-              eyebrow="Pilihan layanan"
-              title={<>Game & layanan <span className="text-shihu-corona">kami</span></>}
-              desc="Pilih game dan layanan yang kamu butuhkan. Semua tersedia dengan harga terbaik."
-            />
-            <Link href="/joki" className="hidden sm:block text-xs font-display font-semibold text-shihu-corona">Lihat semua layanan →</Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <section id="games" className="site-container py-12 sm:py-14 scroll-mt-20">
+          <SectionHeading
+            eyebrow="Pilihan layanan"
+            title={<>Game & layanan <span className="text-shihu-corona">kami</span></>}
+            desc="Pilih game yang kamu mainkan untuk melihat semua paket dan layanan joki yang tersedia."
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-7">
             {games.map((g) => (
               <GameBanner key={g.id} game={g} tagline={g.tagline} />
             ))}
@@ -169,13 +166,7 @@ export default async function HomePage() {
         )}
 
         <section className="site-container py-2 pb-14">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            <QuickAccessCard
-              href="/joki"
-              title="List joki"
-              desc="Semua paket layanan joki per game"
-              icon={<IconList />}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             <QuickAccessCard
               href="/antrian"
               title="Antrian joki"
@@ -203,13 +194,6 @@ export default async function HomePage() {
   );
 }
 
-function IconList() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-    </svg>
-  );
-}
 function IconClock() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -36,7 +36,7 @@ export async function createPatch(
   });
 
   revalidatePath("/admin/patch");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
   revalidatePath("/");
 
   return {};
@@ -64,7 +64,7 @@ export async function updatePatch(
   });
 
   revalidatePath("/admin/patch");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
   revalidatePath("/");
 
   return {};
@@ -75,7 +75,7 @@ export async function deletePatch(formData: FormData) {
   await prisma.patch.delete({ where: { id } });
 
   revalidatePath("/admin/patch");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
   revalidatePath("/");
 }
 
@@ -104,7 +104,7 @@ export async function createPatchEvent(
   });
 
   revalidatePath("/admin/patch");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
 
   return {};
 }
@@ -133,7 +133,7 @@ export async function updatePatchEvent(
   });
 
   revalidatePath("/admin/patch");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
 
   return {};
 }
@@ -143,5 +143,5 @@ export async function deletePatchEvent(formData: FormData) {
   await prisma.patchEvent.delete({ where: { id } });
 
   revalidatePath("/admin/patch");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
 }

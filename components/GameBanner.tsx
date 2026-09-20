@@ -18,7 +18,7 @@ export function GameBanner({
 
   return (
     <Link
-      href={`/joki?game=${game.slug}`}
+      href={`/${game.slug}`}
       className="group relative rounded-[18px] p-7 overflow-hidden min-h-[170px] flex flex-col justify-end border transition-transform hover:-translate-y-1"
       style={{
         borderColor: `${game.accentColor}2E`,

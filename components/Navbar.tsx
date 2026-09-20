@@ -7,7 +7,6 @@ import { ShihuMark } from "./ShihuMark";
 
 const NAV_ITEMS = [
   { href: "/", label: "Beranda" },
-  { href: "/joki", label: "List joki" },
   { href: "/antrian", label: "Antrian" },
   { href: "/history", label: "History" },
   { href: "/testimoni", label: "Testimoni" },

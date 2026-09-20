@@ -5,6 +5,10 @@ import { revalidatePath } from "next/cache";
 import { validateJokiItemRelations } from "@/lib/joki-rules";
 import { notifyPriceListChanged } from "@/lib/discord-notify";
 
+// Catatan: revalidatePath("/[slug]", "page") di bawah me-revalidate SEMUA
+// halaman per-game sekaligus (/genshin, /wuwa, /neverness -- lihat
+// app/[slug]/page.tsx), tanpa perlu tahu slug spesifik mana yang terdampak.
+
 export interface JokiItemActionState {
   error?: string;
 }
@@ -159,7 +163,7 @@ export async function createJokiItem(
   });
 
   revalidatePath("/admin/joki");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
   revalidatePath("/");
 
   const game = await prisma.game.findUnique({ where: { id: gameId }, select: { slug: true } });
@@ -225,7 +229,7 @@ export async function updateJokiItem(
   });
 
   revalidatePath("/admin/joki");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
   revalidatePath("/");
 
   // Notify game baru, dan kalau item dipindah ke game lain, notify game
@@ -248,7 +252,7 @@ export async function deleteJokiItem(formData: FormData) {
   });
 
   revalidatePath("/admin/joki");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
   revalidatePath("/");
 
   notifyPriceListChanged(deleted.game.slug);

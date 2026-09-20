@@ -229,3 +229,13 @@ button[aria-busy="true"]::before {
   background-size: cover, cover;
   background-repeat: no-repeat;
 }
+
+/* Sembunyikan scrollbar untuk container yang di-scroll horizontal (mis. tab
+   kategori di halaman per-game), tapi tetap bisa di-scroll normal. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

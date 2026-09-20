@@ -16,7 +16,7 @@ export async function createGame(formData: FormData) {
 
   revalidatePath("/admin/game");
   revalidatePath("/");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
 }
 
 export async function updateGame(formData: FormData) {
@@ -32,7 +32,7 @@ export async function updateGame(formData: FormData) {
 
   revalidatePath("/admin/game");
   revalidatePath("/");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
 }
 
 export async function deleteGame(formData: FormData) {
@@ -41,5 +41,5 @@ export async function deleteGame(formData: FormData) {
 
   revalidatePath("/admin/game");
   revalidatePath("/");
-  revalidatePath("/joki");
+  revalidatePath("/[slug]", "page");
 }
