@@ -17,6 +17,8 @@ interface CustomerRow {
     name: string;
     notes: string | null;
     publicSlug: string;
+    whatsappNumber: string | null;
+    whatsappNotifEnabled: boolean;
     orders: OrderSummary[];
 }
 

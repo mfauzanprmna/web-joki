@@ -6,6 +6,7 @@ import { calculateJokiItemLinePrice } from "@/lib/order-pricing";
 import { computeRawatAkunPeriod, dateFromIsoDay, isoDay } from "@/lib/rawat-akun-schedule";
 import { createUniqueCustomerSlug } from "./customer";
 import { notifyOrderCreated, notifyOrderProgress } from "@/lib/discord-notify";
+import { notifyOrderCreatedWA, notifyOrderProgressWA } from "@/lib/whatsapp-notify";
 import { isPatchEventLive } from "@/lib/patch-schedule";
 
 export interface OrderActionState {
@@ -509,14 +510,15 @@ export async function createOrder(
   revalidatePath("/antrian");
   revalidatePath("/history");
 
-  // Notifikasi Discord dikirim TERPISAH dari transaksi DB di atas (fire-and-
-  // forget, lihat lib/discord-notify.ts) -- kalau bot down, order tetap
-  // sukses dibuat, cuma notifnya yang tidak terkirim.
+  // Notifikasi Discord & WhatsApp dikirim TERPISAH dari transaksi DB di atas
+  // (fire-and-forget, lihat lib/discord-notify.ts & lib/whatsapp-notify.ts)
+  // -- kalau bot/provider down, order tetap sukses dibuat, cuma notifnya
+  // yang tidak terkirim.
   if (createdForNotify.length > 0) {
     const [customer, games] = await Promise.all([
       prisma.customer.findUnique({
         where: { id: resolvedCustomerId },
-        select: { name: true, publicSlug: true },
+        select: { name: true, publicSlug: true, whatsappNumber: true, whatsappNotifEnabled: true },
       }),
       prisma.game.findMany({
         where: { id: { in: createdForNotify.map((c) => c.gameId) } },
@@ -534,6 +536,15 @@ export async function createOrder(
           layanan: created.layanan,
           totalPrice: created.totalPrice,
           status: "MENUNGGU",
+          publicSlug: customer.publicSlug,
+        });
+        notifyOrderCreatedWA({
+          customer,
+          customerName: customer.name,
+          orderCode: created.orderCode,
+          gameName: gameNameById.get(created.gameId) ?? "-",
+          layanan: created.layanan,
+          totalPrice: created.totalPrice,
           publicSlug: customer.publicSlug,
         });
       }
@@ -575,7 +586,9 @@ export async function updateOrder(formData: FormData) {
       orderCode: true,
       status: true,
       progressPct: true,
-      customer: { select: { publicSlug: true } },
+      customer: {
+        select: { name: true, publicSlug: true, whatsappNumber: true, whatsappNotifEnabled: true },
+      },
     },
   });
 
@@ -583,10 +596,19 @@ export async function updateOrder(formData: FormData) {
   revalidatePath("/antrian");
   revalidatePath("/history");
 
-  // Fire-and-forget: kirim update progress/status ke Discord (lihat catatan
-  // di lib/discord-notify.ts -- tidak akan menggagalkan update ini kalau
-  // bot sedang tidak bisa dihubungi).
+  // Fire-and-forget: kirim update progress/status ke Discord & WhatsApp
+  // (lihat catatan di lib/discord-notify.ts & lib/whatsapp-notify.ts --
+  // tidak akan menggagalkan update ini kalau bot/provider sedang tidak bisa
+  // dihubungi).
   notifyOrderProgress({
+    orderCode: updated.orderCode,
+    status: updated.status,
+    progressPct: updated.progressPct,
+    publicSlug: updated.customer.publicSlug,
+  });
+  notifyOrderProgressWA({
+    customer: updated.customer,
+    customerName: updated.customer.name,
     orderCode: updated.orderCode,
     status: updated.status,
     progressPct: updated.progressPct,

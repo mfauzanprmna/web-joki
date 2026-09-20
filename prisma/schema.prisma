@@ -292,6 +292,17 @@ model Customer {
   /// login yang menampilkan seluruh order & progress milik Customer ini.
   /// Di-generate otomatis saat Customer dibuat (lihat lib/actions/customer.ts).
   publicSlug       String             @unique
+  /// Nomor WhatsApp untuk kirim notifikasi progress (format bebas apa adanya
+  /// seperti diisi admin, mis. "0812xxxx" atau "+62812xxxx" -- dinormalisasi
+  /// ke format internasional saat benar-benar dikirim, lihat
+  /// lib/whatsapp-notify.ts). Null/kosong berarti belum ada nomor terdaftar,
+  /// independen dari toggle whatsappNotifEnabled di bawah.
+  whatsappNumber       String?
+  /// Saklar on/off notifikasi WhatsApp untuk SEMUA order milik customer ini
+  /// (order baru, update progress, dst). Default false (opt-in) -- admin
+  /// perlu mengaktifkan manual per customer, bukan otomatis nyala untuk
+  /// semua orang begitu nomornya diisi.
+  whatsappNotifEnabled Boolean            @default(false)
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   jokiHistoryEntries JokiHistoryEntry[]
@@ -382,6 +393,9 @@ model Order {
   @@index([gameId])
   @@index([customerId])
   @@index([accountId])
+  /// Dipakai dashboard analitik (/admin/analitik) untuk query order dalam
+  /// rentang tanggal tertentu (tren omzet harian/bulanan, dst).
+  @@index([createdAt])
   @@index([workerId])
 }
 

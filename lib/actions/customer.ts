@@ -21,10 +21,18 @@ export async function createUniqueCustomerSlug(): Promise<string> {
 export async function createCustomer(formData: FormData) {
   const name = String(formData.get("name"));
   const notes = String(formData.get("notes") || "").trim();
+  const whatsappNumber = String(formData.get("whatsappNumber") || "").trim();
+  const whatsappNotifEnabled = formData.get("whatsappNotifEnabled") === "on";
   const publicSlug = await createUniqueCustomerSlug();
 
   await prisma.customer.create({
-    data: { name, notes: notes || null, publicSlug },
+    data: {
+      name,
+      notes: notes || null,
+      publicSlug,
+      whatsappNumber: whatsappNumber || null,
+      whatsappNotifEnabled,
+    },
   });
 
   revalidatePath("/admin/customer");
@@ -35,10 +43,17 @@ export async function updateCustomer(formData: FormData) {
   const id = String(formData.get("id"));
   const name = String(formData.get("name"));
   const notes = String(formData.get("notes") || "").trim();
+  const whatsappNumber = String(formData.get("whatsappNumber") || "").trim();
+  const whatsappNotifEnabled = formData.get("whatsappNotifEnabled") === "on";
 
   await prisma.customer.update({
     where: { id },
-    data: { name, notes: notes || null },
+    data: {
+      name,
+      notes: notes || null,
+      whatsappNumber: whatsappNumber || null,
+      whatsappNotifEnabled,
+    },
   });
 
   revalidatePath("/admin/customer");

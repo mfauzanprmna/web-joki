@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { notifyOrderProgress } from "@/lib/discord-notify";
+import { notifyOrderProgressWA } from "@/lib/whatsapp-notify";
 
 export interface OrderLineUpdateActionState {
   error?: string;
@@ -45,7 +46,9 @@ export async function addOrderLineUpdate(
           orderCode: true,
           status: true,
           progressPct: true,
-          customer: { select: { publicSlug: true } },
+          customer: {
+            select: { name: true, publicSlug: true, whatsappNumber: true, whatsappNotifEnabled: true },
+          },
         },
       },
     },
@@ -67,9 +70,18 @@ export async function addOrderLineUpdate(
   revalidatePath(`/admin/progress/${orderLine.orderId}`);
   revalidatePath(`/progress/${orderLine.order.customer.publicSlug}`);
 
-  // Fire-and-forget: kabari Discord ada update baru (dengan catatannya kalau
-  // ada), supaya customer yang punya ticket order langsung lihat progresnya.
+  // Fire-and-forget: kabari Discord & WhatsApp ada update baru (dengan
+  // catatannya kalau ada), supaya customer langsung lihat progresnya.
   notifyOrderProgress({
+    orderCode: orderLine.order.orderCode,
+    status: orderLine.order.status,
+    progressPct: orderLine.order.progressPct,
+    publicSlug: orderLine.order.customer.publicSlug,
+    note: note || null,
+  });
+  notifyOrderProgressWA({
+    customer: orderLine.order.customer,
+    customerName: orderLine.order.customer.name,
     orderCode: orderLine.order.orderCode,
     status: orderLine.order.status,
     progressPct: orderLine.order.progressPct,

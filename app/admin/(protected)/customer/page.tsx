@@ -9,6 +9,8 @@ export default async function AdminCustomerPage() {
       name: true,
       notes: true,
       publicSlug: true,
+      whatsappNumber: true,
+      whatsappNotifEnabled: true,
       orders: {
         select: {
           id: true,
@@ -53,6 +55,24 @@ export default async function AdminCustomerPage() {
             </label>
             <textarea name="notes" rows={2} className="admin-input" placeholder="Pelanggan lama, sering order Genshin" />
           </div>
+
+          <div>
+            <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1">
+              Nomor WhatsApp (opsional)
+            </label>
+            <input name="whatsappNumber" type="tel" className="admin-input" placeholder="mis. 0812xxxxxxx" />
+          </div>
+
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              name="whatsappNotifEnabled"
+              className="w-4 h-4 rounded accent-shihu-corona"
+            />
+            <span className="text-xs font-display text-shihu-muted">
+              Kirim notifikasi progress lewat WhatsApp ke customer ini
+            </span>
+          </label>
 
           <button
             type="submit"

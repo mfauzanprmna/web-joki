@@ -5,7 +5,10 @@ import { logoutAction } from "@/lib/actions/auth";
 const NAV_GROUPS = [
   {
     label: null,
-    items: [{ href: "/admin", label: "Dashboard" }],
+    items: [
+      { href: "/admin", label: "Dashboard" },
+      { href: "/admin/analitik", label: "Analitik" },
+    ],
   },
   {
     label: "Data master",

@@ -19,6 +19,8 @@ interface CustomerRow {
   name: string;
   notes: string | null;
   publicSlug: string;
+  whatsappNumber: string | null;
+  whatsappNotifEnabled: boolean;
   orders: OrderSummary[];
 }
 
@@ -61,6 +63,31 @@ export function CustomerRowItem({ customer }: { customer: CustomerRow }) {
           />
         </div>
 
+        <div>
+          <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1">
+            Nomor WhatsApp (opsional)
+          </label>
+          <input
+            name="whatsappNumber"
+            type="tel"
+            placeholder="mis. 0812xxxxxxx"
+            defaultValue={customer.whatsappNumber ?? ""}
+            className="admin-input"
+          />
+        </div>
+
+        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            name="whatsappNotifEnabled"
+            defaultChecked={customer.whatsappNotifEnabled}
+            className="w-4 h-4 rounded accent-shihu-corona"
+          />
+          <span className="text-xs font-display text-shihu-muted">
+            Kirim notifikasi progress lewat WhatsApp ke customer ini
+          </span>
+        </label>
+
         <div className="flex gap-2 pt-1">
           <button
             type="submit"
@@ -100,6 +127,18 @@ export function CustomerRowItem({ customer }: { customer: CustomerRow }) {
             {customer.orders.length} order
             {customer.notes && ` · ${customer.notes}`}
           </p>
+          {customer.whatsappNumber && (
+            <p className="text-[10.5px] mt-1 flex items-center gap-1">
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  customer.whatsappNotifEnabled ? "bg-emerald-400" : "bg-shihu-faint"
+                }`}
+              />
+              <span className={customer.whatsappNotifEnabled ? "text-emerald-400" : "text-shihu-faint"}>
+                WA {customer.whatsappNotifEnabled ? "aktif" : "nonaktif"} · {customer.whatsappNumber}
+              </span>
+            </p>
+          )}
         </div>
         {customer.orders.length > 0 && (
           <button
