@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { CreateJokiItemForm } from "@/components/admin/CreateJokiItemForm";
 import { JokiItemRowItem } from "@/components/admin/JokiItemRowItem";
 import { PaginatedList } from "@/components/PaginatedList";
+import Link from "next/link";
 
 export default async function AdminJokiPage() {
   const [games, categories, regions, questTypes, patches, endgameContents, items] = await Promise.all([
@@ -48,9 +49,9 @@ export default async function AdminJokiPage() {
           </p>
           <p className="text-shihu-muted text-[13px]">
             Buat minimal satu Kategori joki dulu di halaman{" "}
-            <a href="/admin/kategori" className="underline text-shihu-text">
+            <Link href="/admin/kategori" className="underline text-shihu-text">
               Kategori joki
-            </a>{" "}
+            </Link>{" "}
             sebelum bisa menambahkan Joki Item.
           </p>
         </div>
