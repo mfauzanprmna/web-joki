@@ -9,6 +9,7 @@ import type { JokiItemOption, JokiPaketOption, PatchEventOption, EndgameContentO
 import { OrderSourceFields } from "./OrderSourceFields";
 import { CustomerSelector, type CustomerOption } from "./CustomerSelector";
 import { OrderAccountTab, type AccountData } from "./OrderAccountTab";
+import { FaPlus, FaXmark, FaCheck } from "react-icons/fa6";
 
 interface GameOption {
   id: string;
@@ -306,8 +307,9 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
           type="submit"
           disabled={pending}
           aria-busy={pending}
-          className="self-start px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona mt-1 disabled:opacity-60"
+          className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona mt-1 disabled:opacity-60"
         >
+          <FaPlus size={12} aria-hidden="true" />
           {pending ? "Menyimpan..." : `Buat ${accountCount > 1 ? `${accountCount} pesanan` : "pesanan"}`}
         </button>
       </form>
@@ -320,7 +322,9 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
                 <h2 id="confirm-order-title" className="font-display text-lg font-bold">Konfirmasi pesanan</h2>
                 <p className="text-shihu-muted text-xs mt-1">Periksa detail pesanan sebelum disimpan.</p>
               </div>
-              <button type="button" onClick={() => setConfirmFormData(null)} className="text-shihu-muted text-xl leading-none" aria-label="Tutup">×</button>
+              <button type="button" onClick={() => setConfirmFormData(null)} className="text-shihu-muted text-xl leading-none hover:text-shihu-text" aria-label="Tutup">
+                <FaXmark size={18} aria-hidden="true" />
+              </button>
             </div>
 
             <div className="bg-[#241E38] border border-shihu-border rounded-xl p-3 mb-4">
@@ -395,7 +399,8 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
             </div>
 
             <div className="flex justify-end gap-2 mt-5">
-              <button type="button" onClick={() => setConfirmFormData(null)} className="px-4 py-2.5 rounded-xl font-display text-sm border border-shihu-border text-shihu-muted">
+              <button type="button" onClick={() => setConfirmFormData(null)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-display text-sm border border-shihu-border text-shihu-muted">
+                <FaXmark size={12} aria-hidden="true" />
                 Kembali edit
               </button>
               <button
@@ -407,8 +412,9 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
                   setConfirmFormData(null);
                   formAction(confirmFormData);
                 }}
-                className="px-4 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona disabled:opacity-60"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona disabled:opacity-60"
               >
+                <FaCheck size={12} aria-hidden="true" />
                 {pending ? "Menyimpan..." : "Ya, buat pesanan"}
               </button>
             </div>

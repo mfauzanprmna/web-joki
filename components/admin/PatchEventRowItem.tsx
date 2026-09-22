@@ -5,6 +5,7 @@ import { updatePatchEvent, deletePatchEvent, type PatchActionState } from "@/lib
 import { formatRupiah } from "@/lib/format";
 import { isPatchEventLive } from "@/lib/patch-schedule";
 import { toDateTimeLocalValue } from "@/lib/date-input";
+import { FaPen, FaFloppyDisk, FaXmark, FaTrash } from "react-icons/fa6";
 
 interface PatchEventRow {
   id: string;
@@ -49,8 +50,9 @@ export function PatchEventRowItem({ event }: { event: PatchEventRow }) {
         </div>
         <button
           onClick={() => setEditing(true)}
-          className="px-2.5 py-1 rounded-lg text-[11px] font-display font-medium border border-shihu-borderSoft hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-display font-medium border border-shihu-borderSoft hover:bg-[#2C2540]"
         >
+          <FaPen size={9} aria-hidden="true" />
           Edit
         </button>
       </div>
@@ -133,15 +135,17 @@ export function PatchEventRowItem({ event }: { event: PatchEventRow }) {
           type="submit"
           disabled={pending}
           aria-busy={pending}
-          className="px-3 py-1.5 rounded-lg font-display font-semibold text-[11px] text-[#1A1206] bg-corona disabled:opacity-60"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display font-semibold text-[11px] text-[#1A1206] bg-corona disabled:opacity-60"
         >
+          <FaFloppyDisk size={10} aria-hidden="true" />
           {pending ? "Menyimpan..." : "Simpan"}
         </button>
         <button
           type="button"
           onClick={() => setEditing(false)}
-          className="px-3 py-1.5 rounded-lg font-display font-medium text-[11px] border border-shihu-borderSoft"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display font-medium text-[11px] border border-shihu-borderSoft"
         >
+          <FaXmark size={10} aria-hidden="true" />
           Batal
         </button>
         <button
@@ -151,8 +155,9 @@ export function PatchEventRowItem({ event }: { event: PatchEventRow }) {
             fd.set("id", event.id);
             deletePatchEvent(fd);
           }}
-          className="ml-auto px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
+          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
         >
+          <FaTrash size={11} aria-hidden="true" />
           Hapus
         </button>
       </div>

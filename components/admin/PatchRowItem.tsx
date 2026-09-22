@@ -5,6 +5,7 @@ import { updatePatch, deletePatch, createPatchEvent, type PatchActionState } fro
 import { isPatchOngoing } from "@/lib/patch-schedule";
 import { toDateTimeLocalValue } from "@/lib/date-input";
 import { PatchEventRowItem } from "./PatchEventRowItem";
+import { FaPen, FaFloppyDisk, FaXmark, FaTrash, FaPlus } from "react-icons/fa6";
 
 interface PatchEventData {
   id: string;
@@ -71,8 +72,9 @@ export function PatchRowItem({ patch }: { patch: PatchRow }) {
         {!editing && (
           <button
             onClick={() => setEditing(true)}
-            className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
           >
+            <FaPen size={10} aria-hidden="true" />
             Edit
           </button>
         )}
@@ -133,15 +135,17 @@ export function PatchRowItem({ patch }: { patch: PatchRow }) {
               type="submit"
               disabled={pending}
               aria-busy={pending}
-              className="px-3 py-1.5 rounded-lg font-display font-semibold text-[11px] text-[#1A1206] bg-corona disabled:opacity-60"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display font-semibold text-[11px] text-[#1A1206] bg-corona disabled:opacity-60"
             >
+              <FaFloppyDisk size={10} aria-hidden="true" />
               {pending ? "Menyimpan..." : "Simpan"}
             </button>
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="px-3 py-1.5 rounded-lg font-display font-medium text-[11px] border border-shihu-borderSoft"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display font-medium text-[11px] border border-shihu-borderSoft"
             >
+              <FaXmark size={10} aria-hidden="true" />
               Batal
             </button>
             <button
@@ -151,8 +155,9 @@ export function PatchRowItem({ patch }: { patch: PatchRow }) {
                 fd.set("id", patch.id);
                 deletePatch(fd);
               }}
-              className="ml-auto px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
+              className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
             >
+              <FaTrash size={11} aria-hidden="true" />
               Hapus patch
             </button>
           </div>
@@ -176,9 +181,10 @@ export function PatchRowItem({ patch }: { patch: PatchRow }) {
         ) : (
           <button
             onClick={() => setShowEventForm(true)}
-            className="self-start px-3 py-1.5 rounded-lg font-display font-medium text-[11px] border border-dashed border-shihu-borderSoft text-shihu-muted hover:text-shihu-text hover:border-shihu-corona/50"
+            className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display font-medium text-[11px] border border-dashed border-shihu-borderSoft text-shihu-muted hover:text-shihu-text hover:border-shihu-corona/50"
           >
-            + Tambah event
+            <FaPlus size={9} aria-hidden="true" />
+            Tambah event
           </button>
         )}
       </div>
@@ -238,15 +244,17 @@ function CreateEventInlineForm({ patchId, onDone }: { patchId: string; onDone: (
           type="submit"
           disabled={pending}
           aria-busy={pending}
-          className="px-3 py-1.5 rounded-lg font-display font-semibold text-[11px] text-[#1A1206] bg-corona disabled:opacity-60"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display font-semibold text-[11px] text-[#1A1206] bg-corona disabled:opacity-60"
         >
+          <FaFloppyDisk size={10} aria-hidden="true" />
           {pending ? "Menyimpan..." : "Tambah event"}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="px-3 py-1.5 rounded-lg font-display font-medium text-[11px] border border-shihu-borderSoft"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display font-medium text-[11px] border border-shihu-borderSoft"
         >
+          <FaXmark size={10} aria-hidden="true" />
           Batal
         </button>
       </div>

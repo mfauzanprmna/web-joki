@@ -1,36 +1,56 @@
 import Link from "next/link";
 import { ShihuMark } from "@/components/ShihuMark";
 import { logoutAction } from "@/lib/actions/auth";
+import {
+  FaGaugeHigh,
+  FaChartLine,
+  FaGamepad,
+  FaLayerGroup,
+  FaMapLocationDot,
+  FaListOl,
+  FaCodeBranch,
+  FaDungeon,
+  FaUsers,
+  FaBoxOpen,
+  FaBoxesStacked,
+  FaClipboardList,
+  FaUserTie,
+  FaClockRotateLeft,
+  FaStar,
+  FaArrowLeft,
+  FaRightFromBracket,
+} from "react-icons/fa6";
+import type { IconType } from "react-icons";
 
-const NAV_GROUPS = [
+const NAV_GROUPS: { label: string | null; items: { href: string; label: string; icon: IconType }[] }[] = [
   {
     label: null,
     items: [
-      { href: "/admin", label: "Dashboard" },
-      { href: "/admin/analitik", label: "Analitik" },
+      { href: "/admin", label: "Dashboard", icon: FaGaugeHigh },
+      { href: "/admin/analitik", label: "Analitik", icon: FaChartLine },
     ],
   },
   {
     label: "Data master",
     items: [
-      { href: "/admin/game", label: "Game" },
-      { href: "/admin/kategori", label: "Kategori joki" },
-      { href: "/admin/region", label: "Region" },
-      { href: "/admin/quest", label: "Jenis quest" },
-      { href: "/admin/patch", label: "Patch" },
-      { href: "/admin/endgame", label: "Konten endgame" },
+      { href: "/admin/game", label: "Game", icon: FaGamepad },
+      { href: "/admin/kategori", label: "Kategori joki", icon: FaLayerGroup },
+      { href: "/admin/region", label: "Region", icon: FaMapLocationDot },
+      { href: "/admin/quest", label: "Jenis quest", icon: FaListOl },
+      { href: "/admin/patch", label: "Patch", icon: FaCodeBranch },
+      { href: "/admin/endgame", label: "Konten endgame", icon: FaDungeon },
     ],
   },
   {
     label: "Operasional",
     items: [
-      { href: "/admin/customer", label: "Customer" },
-      { href: "/admin/joki", label: "Joki item" },
-      { href: "/admin/paket", label: "Paket joki" },
-      { href: "/admin/antrian", label: "Pesanan" },
-      { href: "/admin/worker", label: "Akun worker" },
-      { href: "/admin/history-joki", label: "History joki" },
-      { href: "/admin/testimoni", label: "Testimoni" },
+      { href: "/admin/customer", label: "Customer", icon: FaUsers },
+      { href: "/admin/joki", label: "Joki item", icon: FaBoxOpen },
+      { href: "/admin/paket", label: "Paket joki", icon: FaBoxesStacked },
+      { href: "/admin/antrian", label: "Pesanan", icon: FaClipboardList },
+      { href: "/admin/worker", label: "Akun worker", icon: FaUserTie },
+      { href: "/admin/history-joki", label: "History joki", icon: FaClockRotateLeft },
+      { href: "/admin/testimoni", label: "Testimoni", icon: FaStar },
     ],
   },
 ];
@@ -59,15 +79,19 @@ export default function AdminLayout({
                 </p>
               )}
               <div className="flex flex-col gap-1">
-                {group.items.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="px-3.5 py-2.5 rounded-xl font-display text-sm font-medium text-shihu-muted hover:text-shihu-text hover:bg-[#2C2540] transition-colors"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-display text-sm font-medium text-shihu-muted hover:text-shihu-text hover:bg-[#2C2540] transition-colors"
+                    >
+                      <Icon className="text-[13px] shrink-0" aria-hidden="true" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -75,15 +99,17 @@ export default function AdminLayout({
         <div className="p-3 border-t border-shihu-border">
           <Link
             href="/"
-            className="block px-3.5 py-2 text-shihu-faint text-xs mb-1 hover:text-shihu-muted"
+            className="flex items-center gap-2 px-3.5 py-2 text-shihu-faint text-xs mb-1 hover:text-shihu-muted"
           >
-            ← Lihat situs customer
+            <FaArrowLeft className="text-[10px]" aria-hidden="true" />
+            Lihat situs customer
           </Link>
           <form action={logoutAction}>
             <button
               type="submit"
-              className="w-full text-left px-3.5 py-2 rounded-xl text-sm text-red-400 hover:bg-red-400/10 transition-colors font-display font-medium"
+              className="w-full flex items-center gap-2.5 text-left px-3.5 py-2 rounded-xl text-sm text-red-400 hover:bg-red-400/10 transition-colors font-display font-medium"
             >
+              <FaRightFromBracket className="text-[13px]" aria-hidden="true" />
               Keluar
             </button>
           </form>
@@ -97,7 +123,8 @@ export default function AdminLayout({
             <span className="font-display font-bold text-sm">Admin</span>
           </div>
           <form action={logoutAction}>
-            <button type="submit" className="text-red-400 text-xs font-display font-medium">
+            <button type="submit" className="flex items-center gap-1.5 text-red-400 text-xs font-display font-medium">
+              <FaRightFromBracket className="text-[11px]" aria-hidden="true" />
               Keluar
             </button>
           </form>

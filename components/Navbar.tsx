@@ -4,12 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ShihuMark } from "./ShihuMark";
+import { FaHouse, FaListCheck, FaClockRotateLeft, FaStar } from "react-icons/fa6";
+import type { IconType } from "react-icons";
 
-const NAV_ITEMS = [
-  { href: "/", label: "Beranda" },
-  { href: "/antrian", label: "Antrian" },
-  { href: "/history", label: "History" },
-  { href: "/testimoni", label: "Testimoni" },
+const NAV_ITEMS: { href: string; label: string; icon: IconType }[] = [
+  { href: "/", label: "Beranda", icon: FaHouse },
+  { href: "/antrian", label: "Antrian", icon: FaListCheck },
+  { href: "/history", label: "History", icon: FaClockRotateLeft },
+  { href: "/testimoni", label: "Testimoni", icon: FaStar },
 ];
 
 export function Navbar() {
@@ -23,16 +25,18 @@ export function Navbar() {
   function renderNavItems(mobile = false) {
     return NAV_ITEMS.map((item) => {
       const active = pathname === item.href;
+      const Icon = item.icon;
       return (
         <Link
           key={item.href}
           href={item.href}
           onClick={() => setMenuOpen(false)}
-          className={`${mobile ? "block w-full px-3.5 py-3" : "px-3.5 py-2"} rounded-[10px] font-display text-sm font-medium transition-colors ${active
+          className={`${mobile ? "flex items-center gap-2.5 w-full px-3.5 py-3" : "flex items-center gap-1.5 px-3.5 py-2"} rounded-[10px] font-display text-sm font-medium transition-colors ${active
             ? "bg-shihu-corona/15 text-shihu-corona"
             : "text-shihu-muted hover:text-shihu-text hover:bg-white/5"
             }`}
         >
+          <Icon className={mobile ? "text-base" : "text-[13px]"} aria-hidden="true" />
           {item.label}
         </Link>
       );

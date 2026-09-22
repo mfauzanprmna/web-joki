@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ShihuMark } from "@/components/ShihuMark";
+import { FaUser, FaRightFromBracket } from "react-icons/fa6";
 import {
     getCurrentWorker,
     workerLogoutAction,
@@ -29,14 +30,16 @@ export default async function WorkerProtectedLayout({
                         </div>
                     </Link>
                     <div className="flex items-center gap-3">
-                        <p className="text-shihu-muted text-sm hidden sm:block">
+                        <p className="text-shihu-muted text-sm hidden sm:flex items-center gap-1.5">
+                            <FaUser className="text-[11px]" aria-hidden="true" />
                             {worker.name}
                         </p>
                         <form action={workerLogoutAction}>
                             <button
                                 type="submit"
-                                className="px-3 py-1.5 rounded-lg text-xs font-display font-medium text-red-400 hover:bg-red-400/10"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium text-red-400 hover:bg-red-400/10"
                             >
+                                <FaRightFromBracket className="text-[11px]" aria-hidden="true" />
                                 Keluar
                             </button>
                         </form>

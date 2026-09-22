@@ -6,6 +6,7 @@ import { Stars } from "./Stars";
 import { OrderLineDetailPanel, type OrderLineDetail } from "./OrderLineDetailPanel";
 import { formatDate } from "@/lib/format";
 import type { GameLite } from "@/types/game";
+import { FaCheck } from "react-icons/fa6";
 
 interface HistoryRowProps {
   orderCode: string;
@@ -44,9 +45,7 @@ export function HistoryRow({
             backgroundColor: `${game.accentColor}1F`,
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={game.accentColor} strokeWidth="2.5">
-            <path d="M20 6L9 17l-5-5" />
-          </svg>
+          <FaCheck size={13} color={game.accentColor} aria-hidden="true" />
         </div>
         <div className="flex-1 min-w-[180px]">
           <div className="flex gap-2 items-center mb-1 flex-wrap">

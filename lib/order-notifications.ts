@@ -15,6 +15,8 @@ export interface OrderNotification {
     title: string;
     detail: string;
     tone: "urgent" | "normal";
+    /** Jenis pengingat, dipakai untuk pilih ikon yang sesuai di tampilan. */
+    kind: "deadline" | "reset" | "event";
 }
 
 function daysFromToday(date: Date, today: Date): number {
@@ -149,6 +151,7 @@ export async function getOrderNotifications(workerId?: string): Promise<OrderNot
                     title: item.title,
                     detail,
                     tone: daysLeft <= 1 ? "urgent" : "normal",
+                    kind: "deadline",
                 });
             }
 
@@ -211,6 +214,7 @@ export async function getOrderNotifications(workerId?: string): Promise<OrderNot
                     title: cycle.label,
                     detail: formatReminderDetail(cycle.category, daysUntil),
                     tone: daysUntil <= 1 ? "urgent" : "normal",
+                    kind: cycle.category === "Event" ? "event" : "reset",
                 });
             }
         }

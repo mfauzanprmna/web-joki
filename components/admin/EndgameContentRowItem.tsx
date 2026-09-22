@@ -5,6 +5,7 @@ import { updateEndgameContent, deleteEndgameContent, type EndgameActionState } f
 import { formatRupiah } from "@/lib/format";
 import { RESET_CYCLE_LABEL, type ResetCycle } from "@/lib/endgame-schedule";
 import { EndgameContentFormFields } from "./EndgameContentFormFields";
+import { FaPen, FaFloppyDisk, FaXmark, FaTrash } from "react-icons/fa6";
 
 interface EndgameContentRow {
   id: string;
@@ -61,8 +62,9 @@ export function EndgameContentRowItem({ content }: { content: EndgameContentRow 
         </div>
         <button
           onClick={() => setEditing(true)}
-          className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
         >
+          <FaPen size={10} aria-hidden="true" />
           Edit
         </button>
       </div>
@@ -151,15 +153,17 @@ export function EndgameContentRowItem({ content }: { content: EndgameContentRow 
           type="submit"
           disabled={pending}
           aria-busy={pending}
-          className="px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona disabled:opacity-60"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona disabled:opacity-60"
         >
+          <FaFloppyDisk size={11} aria-hidden="true" />
           {pending ? "Menyimpan..." : "Simpan"}
         </button>
         <button
           type="button"
           onClick={() => setEditing(false)}
-          className="px-4 py-2 rounded-xl font-display font-medium text-xs border border-shihu-borderSoft"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs border border-shihu-borderSoft"
         >
+          <FaXmark size={11} aria-hidden="true" />
           Batal
         </button>
         <button
@@ -169,8 +173,9 @@ export function EndgameContentRowItem({ content }: { content: EndgameContentRow 
             fd.set("id", content.id);
             deleteEndgameContent(fd);
           }}
-          className="ml-auto px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
+          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
         >
+          <FaTrash size={11} aria-hidden="true" />
           Hapus
         </button>
       </div>

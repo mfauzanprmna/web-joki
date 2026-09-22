@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ShihuMark } from "@/components/ShihuMark";
+import { FaHouse, FaListCheck } from "react-icons/fa6";
 
 export default function NotFound() {
   return (
@@ -23,14 +24,16 @@ export default function NotFound() {
         <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
           <Link
             href="/"
-            className="px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona hover:opacity-90 transition-opacity"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona hover:opacity-90 transition-opacity"
           >
+            <FaHouse size={13} aria-hidden="true" />
             Kembali ke beranda
           </Link>
           <Link
             href="/antrian"
-            className="px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-shihu-muted bg-[#2C2540] hover:bg-[#332B4A] transition-colors"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-shihu-muted bg-[#2C2540] hover:bg-[#332B4A] transition-colors"
           >
+            <FaListCheck size={13} aria-hidden="true" />
             Lihat antrian
           </Link>
         </div>

@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { createPatch, type PatchActionState } from "@/lib/actions/patch";
+import { FaPlus } from "react-icons/fa6";
 
 interface GameOption {
   id: string;
@@ -75,8 +76,9 @@ export function CreatePatchForm({ games }: { games: GameOption[] }) {
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="self-start px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona mt-1 disabled:opacity-60"
+        className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona mt-1 disabled:opacity-60"
       >
+        <FaPlus size={12} aria-hidden="true" />
         {pending ? "Menyimpan..." : "Tambah patch"}
       </button>
     </form>

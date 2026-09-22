@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { updateWorker, deleteWorker, type WorkerActionState } from "@/lib/actions/worker";
+import { FaPen, FaTrash, FaFloppyDisk, FaXmark } from "react-icons/fa6";
 
 interface WorkerRow {
     id: string;
@@ -42,8 +43,9 @@ export function WorkerRowItem({ item }: { item: WorkerRow }) {
                 </div>
                 <button
                     onClick={() => setEditing(true)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
                 >
+                    <FaPen size={10} aria-hidden="true" />
                     Edit
                 </button>
                 <button
@@ -53,8 +55,9 @@ export function WorkerRowItem({ item }: { item: WorkerRow }) {
                         fd.set("id", item.id);
                         deleteWorker(fd);
                     }}
-                    className="px-3 py-1.5 rounded-lg text-xs font-display font-medium text-red-400 hover:bg-red-400/10"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium text-red-400 hover:bg-red-400/10"
                 >
+                    <FaTrash size={10} aria-hidden="true" />
                     Hapus
                 </button>
             </div>
@@ -94,15 +97,17 @@ export function WorkerRowItem({ item }: { item: WorkerRow }) {
                     type="submit"
                     disabled={pending}
                     aria-busy={pending}
-                    className="px-4 py-2 rounded-lg bg-corona text-[#1A1206] text-xs font-display font-semibold disabled:opacity-60"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-corona text-[#1A1206] text-xs font-display font-semibold disabled:opacity-60"
                 >
+                    <FaFloppyDisk size={11} aria-hidden="true" />
                     {pending ? "Menyimpan..." : "Simpan"}
                 </button>
                 <button
                     type="button"
                     onClick={() => setEditing(false)}
-                    className="px-4 py-2 rounded-lg text-xs font-display font-medium text-shihu-muted hover:bg-white/5"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-display font-medium text-shihu-muted hover:bg-white/5"
                 >
+                    <FaXmark size={11} aria-hidden="true" />
                     Batal
                 </button>
             </div>

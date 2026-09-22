@@ -4,6 +4,7 @@ import { useState } from "react";
 import { deleteJokiHistoryEntry } from "@/lib/actions/joki-history";
 import { Stars } from "@/components/Stars";
 import { formatDate } from "@/lib/format";
+import { FaLink, FaCheck, FaEye, FaEyeSlash, FaTrash } from "react-icons/fa6";
 
 interface JokiHistoryRow {
   id: string;
@@ -47,22 +48,25 @@ export function JokiHistoryRowItem({ item }: { item: JokiHistoryRow }) {
         </div>
         <button
           onClick={copyTestimonialLink}
-          className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-corona hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-corona hover:bg-[#2C2540]"
         >
+          {copied ? <FaCheck size={10} aria-hidden="true" /> : <FaLink size={10} aria-hidden="true" />}
           {copied ? "Link disalin!" : item.hasTestimonial ? "Salin link (sudah diisi)" : "Salin link testimoni"}
         </button>
         <button
           onClick={() => setShowDetail((v) => !v)}
-          className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
         >
+          {showDetail ? <FaEyeSlash size={10} aria-hidden="true" /> : <FaEye size={10} aria-hidden="true" />}
           {showDetail ? "Tutup" : "Lihat Detail"}
         </button>
         <form action={deleteJokiHistoryEntry}>
           <input type="hidden" name="id" value={item.id} />
           <button
             type="submit"
-            className="px-3 py-1.5 rounded-lg text-xs font-display font-medium text-red-400 hover:bg-red-400/10"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium text-red-400 hover:bg-red-400/10"
           >
+            <FaTrash size={10} aria-hidden="true" />
             Hapus
           </button>
         </form>

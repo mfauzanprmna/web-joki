@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { updateJokiPaket, deleteJokiPaket, type PaketActionState } from "@/lib/actions/paket";
 import { formatRupiah } from "@/lib/format";
 import { filterExplorationItems, filterQuestItemsByKind } from "@/lib/paket-rules";
+import { FaPen, FaFloppyDisk, FaXmark, FaTrash } from "react-icons/fa6";
 import {
   JokiPaketFormFields,
   type RegionOption,
@@ -81,8 +82,9 @@ export function JokiPaketRowItem({ paket, regions, categories, questTypes, items
         </div>
         <button
           onClick={() => setEditing(true)}
-          className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
         >
+          <FaPen size={10} aria-hidden="true" />
           Edit
         </button>
       </div>
@@ -206,15 +208,17 @@ export function JokiPaketRowItem({ paket, regions, categories, questTypes, items
           type="submit"
           disabled={pending}
           aria-busy={pending}
-          className="px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona disabled:opacity-60"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona disabled:opacity-60"
         >
+          <FaFloppyDisk size={11} aria-hidden="true" />
           {pending ? "Menyimpan..." : "Simpan"}
         </button>
         <button
           type="button"
           onClick={() => setEditing(false)}
-          className="px-4 py-2 rounded-xl font-display font-medium text-xs border border-shihu-borderSoft"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs border border-shihu-borderSoft"
         >
+          <FaXmark size={11} aria-hidden="true" />
           Batal
         </button>
         <button
@@ -224,8 +228,9 @@ export function JokiPaketRowItem({ paket, regions, categories, questTypes, items
             fd.set("id", paket.id);
             deleteJokiPaket(fd);
           }}
-          className="ml-auto px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
+          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
         >
+          <FaTrash size={11} aria-hidden="true" />
           Hapus
         </button>
       </div>

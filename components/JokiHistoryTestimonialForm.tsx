@@ -5,6 +5,7 @@ import {
     submitJokiHistoryTestimonial,
     type SubmitTestimonialState,
 } from "@/lib/actions/testimonial";
+import { FaArrowRight, FaPaperPlane } from "react-icons/fa6";
 
 interface ExistingTestimonial {
     rating: number;
@@ -123,9 +124,9 @@ export function JokiHistoryTestimonialForm({
                 <button
                     type="button"
                     onClick={() => setOpen(true)}
-                    className="text-sm font-display font-semibold text-shihu-corona whitespace-nowrap"
+                    className="flex items-center gap-1.5 text-sm font-display font-semibold text-shihu-corona whitespace-nowrap"
                 >
-                    Beri Testimoni →
+                    Beri Testimoni <FaArrowRight size={11} aria-hidden="true" />
                 </button>
             </div>
         );
@@ -184,8 +185,9 @@ export function JokiHistoryTestimonialForm({
                 type="submit"
                 disabled={pending || rating === 0}
                 aria-busy={pending}
-                className="self-start px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona disabled:opacity-60"
+                className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona disabled:opacity-60"
             >
+                <FaPaperPlane size={12} aria-hidden="true" />
                 {pending ? "Mengirim..." : "Kirim Testimoni"}
             </button>
         </form>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { updateCustomer, deleteCustomer } from "@/lib/actions/customer";
 import { formatRupiah } from "@/lib/format";
 import { STATUS_LABEL } from "@/types/game";
+import { FaPen, FaFloppyDisk, FaXmark, FaTrash, FaChevronDown, FaChevronUp, FaChartLine } from "react-icons/fa6";
 
 interface OrderSummary {
   id: string;
@@ -91,15 +92,17 @@ export function CustomerRowItem({ customer }: { customer: CustomerRow }) {
         <div className="flex gap-2 pt-1">
           <button
             type="submit"
-            className="px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona"
           >
+            <FaFloppyDisk size={11} aria-hidden="true" />
             Simpan
           </button>
           <button
             type="button"
             onClick={() => setEditing(false)}
-            className="px-4 py-2 rounded-xl font-display font-medium text-xs border border-shihu-borderSoft"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs border border-shihu-borderSoft"
           >
+            <FaXmark size={11} aria-hidden="true" />
             Batal
           </button>
           <button
@@ -109,8 +112,9 @@ export function CustomerRowItem({ customer }: { customer: CustomerRow }) {
               fd.set("id", customer.id);
               deleteCustomer(fd);
             }}
-            className="ml-auto px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
+            className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
           >
+            <FaTrash size={11} aria-hidden="true" />
             Hapus
           </button>
         </div>
@@ -143,21 +147,24 @@ export function CustomerRowItem({ customer }: { customer: CustomerRow }) {
         {customer.orders.length > 0 && (
           <button
             onClick={() => setExpanded((e) => !e)}
-            className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
           >
+            {expanded ? <FaChevronUp size={9} aria-hidden="true" /> : <FaChevronDown size={9} aria-hidden="true" />}
             {expanded ? "Sembunyikan" : "Lihat order"}
           </button>
         )}
         <button
           onClick={() => setEditing(true)}
-          className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
         >
+          <FaPen size={10} aria-hidden="true" />
           Edit
         </button>
         <Link
           href={`/progress/${customer.publicSlug}`}
-          className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-corona/40 text-shihu-corona hover:bg-shihu-corona/10"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-corona/40 text-shihu-corona hover:bg-shihu-corona/10"
         >
+          <FaChartLine size={10} aria-hidden="true" />
           Progress
         </Link>
       </div>

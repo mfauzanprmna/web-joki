@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { updateTestimonial, deleteTestimonial } from "@/lib/actions/testimonial";
 import { Stars } from "@/components/Stars";
+import { FaPen, FaFloppyDisk, FaXmark, FaTrash } from "react-icons/fa6";
 
 interface TestimonialRow {
   id: string;
@@ -39,8 +40,9 @@ export function TestimonialRowItem({ item }: { item: TestimonialRow }) {
         </div>
         <button
           onClick={() => setEditing(true)}
-          className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
         >
+          <FaPen size={10} aria-hidden="true" />
           Edit
         </button>
       </div>
@@ -111,15 +113,17 @@ export function TestimonialRowItem({ item }: { item: TestimonialRow }) {
       <div className="flex gap-2 pt-1">
         <button
           type="submit"
-          className="px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona"
         >
+          <FaFloppyDisk size={11} aria-hidden="true" />
           Simpan
         </button>
         <button
           type="button"
           onClick={() => setEditing(false)}
-          className="px-4 py-2 rounded-xl font-display font-medium text-xs border border-shihu-borderSoft"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs border border-shihu-borderSoft"
         >
+          <FaXmark size={11} aria-hidden="true" />
           Batal
         </button>
         <button
@@ -129,8 +133,9 @@ export function TestimonialRowItem({ item }: { item: TestimonialRow }) {
             fd.set("id", item.id);
             deleteTestimonial(fd);
           }}
-          className="ml-auto px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
+          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
         >
+          <FaTrash size={11} aria-hidden="true" />
           Hapus
         </button>
       </div>

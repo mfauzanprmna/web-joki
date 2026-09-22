@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { FaCheck, FaXmark, FaTriangleExclamation, FaCircleInfo, FaCircleQuestion } from "react-icons/fa6";
 
 export type AlertVariant = "success" | "error" | "warning" | "info" | "question";
 
@@ -48,11 +49,11 @@ interface SweetAlertContextValue {
 const SweetAlertContext = createContext<SweetAlertContextValue | null>(null);
 
 const VARIANT_ICON: Record<AlertVariant, ReactNode> = {
-  success: <IconCheck />,
-  error: <IconCross />,
-  warning: <IconWarning />,
-  info: <IconInfo />,
-  question: <IconQuestion />,
+  success: <FaCheck size={26} />,
+  error: <FaXmark size={26} />,
+  warning: <FaTriangleExclamation size={24} />,
+  info: <FaCircleInfo size={24} />,
+  question: <FaCircleQuestion size={24} />,
 };
 
 const VARIANT_STYLE: Record<AlertVariant, { ring: string; glow: string }> = {
@@ -220,74 +221,4 @@ export function useSweetAlert() {
     throw new Error("useSweetAlert harus dipakai di dalam <SweetAlertProvider>");
   }
   return ctx;
-}
-
-function IconCheck() {
-  return (
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M5 13l4 4L19 7"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconCross() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M6 6l12 12M18 6L6 18"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconWarning() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M12 9v4.5M12 17h.01M10.6 3.9l-8.4 14.5a1.6 1.6 0 001.4 2.4h16.8a1.6 1.6 0 001.4-2.4L13.4 3.9a1.6 1.6 0 00-2.8 0z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconInfo() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M12 11v6M12 7.5h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconQuestion() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M9.5 9a2.5 2.5 0 114 2c-.7.6-1.5 1.1-1.5 2.2M12 17h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
 }

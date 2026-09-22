@@ -5,6 +5,7 @@ import {
   submitCustomerTestimonial,
   type SubmitTestimonialState,
 } from "@/lib/actions/testimonial";
+import { FaArrowRight, FaPaperPlane, FaXmark } from "react-icons/fa6";
 
 interface ExistingTestimonial {
   rating: number;
@@ -119,9 +120,9 @@ export function TestimonialPrompt({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-sm font-display font-semibold text-shihu-corona whitespace-nowrap"
+          className="flex items-center gap-1.5 text-sm font-display font-semibold text-shihu-corona whitespace-nowrap"
         >
-          Beri Testimoni →
+          Beri Testimoni <FaArrowRight size={11} aria-hidden="true" />
         </button>
       </div>
     );
@@ -186,16 +187,18 @@ export function TestimonialPrompt({
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-xs font-display font-medium px-3 py-1.5 rounded-lg text-shihu-muted hover:bg-white/5"
+          className="flex items-center gap-1.5 text-xs font-display font-medium px-3 py-1.5 rounded-lg text-shihu-muted hover:bg-white/5"
         >
+          <FaXmark size={10} aria-hidden="true" />
           Batal
         </button>
         <button
           type="submit"
           disabled={pending || rating === 0}
           aria-busy={pending}
-          className="text-xs font-display font-semibold px-4 py-1.5 rounded-lg bg-corona text-[#1A1206] disabled:opacity-60"
+          className="flex items-center gap-1.5 text-xs font-display font-semibold px-4 py-1.5 rounded-lg bg-corona text-[#1A1206] disabled:opacity-60"
         >
+          <FaPaperPlane size={10} aria-hidden="true" />
           {pending ? "Mengirim..." : "Kirim Testimoni"}
         </button>
       </div>

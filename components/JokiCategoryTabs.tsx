@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { JokiCard } from "./JokiCard";
 import { Pagination } from "./Pagination";
 import type { GameLite } from "@/types/game";
+import { FaMagnifyingGlass } from "react-icons/fa6";
 
 export interface JokiDisplayCard {
   key: string;
@@ -172,7 +173,7 @@ export function JokiCategoryTabs({ cards }: { cards: JokiDisplayCard[] }) {
 
       <div className="flex flex-col sm:flex-row gap-2.5 mb-5">
         <div className="relative flex-1 min-w-0">
-          <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-shihu-faint pointer-events-none" />
+          <FaMagnifyingGlass className="absolute left-3.5 top-1/2 -translate-y-1/2 text-shihu-faint pointer-events-none" size={14} aria-hidden="true" />
           <input
             type="text"
             value={query}
@@ -244,14 +245,5 @@ export function JokiCategoryTabs({ cards }: { cards: JokiDisplayCard[] }) {
         </>
       )}
     </div>
-  );
-}
-
-function SearchIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={className}>
-      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-      <path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
   );
 }

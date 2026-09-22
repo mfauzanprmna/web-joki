@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { ShihuMark } from "@/components/ShihuMark";
+import { FaTriangleExclamation, FaArrowRotateRight } from "react-icons/fa6";
 
 export default function GlobalPageError({
   error,
@@ -24,7 +25,7 @@ export default function GlobalPageError({
       <div className="relative z-10 w-full max-w-md text-center">
         <div className="flex justify-center mb-5">
           <div className="h-16 w-16 rounded-full bg-[#E2504A18] text-[#E2504A] flex items-center justify-center">
-            <IconAlert />
+            <FaTriangleExclamation size={26} aria-hidden="true" />
           </div>
         </div>
 
@@ -50,8 +51,9 @@ export default function GlobalPageError({
           <button
             type="button"
             onClick={() => reset()}
-            className="px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona hover:opacity-90 transition-opacity"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-[#1A1206] bg-corona hover:opacity-90 transition-opacity"
           >
+            <FaArrowRotateRight size={13} aria-hidden="true" />
             Coba lagi
           </button>
           <Link
@@ -63,19 +65,5 @@ export default function GlobalPageError({
         </div>
       </div>
     </div>
-  );
-}
-
-function IconAlert() {
-  return (
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M12 9v4.5M12 17h.01M10.6 3.9l-8.4 14.5a1.6 1.6 0 001.4 2.4h16.8a1.6 1.6 0 001.4-2.4L13.4 3.9a1.6 1.6 0 00-2.8 0z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
