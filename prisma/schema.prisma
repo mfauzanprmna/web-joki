@@ -14,13 +14,13 @@ model Game {
   name               String
   tagline            String
   accentColor        String
-  bannerImage        String?  // nullable, kolom baru
   createdAt          DateTime           @default(now())
+  bannerImage        String?
   endgameContent     EndgameContent[]
   regions            GameRegion[]
+  jokiAccounts       JokiAccount[]
   categories         JokiCategory[]
   jokiHistoryEntries JokiHistoryEntry[]
-  jokiAccounts       JokiAccount[]
   jokiItems          JokiItem[]
   jokiPakets         JokiPaket[]
   orders             Order[]
@@ -158,9 +158,9 @@ model EndgameContent {
   anchorStartDate     DateTime?
   daysAfterPatchStart Int?
   isActive            Boolean                  @default(true)
-  isOrderable         Boolean                  @default(false)
   createdAt           DateTime                 @default(now())
   updatedAt           DateTime                 @updatedAt
+  isOrderable         Boolean                  @default(false)
   game                Game                     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   rawatAkunItems      JokiItemEndgameContent[]
   orderLines          OrderLine[]
@@ -285,29 +285,29 @@ model JokiItemEndgameContent {
 /// dalam satu tempat. Total harga TIDAK digabung lintas Order; setiap Order
 /// tetap unit transaksi/tagihan sendiri-sendiri.
 model Customer {
-  id               String             @id @default(cuid())
-  name             String
-  notes            String?
+  id                   String             @id @default(cuid())
+  name                 String
+  notes                String?
   /// Slug unik acak untuk URL publik /progress/[publicSlug] -- halaman tanpa
   /// login yang menampilkan seluruh order & progress milik Customer ini.
   /// Di-generate otomatis saat Customer dibuat (lihat lib/actions/customer.ts).
-  publicSlug       String             @unique
+  publicSlug           String             @unique
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  /// Saklar on/off notifikasi WhatsApp untuk SEMUA order milik customer ini
+  /// (order baru, update progress, dst). Default false (opt-in) -- admin
+  /// perlu mengaktifkan manual per customer, bukan otomatis nyala untuk
+  /// semua orang begitu nomornya diisi.
+  whatsappNotifEnabled Boolean            @default(false)
   /// Nomor WhatsApp untuk kirim notifikasi progress (format bebas apa adanya
   /// seperti diisi admin, mis. "0812xxxx" atau "+62812xxxx" -- dinormalisasi
   /// ke format internasional saat benar-benar dikirim, lihat
   /// lib/whatsapp-notify.ts). Null/kosong berarti belum ada nomor terdaftar,
   /// independen dari toggle whatsappNotifEnabled di bawah.
   whatsappNumber       String?
-  /// Saklar on/off notifikasi WhatsApp untuk SEMUA order milik customer ini
-  /// (order baru, update progress, dst). Default false (opt-in) -- admin
-  /// perlu mengaktifkan manual per customer, bukan otomatis nyala untuk
-  /// semua orang begitu nomornya diisi.
-  whatsappNotifEnabled Boolean            @default(false)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  jokiHistoryEntries JokiHistoryEntry[]
-  orders           Order[]
-  jokiAccounts     JokiAccount[]
+  jokiAccounts         JokiAccount[]
+  jokiHistoryEntries   JokiHistoryEntry[]
+  orders               Order[]
 }
 
 /// Identitas akun game milik Customer. Satu akun dapat memiliki beberapa
@@ -339,62 +339,60 @@ model Worker {
 }
 
 model Order {
-  id             String       @id @default(cuid())
-  orderCode      String       @unique
-  gameId         String
-  customerId     String
-  accountId      String?
+  id              String       @id @default(cuid())
+  orderCode       String       @unique
+  gameId          String
+  customerId      String
   /// Label nama joki bebas teks (legacy/manual, dipakai kalau belum ada akun
   /// Worker-nya). Kalau workerId terisi, tampilan sebaiknya pakai worker.name.
-  jokerName      String?
-  status         OrderStatus  @default(MENUNGGU)
-  progressPct    Int          @default(0)
+  jokerName       String?
+  status          OrderStatus  @default(MENUNGGU)
+  progressPct     Int          @default(0)
   /// Estimasi waktu pengerjaan khusus order ini (custom per order, bukan
   /// diambil otomatis dari etaLabel Joki Item).
-  estimasiJoki   String?
+  estimasiJoki    String?
   /// Jumlah calculatedPrice seluruh OrderLine, DIKURANGI diskon (jika ada) --
   /// ini harga FINAL yang dipakai di semua tempat lain (notifikasi, komisi
   /// worker, tampilan customer/admin). Disimpan (bukan dihitung ulang setiap
   /// render) supaya harga order tetap konsisten meski admin mengubah harga
   /// Joki Item/Paket di kemudian hari.
-  totalPrice     Int          @default(0)
+  totalPrice      Int          @default(0)
+  /// Platform tempat order masuk. sourceUsername wajib untuk semua platform;
+  /// sourceWhatsapp hanya diisi jika orderSource = WHATSAPP.
+  orderSource     OrderSource
+  sourceUsername  String
+  sourceWhatsapp  String?
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  completedAt     DateTime?
+  /// Akun Worker yang ditugaskan mengerjakan order ini -- worker login sendiri
+  /// dan cuma bisa lihat/update progress order yang workerId-nya cocok.
+  workerId        String?
+  accountId       String?
+  /// Nominal potongan hasil kalkulasi (harga asli x discountPercent / 100),
+  /// dibulatkan. Disimpan langsung (bukan dihitung ulang dari persen) supaya
+  /// tetap akurat meski ada pembulatan per-akun. Null kalau tidak ada diskon.
+  discountAmount  Int?
+  /// Catatan/label bebas untuk diskon (mis. "Promo lebaran", "Loyal customer"),
+  /// opsional, cuma relevan kalau discountAmount terisi.
+  discountLabel   String?
   /// Persentase diskon yang diinput admin saat membuat pesanan (0-100),
   /// opsional. Disimpan terpisah dari totalPrice supaya riwayat "harga asli
   /// vs setelah diskon" tetap terlihat, bukan cuma totalPrice yang sudah
   /// dipotong tanpa jejak.
   discountPercent Int?
-  /// Nominal potongan hasil kalkulasi (harga asli x discountPercent / 100),
-  /// dibulatkan. Disimpan langsung (bukan dihitung ulang dari persen) supaya
-  /// tetap akurat meski ada pembulatan per-akun. Null kalau tidak ada diskon.
-  discountAmount Int?
-  /// Catatan/label bebas untuk diskon (mis. "Promo lebaran", "Loyal customer"),
-  /// opsional, cuma relevan kalau discountAmount terisi.
-  discountLabel  String?
-  /// Platform tempat order masuk. sourceUsername wajib untuk semua platform;
-  /// sourceWhatsapp hanya diisi jika orderSource = WHATSAPP.
-  orderSource    OrderSource
-  sourceUsername String
-  sourceWhatsapp String?
-  notes          String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  completedAt    DateTime?
-  /// Akun Worker yang ditugaskan mengerjakan order ini -- worker login sendiri
-  /// dan cuma bisa lihat/update progress order yang workerId-nya cocok.
-  workerId       String?
-  customer       Customer     @relation(fields: [customerId], references: [id])
-  account        JokiAccount? @relation(fields: [accountId], references: [id])
-  game           Game         @relation(fields: [gameId], references: [id])
-  worker         Worker?      @relation(fields: [workerId], references: [id])
-  lines          OrderLine[]
-  testimonial    Testimonial?
+  account         JokiAccount? @relation(fields: [accountId], references: [id])
+  customer        Customer     @relation(fields: [customerId], references: [id])
+  game            Game         @relation(fields: [gameId], references: [id])
+  worker          Worker?      @relation(fields: [workerId], references: [id])
+  lines           OrderLine[]
+  testimonial     Testimonial?
 
   @@index([status])
   @@index([gameId])
   @@index([customerId])
   @@index([accountId])
-  /// Dipakai dashboard analitik (/admin/analitik) untuk query order dalam
-  /// rentang tanggal tertentu (tren omzet harian/bulanan, dst).
   @@index([createdAt])
   @@index([workerId])
 }
@@ -419,6 +417,20 @@ model OrderLine {
   orderId            String
   jokiItemId         String?
   jokiPaketId        String?
+  /// ID unik per PEMBELIAN Paket Joki (bukan per jenis paketnya). Saat
+  /// customer membeli Paket Joki, order TIDAK lagi menyimpan 1 baris
+  /// gabungan untuk seluruh paket -- setiap Joki Item isi paket dipecah
+  /// jadi OrderLine SENDIRI-SENDIRI (jokiItemId terisi per item), supaya
+  /// progress (persen, update, screenshot, status selesai) tiap item bisa
+  /// diisi & dilihat TERPISAH, bukan digabung jadi satu seperti sebelumnya.
+  /// jokiPaketId tetap menandai JENIS paketnya (dipakai untuk label "Paket
+  /// X" & breakdown isi paket); paketGroupId inilah yang menandai bahwa
+  /// sekumpulan OrderLine berasal dari SATU KALI pembelian yang sama --
+  /// dua kali pembelian Paket yang sama dalam satu Order akan punya
+  /// jokiPaketId yang sama tapi paketGroupId yang berbeda. Null untuk
+  /// baris bukan-paket, dan juga null untuk data lama (order sebelum
+  /// perubahan ini) yang masih berupa 1 baris gabungan per paket.
+  paketGroupId       String?
   explorationPercent Int?
   actFrom            Int?
   actTo              Int?
@@ -438,24 +450,16 @@ model OrderLine {
   levelFrom          Int?
   levelTo            Int?
   patchEventId       String?
-  endgameContentId   String?
-  jokiItem           JokiItem?              @relation(fields: [jokiItemId], references: [id])
-  jokiPaket          JokiPaket?             @relation(fields: [jokiPaketId], references: [id])
-  endgameContent     EndgameContent?        @relation(fields: [endgameContentId], references: [id])
-  order              Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  patchEvent         PatchEvent?            @relation(fields: [patchEventId], references: [id])
-  dayProgress        OrderLineDayProgress[]
-  dayTasks           OrderLineDayTask[]
-  updates            OrderLineUpdate[]
+  /// Quest & Material: jumlah yang sudah selesai/diambil dari total target
+  /// (target Quest = actTo-actFrom+1, target Material = materialQuantity).
+  progressCurrent    Int?                   @default(0)
   /// Progress SELAMA pengerjaan (bukan buat hitung harga) -- diisi berkala
   /// oleh admin/worker lewat panel progress kategori masing-masing.
   /// Eksplorasi: persen (0-100) area yang sudah dieksplor joki sejauh ini.
-  progressPercent Int? @default(0)
-  /// Quest & Material: jumlah yang sudah selesai/diambil dari total target
-  /// (target Quest = actTo-actFrom+1, target Material = materialQuantity).
-  progressCurrent Int? @default(0)
+  progressPercent    Int?                   @default(0)
+  endgameContentId   String?
   /// Menandai bahwa pengerjaan item ini sudah selesai.
-  isCompleted     Boolean  @default(false)
+  isCompleted        Boolean                @default(false)
   /// Timestamp terakhir kali ensureRawatAkunScheduleSynced() berhasil
   /// membangun kalender OrderLineDayProgress/OrderLineDayTask untuk baris
   /// ini. Dipakai sebagai guard supaya proses berat itu (beberapa query +
@@ -463,11 +467,20 @@ model OrderLine {
   /// sekali di awal, lalu dianggap sinkron selamanya (baris day progress
   /// sudah dibuat idempotent, dan admin/worker update lewat form terpisah,
   /// bukan lewat fungsi sync ini). Null berarti belum pernah disinkronkan.
-  scheduleSyncedAt DateTime?
+  scheduleSyncedAt   DateTime?
+  endgameContent     EndgameContent?        @relation(fields: [endgameContentId], references: [id])
+  jokiItem           JokiItem?              @relation(fields: [jokiItemId], references: [id])
+  jokiPaket          JokiPaket?             @relation(fields: [jokiPaketId], references: [id])
+  order              Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  patchEvent         PatchEvent?            @relation(fields: [patchEventId], references: [id])
+  dayProgress        OrderLineDayProgress[]
+  dayTasks           OrderLineDayTask[]
+  updates            OrderLineUpdate[]
 
   @@index([orderId])
   @@index([jokiItemId])
   @@index([jokiPaketId])
+  @@index([paketGroupId])
   @@index([patchEventId])
   @@index([endgameContentId])
 }

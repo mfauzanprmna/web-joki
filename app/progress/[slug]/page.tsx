@@ -4,14 +4,16 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SectionHeading } from "@/components/SectionHeading";
 import { HistoryRow } from "@/components/HistoryRow";
+import { JokiHistoryPublicRow } from "@/components/JokiHistoryPublicRow";
 import { TestimoniCard } from "@/components/TestimoniCard";
 import { CustomerAccountTabs, type AccountProgress } from "@/components/CustomerAccountTabs";
 import { TestimonialPrompt } from "@/components/TestimonialPrompt";
 import { JokiHistoryTestimonialForm } from "@/components/JokiHistoryTestimonialForm";
 import { buildOrderTitle } from "@/lib/order-display";
+import { buildOrderLineDetails } from "@/lib/order-line-detail";
+import type { OrderLineDetail } from "@/components/OrderLineDetailPanel";
 import { ensureRawatAkunScheduleSynced } from "@/lib/rawat-akun-service";
 import { enumerateDays, isoDay } from "@/lib/rawat-akun-schedule";
-import { getJokiItemCategoryLabel } from "@/lib/order-progress-grouping";
 
 // OPTIMASI: sebelumnya revalidate = 0 (selalu render dinamis penuh dari DB
 // setiap kunjungan). Semua Server Action yang mengubah data halaman ini
@@ -99,23 +101,7 @@ export default async function CustomerProgressPage({
                     questType: { select: { name: true, questKind: true } },
                   },
                 },
-                jokiPaket: {
-                  include: {
-                    items: {
-                      include: {
-                        jokiItem: {
-                          select: {
-                            id: true,
-                            title: true,
-                            category: true,
-                            region: { select: { name: true } },
-                            questType: { select: { name: true, questKind: true } },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
+                jokiPaket: { select: { title: true } },
                 patchEvent: { select: { title: true } },
                 endgameContent: { select: { title: true } },
                 updates: { orderBy: { createdAt: "desc" } },
@@ -157,6 +143,10 @@ export default async function CustomerProgressPage({
           select: {
             jokiItem: { select: { title: true } },
             jokiPaket: { select: { title: true } },
+            patchEvent: { select: { title: true } },
+            endgameContent: { select: { title: true } },
+            jokiPaketId: true,
+            paketGroupId: true,
           },
         },
       },
@@ -183,7 +173,14 @@ export default async function CustomerProgressPage({
     updatedAt: Date;
     game: (typeof recentCompletedOrders)[number]["game"];
     testimonial: (typeof recentCompletedOrders)[number]["testimonial"];
-    lines: { jokiItem: { title: string } | null; jokiPaket: { title: string } | null }[];
+    lines: {
+      jokiItem: { title: string } | null;
+      jokiPaket: { title: string } | null;
+      patchEvent?: { title: string } | null;
+      endgameContent?: { title: string } | null;
+      jokiPaketId?: string | null;
+      paketGroupId?: string | null;
+    }[];
   }
   const toHistorySummary = (o: {
     id: string;
@@ -192,7 +189,7 @@ export default async function CustomerProgressPage({
     updatedAt: Date;
     game: HistoryOrderSummary["game"];
     testimonial: HistoryOrderSummary["testimonial"];
-    lines: { jokiItem: { title: string } | null; jokiPaket: { title: string } | null }[];
+    lines: HistoryOrderSummary["lines"];
   }): HistoryOrderSummary => ({
     id: o.id,
     orderCode: o.orderCode,
@@ -206,9 +203,19 @@ export default async function CustomerProgressPage({
   // "completedOrders" dipakai di bagian History bawah: gabungan yang baru
   // selesai (detail penuh dari query utama, tapi cukup diakses field
   // dasarnya) + yang lama (select minimal dari query kedua).
-  const completedOrders = [
-    ...recentCompletedOrders.map(toHistorySummary),
-    ...oldCompletedOrders.map(toHistorySummary),
+  //
+  // `lineDetails` (untuk tombol "Lihat Detail", sama seperti di halaman
+  // /history) cuma tersedia untuk order yang baru selesai, karena hanya
+  // itu yang query-nya menarik data nested penuh (updates/dayProgress/
+  // dayTasks). Order lama sengaja tetap ringkas (lihat komentar OPTIMASI
+  // di atas) supaya halaman ini tidak menarik ulang seluruh riwayat
+  // pengerjaan tiap order lama pada setiap kunjungan.
+  const completedOrders: (HistoryOrderSummary & { lineDetails?: OrderLineDetail[] })[] = [
+    ...recentCompletedOrders.map((o) => ({
+      ...toHistorySummary(o),
+      lineDetails: buildOrderLineDetails(o.lines),
+    })),
+    ...oldCompletedOrders.map((o) => toHistorySummary(o)),
   ];
   const historyEntries = customer.jokiHistoryEntries;
   const historyCount = completedOrders.length + historyEntries.length;
@@ -278,6 +285,8 @@ export default async function CustomerProgressPage({
           return {
             id: line.id,
             jokiPaketId: line.jokiPaketId,
+            paketGroupId: line.paketGroupId,
+            jokiPaketTitle: line.jokiPaket?.title ?? null,
             patchEvent: line.patchEvent,
             endgameContent: line.endgameContent,
             title:
@@ -304,24 +313,6 @@ export default async function CustomerProgressPage({
               resetLocation: u.resetLocation,
               createdAt: u.createdAt.toISOString(),
             })),
-            paketBreakdown:
-              line.jokiPaket?.items.map((it) => ({
-                id: it.jokiItem.id,
-                title: it.jokiItem.title,
-                categoryLabel: getJokiItemCategoryLabel(it.jokiItem),
-              })) ?? [],
-            paketItems:
-              line.jokiPaket?.items.map((it) => ({
-                id: it.jokiItem.id,
-                title: it.jokiItem.title,
-                actFrom: it.actFrom,
-                actTo: it.actTo,
-                jokiItem: {
-                  category: it.jokiItem.category,
-                  region: it.jokiItem.region,
-                  questType: it.jokiItem.questType,
-                },
-              })) ?? [],
             rawatAkun:
               isRawatAkun && line.startDate && line.endDate
                 ? {
@@ -452,6 +443,7 @@ export default async function CustomerProgressPage({
                     completedAt={o.completedAt ?? o.updatedAt}
                     rating={o.testimonial?.rating ?? null}
                     game={o.game}
+                    lines={o.lineDetails}
                   />
                   {o.testimonial && (
                     <div className="pl-1">
@@ -470,12 +462,13 @@ export default async function CustomerProgressPage({
               ))}
               {historyEntries.map((entry) => (
                 <div key={entry.id} className="flex flex-col gap-2">
-                  <HistoryRow
-                    orderCode="History lama"
+                  <JokiHistoryPublicRow
                     title={entry.title}
                     customerName={customer.name}
                     completedAt={entry.completedAt}
                     rating={entry.testimonial?.rating ?? entry.rating}
+                    note={entry.note}
+                    screenshotUrls={entry.screenshotUrls}
                     game={entry.game}
                   />
                   {entry.testimonial && (

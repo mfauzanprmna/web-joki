@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { updateOrder, deleteOrder } from "@/lib/actions/order";
 import { assignWorkerToOrder } from "@/lib/actions/worker";
@@ -74,6 +74,12 @@ const SOURCE_LABEL: Record<string, string> = {
 };
 
 function describeLine(line: OrderLineRow): string {
+  // Baris hasil pecahan satu pembelian Paket (lihat OrderLine.paketGroupId)
+  // punya jokiItem DAN jokiPaket yang sama-sama terisi. Paket dijual 1 harga
+  // borongan, bukan per item isinya, jadi harga per baris tidak ditampilkan
+  // di sini supaya tidak menyesatkan (item lain di paket yang sama akan
+  // terlihat "gratis" kalau harganya ditampilkan apa adanya).
+  const isPaketItem = !!(line.jokiItem && line.jokiPaket);
   const title = line.jokiItem?.title ?? line.jokiPaket?.title ?? line.patchEvent?.title ?? line.endgameContent?.title ?? "Item tidak dikenal";
   const details: string[] = [];
   if (line.explorationPercent != null) details.push(`${line.explorationPercent}% sudah dikerjakan`);
@@ -83,11 +89,16 @@ function describeLine(line: OrderLineRow): string {
   if (line.characterName) details.push(line.characterName);
   if (line.levelFrom != null && line.levelTo != null) details.push(`Lv ${line.levelFrom}-${line.levelTo}`);
   const detailStr = details.length > 0 ? ` (${details.join(", ")})` : "";
+  if (isPaketItem) {
+    return `${title}${detailStr} — bagian dari ${line.jokiPaket?.title ?? "Paket"}`;
+  }
   return `${title}${detailStr} — ${formatRupiah(line.calculatedPrice)}`;
 }
 
 export function OrderRowItem({ order, workers }: { order: OrderRow; workers: WorkerOption[] }) {
   const [editing, setEditing] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [assignPending, startAssignTransition] = useTransition();
   const commission = calculateWorkerCommission(order.totalPrice);
 
   if (!editing) {
@@ -134,13 +145,21 @@ export function OrderRowItem({ order, workers }: { order: OrderRow; workers: Wor
               Komisi worker: {formatRupiah(commission)}
             </p>
           </div>
-          <form action={assignWorkerToOrder}>
+          <form
+            action={(formData) => {
+              startAssignTransition(async () => {
+                await assignWorkerToOrder(formData);
+              });
+            }}
+          >
             <input type="hidden" name="orderId" value={order.id} />
             <select
               name="workerId"
               defaultValue={order.workerId ?? ""}
+              disabled={assignPending}
+              aria-busy={assignPending}
               onChange={(e) => e.currentTarget.form?.requestSubmit()}
-              className="admin-input !w-auto !py-1.5 !text-xs"
+              className="admin-input !w-auto !py-1.5 !text-xs disabled:opacity-60"
             >
               <option value="">Belum ditugaskan</option>
               {workers.map((w) => (
@@ -181,9 +200,11 @@ export function OrderRowItem({ order, workers }: { order: OrderRow; workers: Wor
 
   return (
     <form
-      action={async (formData) => {
-        await updateOrder(formData);
-        setEditing(false);
+      action={(formData) => {
+        startTransition(async () => {
+          await updateOrder(formData);
+          setEditing(false);
+        });
       }}
       className="bg-shihu-card border border-shihu-corona/40 rounded-2xl p-4 flex flex-col gap-3"
     >
@@ -247,30 +268,37 @@ export function OrderRowItem({ order, workers }: { order: OrderRow; workers: Wor
       <div className="flex gap-2 pt-1">
         <button
           type="submit"
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona"
+          disabled={pending}
+          aria-busy={pending}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona disabled:opacity-60"
         >
           <FaFloppyDisk size={11} aria-hidden="true" />
-          Simpan
+          {pending ? "Menyimpan..." : "Simpan"}
         </button>
         <button
           type="button"
+          disabled={pending}
           onClick={() => setEditing(false)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs border border-shihu-borderSoft"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs border border-shihu-borderSoft disabled:opacity-60"
         >
           <FaXmark size={11} aria-hidden="true" />
           Batal
         </button>
         <button
           type="button"
+          disabled={pending}
+          aria-busy={pending}
           onClick={() => {
             const fd = new FormData();
             fd.set("id", order.id);
-            deleteOrder(fd);
+            startTransition(() => {
+              deleteOrder(fd);
+            });
           }}
-          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
+          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10 disabled:opacity-60"
         >
           <FaTrash size={11} aria-hidden="true" />
-          Hapus
+          {pending ? "Menghapus..." : "Hapus"}
         </button>
       </div>
     </form>

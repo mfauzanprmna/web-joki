@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { deleteJokiHistoryEntry } from "@/lib/actions/joki-history";
 import { Stars } from "@/components/Stars";
 import { formatDate } from "@/lib/format";
@@ -23,6 +23,7 @@ interface JokiHistoryRow {
 export function JokiHistoryRowItem({ item }: { item: JokiHistoryRow }) {
   const [showDetail, setShowDetail] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [deletePending, startDeleteTransition] = useTransition();
 
   function copyTestimonialLink() {
     const url = `${window.location.origin}/testimoni-lama/${item.shareToken}`;
@@ -60,14 +61,22 @@ export function JokiHistoryRowItem({ item }: { item: JokiHistoryRow }) {
           {showDetail ? <FaEyeSlash size={10} aria-hidden="true" /> : <FaEye size={10} aria-hidden="true" />}
           {showDetail ? "Tutup" : "Lihat Detail"}
         </button>
-        <form action={deleteJokiHistoryEntry}>
+        <form
+          action={(formData) => {
+            startDeleteTransition(async () => {
+              await deleteJokiHistoryEntry(formData);
+            });
+          }}
+        >
           <input type="hidden" name="id" value={item.id} />
           <button
             type="submit"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium text-red-400 hover:bg-red-400/10"
+            disabled={deletePending}
+            aria-busy={deletePending}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium text-red-400 hover:bg-red-400/10 disabled:opacity-60"
           >
             <FaTrash size={10} aria-hidden="true" />
-            Hapus
+            {deletePending ? "Menghapus..." : "Hapus"}
           </button>
         </form>
       </div>

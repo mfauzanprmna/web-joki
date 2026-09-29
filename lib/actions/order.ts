@@ -212,7 +212,18 @@ export async function createOrder(
         where: { id: { in: Array.from(allPaketIds) } },
         include: {
           items: {
-            include: { jokiItem: { select: { actNumber: true, category: { select: { requiresQuestType: true } } } } },
+            include: {
+              jokiItem: {
+                select: {
+                  id: true,
+                  actNumber: true,
+                  category: { select: { requiresQuestType: true, isRawatAkun: true } },
+                  isPatchWide: true,
+                  durationDays: true,
+                  patch: { select: { startDate: true, endDate: true } },
+                },
+              },
+            },
           },
         },
       })
@@ -266,6 +277,7 @@ export async function createOrder(
     lines: {
       jokiItemId: string | null;
       jokiPaketId: string | null;
+      paketGroupId: string | null;
       patchEventId: string | null;
       endgameContentId: string | null;
       explorationPercent: number | null;
@@ -319,6 +331,7 @@ export async function createOrder(
         linesToCreate.push({
           jokiItemId: item.id,
           jokiPaketId: null,
+          paketGroupId: null,
           patchEventId: null,
           endgameContentId: null,
           explorationPercent: line.explorationPercent,
@@ -335,20 +348,69 @@ export async function createOrder(
         if (!paket) {
           return { error: "Salah satu Paket Joki yang dipilih tidak ditemukan." };
         }
-        linesToCreate.push({
-          jokiItemId: null,
-          jokiPaketId: paket.id,
-          patchEventId: null,
-          endgameContentId: null,
-          explorationPercent: null,
-          actFrom: null,
-          actTo: null,
-          materialQuantity: null,
-          rawatAkunQuantity: null,
-          startDate: null,
-          endDate: null,
-          calculatedPrice: paket.priceRupiah,
-        });
+        if (paket.items.length === 0) {
+          return { error: `Paket "${paket.title}" belum punya isi Joki Item sama sekali.` };
+        }
+
+        // Satu OrderLine PER Joki Item isi paket (bukan satu OrderLine
+        // gabungan untuk seluruh paket) -- supaya progress tiap item
+        // (persen, update, screenshot, status selesai) tersimpan & bisa
+        // diisi terpisah. paketGroupId menandai semua baris ini berasal
+        // dari SATU kali pembelian paket yang sama, supaya tetap tampil
+        // sebagai satu tab "Paket X" di halaman update progress.
+        const paketGroupId = crypto.randomUUID();
+
+        for (const [index, paketItem] of paket.items.entries()) {
+          const isRawatAkun = paketItem.jokiItem.category.isRawatAkun;
+
+          let startDate: Date | null = null;
+          let endDate: Date | null = null;
+          if (isRawatAkun) {
+            // Item Rawat Akun di dalam paket dihitung durasinya sama seperti
+            // item Rawat Akun berdiri sendiri: mulai hari ini, 1x durasi
+            // default (paket tidak punya input jumlah/tanggal mulai sendiri
+            // dari form, karena harga paket sudah flat per 1 paket).
+            const period = computeRawatAkunPeriod(
+              {
+                isPatchWide: paketItem.jokiItem.isPatchWide,
+                durationDays: paketItem.jokiItem.durationDays,
+                patch: paketItem.jokiItem.patch,
+              },
+              1,
+              dateFromIsoDay(isoDay(new Date()))
+            );
+            if (period) {
+              startDate = period.startDate;
+              endDate = period.endDate;
+            }
+            // Kalau durasi belum diisi di Joki Item-nya, biarkan startDate/
+            // endDate null (sama seperti kalau JokiPaketItem lain gagal
+            // hitung durasi) -- baris ini tetap tersimpan, cuma kalender
+            // Rawat Akun-nya tidak otomatis terbentuk sampai admin
+            // melengkapi durationDays Joki Item tsb.
+          }
+
+          linesToCreate.push({
+            jokiItemId: paketItem.jokiItemId,
+            jokiPaketId: paket.id,
+            paketGroupId,
+            patchEventId: null,
+            endgameContentId: null,
+            explorationPercent: null,
+            actFrom: paketItem.actFrom,
+            actTo: paketItem.actTo,
+            materialQuantity: null,
+            rawatAkunQuantity: null,
+            startDate,
+            endDate,
+            // Harga paket adalah 1 harga borongan, bukan per item -- taruh
+            // semuanya di baris PERTAMA supaya total order tetap benar
+            // (SUM(calculatedPrice) semua baris = harga paket), sisanya 0.
+            // Harga per item TIDAK ditampilkan di mana pun (lihat
+            // describeLine di OrderRowItem.tsx) supaya tidak menyesatkan.
+            calculatedPrice: index === 0 ? paket.priceRupiah : 0,
+          });
+        }
       } else if (line.type === "event") {
         const event = eventMap.get(line.id);
         if (!event || !isPatchEventLive(event)) {
@@ -360,6 +422,7 @@ export async function createOrder(
         linesToCreate.push({
           jokiItemId: null,
           jokiPaketId: null,
+          paketGroupId: null,
           patchEventId: event.id,
           endgameContentId: null,
           explorationPercent: null,
@@ -382,6 +445,7 @@ export async function createOrder(
         linesToCreate.push({
           jokiItemId: null,
           jokiPaketId: null,
+          paketGroupId: null,
           patchEventId: null,
           endgameContentId: content.id,
           explorationPercent: null,
@@ -483,21 +547,29 @@ export async function createOrder(
         },
       });
 
+      const seenPaketGroups = new Set<string>();
       createdForNotify.push({
         orderCode,
         gameId: acc.gameId,
         layanan: acc.lines
-          .map((l) =>
-            l.jokiItemId
-              ? itemMap.get(l.jokiItemId)?.title
-              : l.jokiPaketId
-                ? paketMap.get(l.jokiPaketId)?.title
-                : l.patchEventId
-                  ? eventMap.get(l.patchEventId)?.title
-                  : l.endgameContentId
-                    ? endgameContentMap.get(l.endgameContentId)?.title
-                    : null,
-          )
+          .map((l) => {
+            // Cek jokiPaketId LEBIH DULU (bukan jokiItemId) -- baris hasil
+            // pecahan satu pembelian Paket punya KEDUANYA terisi, tapi yang
+            // relevan untuk notifikasi adalah nama PAKET-nya (satu kali),
+            // bukan nama tiap Joki Item isinya (akan berulang N kali kalau
+            // dicek jokiItemId duluan, dan itemMap juga tidak mengenal id
+            // Joki Item yang berasal dari isi paket).
+            if (l.jokiPaketId) {
+              const groupKey = l.paketGroupId ?? l.jokiPaketId;
+              if (seenPaketGroups.has(groupKey)) return null;
+              seenPaketGroups.add(groupKey);
+              return paketMap.get(l.jokiPaketId)?.title ?? null;
+            }
+            if (l.jokiItemId) return itemMap.get(l.jokiItemId)?.title ?? null;
+            if (l.patchEventId) return eventMap.get(l.patchEventId)?.title ?? null;
+            if (l.endgameContentId) return endgameContentMap.get(l.endgameContentId)?.title ?? null;
+            return null;
+          })
           .filter((title): title is string => !!title)
           .join(", ") || "Pesanan kustom",
         totalPrice: acc.totalPrice,

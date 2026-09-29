@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { updateTestimonial, deleteTestimonial } from "@/lib/actions/testimonial";
 import { Stars } from "@/components/Stars";
 import { FaPen, FaFloppyDisk, FaXmark, FaTrash } from "react-icons/fa6";
@@ -16,6 +16,7 @@ interface TestimonialRow {
 
 export function TestimonialRowItem({ item }: { item: TestimonialRow }) {
   const [editing, setEditing] = useState(false);
+  const [pending, startTransition] = useTransition();
 
   if (!editing) {
     return (
@@ -51,9 +52,11 @@ export function TestimonialRowItem({ item }: { item: TestimonialRow }) {
 
   return (
     <form
-      action={async (formData) => {
-        await updateTestimonial(formData);
-        setEditing(false);
+      action={(formData) => {
+        startTransition(async () => {
+          await updateTestimonial(formData);
+          setEditing(false);
+        });
       }}
       className="bg-shihu-card border border-shihu-corona/40 rounded-2xl p-4 flex flex-col gap-3"
     >
@@ -113,30 +116,37 @@ export function TestimonialRowItem({ item }: { item: TestimonialRow }) {
       <div className="flex gap-2 pt-1">
         <button
           type="submit"
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona"
+          disabled={pending}
+          aria-busy={pending}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-semibold text-xs text-[#1A1206] bg-corona disabled:opacity-60"
         >
           <FaFloppyDisk size={11} aria-hidden="true" />
-          Simpan
+          {pending ? "Menyimpan..." : "Simpan"}
         </button>
         <button
           type="button"
+          disabled={pending}
           onClick={() => setEditing(false)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs border border-shihu-borderSoft"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs border border-shihu-borderSoft disabled:opacity-60"
         >
           <FaXmark size={11} aria-hidden="true" />
           Batal
         </button>
         <button
           type="button"
+          disabled={pending}
+          aria-busy={pending}
           onClick={() => {
             const fd = new FormData();
             fd.set("id", item.id);
-            deleteTestimonial(fd);
+            startTransition(() => {
+              deleteTestimonial(fd);
+            });
           }}
-          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
+          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10 disabled:opacity-60"
         >
           <FaTrash size={11} aria-hidden="true" />
-          Hapus
+          {pending ? "Menghapus..." : "Hapus"}
         </button>
       </div>
     </form>

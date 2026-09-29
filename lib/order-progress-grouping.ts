@@ -41,6 +41,13 @@ const CATEGORY_ORDER: ProgressCategoryKind[] = [
 export interface LineForGrouping {
   id: string;
   jokiPaketId?: string | null;
+  /// Lihat komentar field ini di schema.prisma (model OrderLine) -- menandai
+  /// baris-baris yang berasal dari SATU KALI pembelian Paket yang sama.
+  paketGroupId?: string | null;
+  /// Judul Paket Joki asalnya (bukan judul Joki Item baris ini sendiri) --
+  /// dipakai sebagai label tab "Paket X" & breakdown isi paket. Cuma relevan
+  /// kalau jokiPaketId terisi.
+  jokiPaketTitle?: string | null;
   jokiItem: {
     category: {
       isRawatAkun: boolean;
@@ -97,11 +104,13 @@ function groupBy<T>(items: T[], keyFn: (item: T) => string): SubGroup<T>[] {
   return Array.from(map.entries()).map(([key, lines]) => ({ key, label: key, lines }));
 }
 
-/** Baris non-Paket, dikelompokkan per kategori (+ sub-tab utk Eksplorasi/Quest). */
-export function groupLinesByCategory<T extends LineForGrouping>(lines: T[]): CategoryGroup<T>[] {
-  const nonPaketLines = lines.filter((l) => !l.jokiPaketId);
+/** Inti pengelompokan per kategori, TANPA asumsi soal jokiPaketId -- dipakai
+ * baik untuk baris top-level non-paket maupun untuk baris-baris di DALAM
+ * satu grup pembelian paket (yang keduanya sama-sama "flat list of lines"
+ * pada titik ini, cuma beda konteks pemanggilnya). */
+function groupByCategoryRaw<T extends LineForGrouping>(lines: T[]): CategoryGroup<T>[] {
   const byKind = new Map<ProgressCategoryKind, T[]>();
-  for (const line of nonPaketLines) {
+  for (const line of lines) {
     const kind = getCategoryKind(line);
     if (!byKind.has(kind)) byKind.set(kind, []);
     byKind.get(kind)!.push(line);
@@ -131,9 +140,51 @@ export function groupLinesByCategory<T extends LineForGrouping>(lines: T[]): Cat
   return groups;
 }
 
-/** Baris Paket saja (selalu tab tersendiri, di luar pengelompokan kategori). */
-export function getPaketLines<T extends LineForGrouping>(lines: T[]): T[] {
-  return lines.filter((l) => l.jokiPaketId);
+/** Baris non-Paket, dikelompokkan per kategori (+ sub-tab utk Eksplorasi/Quest). */
+export function groupLinesByCategory<T extends LineForGrouping>(lines: T[]): CategoryGroup<T>[] {
+  const nonPaketLines = lines.filter((l) => !l.jokiPaketId);
+  return groupByCategoryRaw(nonPaketLines);
+}
+
+/** Sama seperti groupLinesByCategory, tapi untuk dipakai KHUSUS di dalam satu
+ * tab Paket -- baris yang masuk di sini SUDAH PASTI baris isi paket
+ * (jokiPaketId terisi), jadi tidak boleh dikeluarkan lagi seperti di
+ * groupLinesByCategory (yang justru mengeluarkan baris paket). */
+export function groupPaketItemsByCategory<T extends LineForGrouping>(lines: T[]): CategoryGroup<T>[] {
+  return groupByCategoryRaw(lines);
+}
+
+/** Baris Paket saja (selalu tab tersendiri, di luar pengelompokan kategori),
+ * dikelompokkan lagi PER PEMBELIAN (paketGroupId) -- satu kali pembelian
+ * Paket Joki bisa terdiri dari beberapa OrderLine (satu per Joki Item isi
+ * paket), dan semuanya harus tampil sebagai SATU tab "Paket X", bukan
+ * banyak tab terpisah. Data lama (order sebelum ada paketGroupId) tetap
+ * kebaca benar: setiap baris jadi grupnya sendiri (fallback ke id baris). */
+export interface PaketPurchaseGroup<T> {
+  key: string;
+  jokiPaketId: string;
+  title: string;
+  lines: T[];
+}
+
+export function groupPaketPurchases<T extends LineForGrouping>(lines: T[]): PaketPurchaseGroup<T>[] {
+  const paketLines = lines.filter((l): l is T & { jokiPaketId: string } => !!l.jokiPaketId);
+  const map = new Map<string, PaketPurchaseGroup<T>>();
+  for (const line of paketLines) {
+    const key = line.paketGroupId ?? line.id;
+    const existing = map.get(key);
+    if (existing) {
+      existing.lines.push(line);
+    } else {
+      map.set(key, {
+        key,
+        jokiPaketId: line.jokiPaketId,
+        title: line.jokiPaketTitle ?? "Paket",
+        lines: [line],
+      });
+    }
+  }
+  return Array.from(map.values());
 }
 
 /** Target hitungan buat progress bar Quest (jumlah Act) / Material (jumlah satuan). */

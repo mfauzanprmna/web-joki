@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { OrderLineProgressPanel } from "./OrderLineProgressPanel";
 import { ExplorationProgressPanel } from "./ExplorationProgressPanel";
 import { CountProgressPanel } from "./CountProgressPanel";
@@ -8,9 +8,11 @@ import { RawatAkunProgressPanel, type DayProgressItem, type DayTaskItem } from "
 import { toggleOrderLineCompletion } from "@/lib/actions/line-progress";
 import {
   groupLinesByCategory,
-  getPaketLines,
+  groupPaketItemsByCategory,
+  groupPaketPurchases,
   getLineProgressTarget,
   getCategoryKind,
+  getJokiItemCategoryLabel,
   type LineForGrouping,
 } from "@/lib/order-progress-grouping";
 
@@ -20,20 +22,6 @@ interface UpdateEntry {
   screenshotUrl: string | null;
   resetLocation: string | null;
   createdAt: Date;
-}
-
-interface PaketItemLine {
-  id: string;
-  title: string;
-  actFrom: number | null;
-  actTo: number | null;
-  jokiItem: NonNullable<OrderLineData["jokiItem"]>;
-}
-
-interface PaketBreakdownItem {
-  id: string;
-  title: string;
-  categoryLabel: string;
 }
 
 export interface OrderLineData extends LineForGrouping {
@@ -61,33 +49,42 @@ export interface OrderLineData extends LineForGrouping {
   isCompleted: boolean;
   updates: UpdateEntry[];
   rawatAkun: { days: DayProgressItem[]; tasks: DayTaskItem[] } | null;
-  paketBreakdown: PaketBreakdownItem[];
-  paketItems: PaketItemLine[];
-  progressLineId?: string;
 }
 
 function LinePanel({ line }: { line: OrderLineData }) {
   const kind = getCategoryKind(line);
-  const progressLineId = line.progressLineId ?? line.id;
+  const [togglePending, startToggleTransition] = useTransition();
   const panel = kind === "RAWAT_AKUN" && line.rawatAkun
-    ? <RawatAkunProgressPanel orderLineId={progressLineId} days={line.rawatAkun.days} tasks={line.rawatAkun.tasks} />
+    ? <RawatAkunProgressPanel orderLineId={line.id} days={line.rawatAkun.days} tasks={line.rawatAkun.tasks} />
     : kind === "EKSPLORASI"
-      ? <ExplorationProgressPanel orderLineId={progressLineId} title={line.title} currentPercent={line.progressPercent ?? 0} jokiItem={line.jokiItem} updates={line.updates} />
+      ? <ExplorationProgressPanel orderLineId={line.id} title={line.title} currentPercent={line.progressPercent ?? 0} jokiItem={line.jokiItem} updates={line.updates} />
       : kind === "QUEST" || kind === "MATERIAL"
-        ? <CountProgressPanel orderLineId={progressLineId} title={line.title} currentCount={line.progressCurrent ?? 0} target={getLineProgressTarget(line)} unitLabel={kind === "QUEST" ? "Act" : "item"} jokiItem={line.jokiItem} updates={line.updates} />
-        : <OrderLineProgressPanel orderLineId={progressLineId} jokiItem={line.jokiItem} updates={line.updates} />;
+        ? <CountProgressPanel orderLineId={line.id} title={line.title} currentCount={line.progressCurrent ?? 0} target={getLineProgressTarget(line)} unitLabel={kind === "QUEST" ? "Act" : "item"} jokiItem={line.jokiItem} updates={line.updates} />
+        : <OrderLineProgressPanel orderLineId={line.id} jokiItem={line.jokiItem} updates={line.updates} />;
 
   return (
     <div className="flex flex-col gap-3">
-      <form action={toggleOrderLineCompletion} className="flex items-center justify-between gap-3 bg-[#241E38] border border-shihu-border rounded-xl p-3.5">
+      <form
+        action={(formData) => {
+          startToggleTransition(async () => {
+            await toggleOrderLineCompletion(formData);
+          });
+        }}
+        className="flex items-center justify-between gap-3 bg-[#241E38] border border-shihu-border rounded-xl p-3.5"
+      >
         <div>
           <p className="font-display text-xs font-semibold">Status item</p>
           <p className="text-[11px] text-shihu-faint">Tandai selesai jika joki item ini sudah rampung.</p>
         </div>
-        <input type="hidden" name="orderLineId" value={progressLineId} />
+        <input type="hidden" name="orderLineId" value={line.id} />
         <input type="hidden" name="isCompleted" value={String(!line.isCompleted)} />
-        <button type="submit" className={`px-3.5 py-2 rounded-lg text-xs font-display font-semibold shrink-0 ${line.isCompleted ? "border border-shihu-borderSoft text-shihu-muted" : "bg-corona text-[#1A1206]"}`}>
-          {line.isCompleted ? "Batalkan selesai" : "Tandai selesai"}
+        <button
+          type="submit"
+          disabled={togglePending}
+          aria-busy={togglePending}
+          className={`px-3.5 py-2 rounded-lg text-xs font-display font-semibold shrink-0 disabled:opacity-60 ${line.isCompleted ? "border border-shihu-borderSoft text-shihu-muted" : "bg-corona text-[#1A1206]"}`}
+        >
+          {togglePending ? "Menyimpan..." : line.isCompleted ? "Batalkan selesai" : "Tandai selesai"}
         </button>
       </form>
       {panel}
@@ -95,39 +92,25 @@ function LinePanel({ line }: { line: OrderLineData }) {
   );
 }
 
-/** Konten tab Paket: breakdown isi paket per kategori (read-only) + 1 form update biasa. */
-function PaketPanel({ line }: { line: OrderLineData }) {
+/** Konten tab Paket: breakdown isi paket per kategori (read-only) + progress
+ * per item isinya -- tiap item sekarang OrderLine SENDIRI (bukan lagi 1
+ * baris gabungan yang dipecah semu di client), jadi progress/update/status
+ * selesainya benar-benar tersimpan terpisah per item. */
+function PaketPanel({ title, lines }: { title: string; lines: OrderLineData[] }) {
   const byCategory = useMemo(() => {
-    const map = new Map<string, PaketBreakdownItem[]>();
-    for (const item of line.paketBreakdown) {
-      if (!map.has(item.categoryLabel)) map.set(item.categoryLabel, []);
-      map.get(item.categoryLabel)!.push(item);
+    const map = new Map<string, { id: string; title: string }[]>();
+    for (const item of lines) {
+      const label = item.jokiItem ? getJokiItemCategoryLabel(item.jokiItem) : "Lainnya";
+      if (!map.has(label)) map.set(label, []);
+      map.get(label)!.push({ id: item.id, title: item.title });
     }
     return Array.from(map.entries());
-  }, [line.paketBreakdown]);
-
-  const itemLines: OrderLineData[] = line.paketItems.map((item) => ({
-    id: `${line.id}:${item.id}`,
-    jokiPaketId: null,
-    patchEvent: null,
-    endgameContent: null,
-    title: item.title,
-    jokiItem: item.jokiItem,
-    actFrom: item.actFrom,
-    actTo: item.actTo,
-    materialQuantity: line.materialQuantity,
-    progressPercent: line.progressPercent,
-    progressCurrent: line.progressCurrent,
-    isCompleted: line.isCompleted,
-    updates: line.updates,
-    rawatAkun: line.rawatAkun,
-    paketBreakdown: [],
-    paketItems: [],
-    progressLineId: line.id,
-  }));
+  }, [lines]);
 
   return (
     <div className="flex flex-col gap-4">
+      <p className="font-display text-sm font-semibold">{title}</p>
+
       {byCategory.length > 0 && (
         <div className="bg-[#241E38] border border-shihu-border rounded-xl p-4">
           <p className="font-display text-xs font-semibold text-shihu-muted mb-2.5">Isi paket ini</p>
@@ -147,16 +130,20 @@ function PaketPanel({ line }: { line: OrderLineData }) {
           </div>
         </div>
       )}
-      {itemLines.length > 0 ? <CategoryTabs lines={itemLines} /> : (
-        <OrderLineProgressPanel orderLineId={line.id} jokiItem={line.jokiItem} updates={line.updates} />
-      )}
+
+      <CategoryTabs lines={lines} includePaketLines />
     </div>
   );
 }
 
-/** Level 1 + level 2 tabs untuk baris non-Paket, dikelompokkan per kategori. */
-function CategoryTabs({ lines }: { lines: OrderLineData[] }) {
-  const groups = useMemo(() => groupLinesByCategory(lines), [lines]);
+/** Level 1 + level 2 tabs. `includePaketLines` dipakai di dalam satu tab
+ * Paket (lines yang masuk sudah pasti isi paket, jadi TIDAK boleh
+ * dikeluarkan lagi seperti pada pengelompokan top-level non-paket). */
+function CategoryTabs({ lines, includePaketLines = false }: { lines: OrderLineData[]; includePaketLines?: boolean }) {
+  const groups = useMemo(
+    () => (includePaketLines ? groupPaketItemsByCategory(lines) : groupLinesByCategory(lines)),
+    [lines, includePaketLines]
+  );
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
   const [activeSubIdx, setActiveSubIdx] = useState(0);
 
@@ -213,7 +200,7 @@ function CategoryTabs({ lines }: { lines: OrderLineData[] }) {
       <div className="flex flex-col gap-4">
         {activeSub.lines.map((line) => (
           <div key={line.id}>
-            {activeSub.lines.length > 1 && (
+            {(activeSub.lines.length > 1 || activeGroup.kind === "EVENT" || activeGroup.kind === "ENDGAME") && (
               <p className="font-display text-xs font-semibold text-shihu-muted mb-2">{line.title}</p>
             )}
             <LinePanel line={line} />
@@ -225,15 +212,15 @@ function CategoryTabs({ lines }: { lines: OrderLineData[] }) {
 }
 
 export function OrderProgressTabs({ lines }: { lines: OrderLineData[] }) {
-  const paketLines = useMemo(() => getPaketLines(lines), [lines]);
+  const paketGroups = useMemo(() => groupPaketPurchases(lines), [lines]);
   const categoryLines = useMemo(() => lines.filter((l) => !l.jokiPaketId), [lines]);
 
   const topTabs = useMemo(
     () => [
       ...(categoryLines.length > 0 ? [{ key: "__categories__", label: null as string | null }] : []),
-      ...paketLines.map((p) => ({ key: p.id, label: p.title as string | null })),
+      ...paketGroups.map((g) => ({ key: g.key, label: g.title as string | null })),
     ],
-    [categoryLines, paketLines]
+    [categoryLines, paketGroups]
   );
 
   const [activeTopIdx, setActiveTopIdx] = useState(0);
@@ -243,18 +230,14 @@ export function OrderProgressTabs({ lines }: { lines: OrderLineData[] }) {
   }
 
   if (topTabs.length <= 1) {
-    if (paketLines.length === 1 && categoryLines.length === 0) {
-      return (
-        <div>
-          <p className="font-display text-sm font-semibold mb-3">{paketLines[0].title}</p>
-          <PaketPanel line={paketLines[0]} />
-        </div>
-      );
+    if (paketGroups.length === 1 && categoryLines.length === 0) {
+      return <PaketPanel title={paketGroups[0].title} lines={paketGroups[0].lines} />;
     }
     return <CategoryTabs lines={categoryLines} />;
   }
 
   const active = topTabs[activeTopIdx];
+  const activeGroup = paketGroups.find((g) => g.key === active.key);
 
   return (
     <div>
@@ -278,9 +261,9 @@ export function OrderProgressTabs({ lines }: { lines: OrderLineData[] }) {
 
       {active.key === "__categories__" ? (
         <CategoryTabs lines={categoryLines} />
-      ) : (
-        <PaketPanel line={paketLines.find((p) => p.id === active.key)!} />
-      )}
+      ) : activeGroup ? (
+        <PaketPanel title={activeGroup.title} lines={activeGroup.lines} />
+      ) : null}
     </div>
   );
 }

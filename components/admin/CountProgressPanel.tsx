@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { updateCountProgress } from "@/lib/actions/line-progress";
 import { OrderLineProgressPanel } from "./OrderLineProgressPanel";
 import type { OrderLineForProgressRules } from "@/lib/order-progress-rules";
@@ -33,6 +33,7 @@ export function CountProgressPanel({
   updates,
 }: CountProgressPanelProps) {
   const [current, setCurrent] = useState(currentCount);
+  const [pending, startTransition] = useTransition();
   const percent = target && target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
 
   return (
@@ -52,7 +53,14 @@ export function CountProgressPanel({
             Target belum jelas -- lengkapi Act dari/sampai atau jumlah material di baris order ini dulu.
           </p>
         ) : (
-          <form action={updateCountProgress} className="flex items-center gap-2">
+          <form
+            action={(formData) => {
+              startTransition(async () => {
+                await updateCountProgress(formData);
+              });
+            }}
+            className="flex items-center gap-2"
+          >
             <input type="hidden" name="orderLineId" value={orderLineId} />
             <input type="hidden" name="target" value={target} />
             <input
@@ -74,9 +82,11 @@ export function CountProgressPanel({
             />
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-corona text-[#1A1206] text-xs font-display font-semibold shrink-0"
+              disabled={pending}
+              aria-busy={pending}
+              className="px-4 py-2 rounded-lg bg-corona text-[#1A1206] text-xs font-display font-semibold shrink-0 disabled:opacity-60"
             >
-              Simpan
+              {pending ? "Menyimpan..." : "Simpan"}
             </button>
           </form>
         )}

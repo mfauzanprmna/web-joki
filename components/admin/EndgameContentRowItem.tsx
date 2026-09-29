@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { updateEndgameContent, deleteEndgameContent, type EndgameActionState } from "@/lib/actions/endgame";
 import { formatRupiah } from "@/lib/format";
 import { RESET_CYCLE_LABEL, type ResetCycle } from "@/lib/endgame-schedule";
@@ -27,6 +27,7 @@ export function EndgameContentRowItem({ content }: { content: EndgameContentRow 
     undefined
   );
   const hasSubmittedRef = useRef(false);
+  const [deletePending, startDeleteTransition] = useTransition();
 
   useEffect(() => {
     if (hasSubmittedRef.current && !pending && !state?.error) {
@@ -168,16 +169,20 @@ export function EndgameContentRowItem({ content }: { content: EndgameContentRow 
         </button>
         <button
           type="button"
+          disabled={deletePending}
+          aria-busy={deletePending}
           onClick={() => {
             const fd = new FormData();
             fd.set("id", content.id);
-            deleteEndgameContent(fd);
+            startDeleteTransition(() => {
+              deleteEndgameContent(fd);
+            });
           }}
-          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
-        >
+          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10 disabled:opacity-60"
+          >
           <FaTrash size={11} aria-hidden="true" />
-          Hapus
-        </button>
+          {deletePending ? "Menghapus..." : "Hapus"}
+          </button>
       </div>
     </form>
   );

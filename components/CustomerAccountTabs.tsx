@@ -7,9 +7,11 @@ import { ExplorationProgressView } from "@/components/ExplorationProgressView";
 import { CountProgressView } from "@/components/CountProgressView";
 import {
   groupLinesByCategory,
-  getPaketLines,
+  groupPaketItemsByCategory,
+  groupPaketPurchases,
   getLineProgressTarget,
   getCategoryKind,
+  getJokiItemCategoryLabel,
   type LineForGrouping,
 } from "@/lib/order-progress-grouping";
 import { STATUS_LABEL } from "@/types/game";
@@ -21,20 +23,6 @@ interface UpdateEntry {
   screenshotUrl: string | null;
   resetLocation: string | null;
   createdAt: string; // ISO string
-}
-
-interface PaketBreakdownItem {
-  id: string;
-  title: string;
-  categoryLabel: string;
-}
-
-interface PaketItemLine {
-  id: string;
-  title: string;
-  actFrom: number | null;
-  actTo: number | null;
-  jokiItem: NonNullable<LineDetail["jokiItem"]>;
 }
 
 interface LineDetail extends LineForGrouping {
@@ -64,8 +52,6 @@ interface LineDetail extends LineForGrouping {
   calculatedPrice: number;
   updates: UpdateEntry[];
   rawatAkun: { days: CustomerDayProgressItem[]; tasks: CustomerDayTaskItem[] } | null;
-  paketBreakdown: PaketBreakdownItem[];
-  paketItems: PaketItemLine[];
 }
 
 export interface AccountProgress {
@@ -174,41 +160,20 @@ function LineDetailBody({ line }: { line: LineDetail }) {
   );
 }
 
-function PaketDetailBody({ line }: { line: LineDetail }) {
+function PaketDetailBody({ title, lines }: { title: string; lines: LineDetail[] }) {
   const byCategory = useMemo(() => {
-    const map = new Map<string, PaketBreakdownItem[]>();
-    for (const item of line.paketBreakdown) {
-      if (!map.has(item.categoryLabel)) map.set(item.categoryLabel, []);
-      map.get(item.categoryLabel)!.push(item);
+    const map = new Map<string, { id: string; title: string }[]>();
+    for (const item of lines) {
+      const label = item.jokiItem ? getJokiItemCategoryLabel(item.jokiItem) : "Lainnya";
+      if (!map.has(label)) map.set(label, []);
+      map.get(label)!.push({ id: item.id, title: item.title });
     }
     return Array.from(map.entries());
-  }, [line.paketBreakdown]);
-
-  const itemLines: LineDetail[] = line.paketItems.map((item) => ({
-    id: `${line.id}:${item.id}`,
-    jokiPaketId: null,
-    title: item.title,
-    jokiItem: item.jokiItem,
-    explorationPercent: null,
-    actFrom: item.actFrom,
-    actTo: item.actTo,
-    materialQuantity: line.materialQuantity,
-    rawatAkunQuantity: line.rawatAkunQuantity,
-    characterName: null,
-    levelFrom: null,
-    levelTo: null,
-    progressPercent: line.progressPercent,
-    progressCurrent: line.progressCurrent,
-    calculatedPrice: line.calculatedPrice,
-    updates: line.updates,
-    rawatAkun: line.rawatAkun,
-    paketBreakdown: [],
-    paketItems: [],
-  }));
+  }, [lines]);
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="font-display text-sm font-semibold">{line.title}</p>
+      <p className="font-display text-sm font-semibold">{title}</p>
 
       {byCategory.length > 0 && (
         <div className="bg-[#241E38] border border-shihu-border rounded-xl p-4">
@@ -230,19 +195,19 @@ function PaketDetailBody({ line }: { line: LineDetail }) {
         </div>
       )}
 
-      {itemLines.length > 0 ? <CategorySection lines={itemLines} /> : (
-        <div>
-          <p className="font-display text-xs font-semibold text-shihu-muted mb-2">Riwayat pengerjaan</p>
-          <UpdatesHistory updates={line.updates} />
-        </div>
-      )}
+      <CategorySection lines={lines} includePaketLines />
     </div>
   );
 }
 
-/** Tab level 1 (kategori) + level 2 (region/jenis quest) untuk baris non-paket. */
-function CategorySection({ lines }: { lines: LineDetail[] }) {
-  const groups = useMemo(() => groupLinesByCategory(lines), [lines]);
+/** Tab level 1 (kategori) + level 2 (region/jenis quest) untuk baris
+ * non-paket. `includePaketLines` dipakai di dalam satu tab Paket (lines yang
+ * masuk sudah pasti isi paket, jadi TIDAK boleh dikeluarkan lagi). */
+function CategorySection({ lines, includePaketLines = false }: { lines: LineDetail[]; includePaketLines?: boolean }) {
+  const groups = useMemo(
+    () => (includePaketLines ? groupPaketItemsByCategory(lines) : groupLinesByCategory(lines)),
+    [lines, includePaketLines]
+  );
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
   const [activeSubIdx, setActiveSubIdx] = useState(0);
   const [activeLineIdx, setActiveLineIdx] = useState(0);
@@ -347,12 +312,12 @@ export function CustomerAccountTabs({ accounts }: { accounts: AccountProgress[] 
 
   const account = accounts[activeTab];
   const lines = account?.lines ?? [];
-  const paketLines = getPaketLines(lines);
+  const paketGroups = groupPaketPurchases(lines);
   const categoryLines = lines.filter((l) => !l.jokiPaketId);
 
   const topTabs = [
     ...(categoryLines.length > 0 ? [{ key: "__categories__", label: null as string | null }] : []),
-    ...paketLines.map((p) => ({ key: p.id, label: p.title as string | null })),
+    ...paketGroups.map((g) => ({ key: g.key, label: g.title as string | null })),
   ];
   const activeTopTab = topTabs[Math.min(activeTopIdx, topTabs.length - 1)];
 
@@ -429,7 +394,10 @@ export function CustomerAccountTabs({ accounts }: { accounts: AccountProgress[] 
             <CategorySection lines={categoryLines} />
           ) : activeTopTab ? (
             <div className="bg-shihu-card border border-shihu-border rounded-2xl p-5">
-              <PaketDetailBody line={paketLines.find((p) => p.id === activeTopTab.key)!} />
+              {(() => {
+                const group = paketGroups.find((p) => p.key === activeTopTab.key);
+                return group ? <PaketDetailBody title={group.title} lines={group.lines} /> : null;
+              })()}
             </div>
           ) : null}
         </div>

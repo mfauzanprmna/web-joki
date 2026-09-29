@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { updateExplorationProgress } from "@/lib/actions/line-progress";
 import { OrderLineProgressPanel } from "./OrderLineProgressPanel";
 import type { OrderLineForProgressRules } from "@/lib/order-progress-rules";
@@ -29,6 +29,7 @@ export function ExplorationProgressPanel({
   updates,
 }: ExplorationProgressPanelProps) {
   const [percent, setPercent] = useState(currentPercent);
+  const [pending, startTransition] = useTransition();
 
   return (
     <div className="flex flex-col gap-4">
@@ -40,7 +41,14 @@ export function ExplorationProgressPanel({
         <div className="w-full h-2.5 rounded-full bg-shihu-border overflow-hidden mb-3">
           <div className="h-full bg-corona transition-all" style={{ width: `${percent}%` }} />
         </div>
-        <form action={updateExplorationProgress} className="flex items-center gap-2">
+        <form
+          action={(formData) => {
+            startTransition(async () => {
+              await updateExplorationProgress(formData);
+            });
+          }}
+          className="flex items-center gap-2"
+        >
           <input type="hidden" name="orderLineId" value={orderLineId} />
           <input
             type="range"
@@ -61,9 +69,11 @@ export function ExplorationProgressPanel({
           />
           <button
             type="submit"
-            className="px-4 py-2 rounded-lg bg-corona text-[#1A1206] text-xs font-display font-semibold shrink-0"
+            disabled={pending}
+            aria-busy={pending}
+            className="px-4 py-2 rounded-lg bg-corona text-[#1A1206] text-xs font-display font-semibold shrink-0 disabled:opacity-60"
           >
-            Simpan
+            {pending ? "Menyimpan..." : "Simpan"}
           </button>
         </form>
       </div>

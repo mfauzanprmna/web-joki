@@ -7,8 +7,7 @@ import { JokiHistoryPublicRow } from "@/components/JokiHistoryPublicRow";
 import { PaginatedList } from "@/components/PaginatedList";
 import { GameCountBadges } from "@/components/GameCountBadges";
 import { buildOrderTitle } from "@/lib/order-display";
-import type { OrderLineDetail } from "@/components/OrderLineDetailPanel";
-import { enumerateDays, isoDay } from "@/lib/rawat-akun-schedule";
+import { buildOrderLineDetails } from "@/lib/order-line-detail";
 
 export const revalidate = 60;
 
@@ -25,6 +24,7 @@ export default async function HistoryPage() {
             jokiItem: { include: { category: { select: { isRawatAkun: true } } } },
             jokiPaket: true,
             patchEvent: true,
+            endgameContent: true,
             updates: { orderBy: { createdAt: "desc" } },
             dayProgress: { orderBy: { date: "asc" } },
             dayTasks: { orderBy: [{ date: "asc" }, { position: "asc" }] },
@@ -86,7 +86,7 @@ export default async function HistoryPage() {
                     completedAt={item.data.completedAt ?? item.data.updatedAt}
                     rating={item.data.testimonial?.rating ?? null}
                     game={item.data.game}
-                    lines={buildLineDetails(item.data.lines)}
+                    lines={buildOrderLineDetails(item.data.lines)}
                   />
                 ) : (
                   <JokiHistoryPublicRow
@@ -109,80 +109,6 @@ export default async function HistoryPage() {
       <Footer />
     </div>
   );
-}
-
-function buildLineDetails(
-  lines: Array<{
-    id: string;
-    jokiItem: { title: string; category: { isRawatAkun: boolean } } | null;
-    jokiPaket: { title: string } | null;
-    patchEvent: { title: string } | null;
-    explorationPercent: number | null;
-    actFrom: number | null;
-    actTo: number | null;
-    materialQuantity: number | null;
-    rawatAkunQuantity: number | null;
-    characterName?: string | null;
-    levelFrom?: number | null;
-    levelTo?: number | null;
-    startDate: Date | null;
-    endDate: Date | null;
-    updates: {
-      id: string;
-      note: string | null;
-      screenshotUrl: string | null;
-      resetLocation: string | null;
-      createdAt: Date;
-    }[];
-    dayProgress: { date: Date; percent: number; note: string | null; screenshotUrls: string[] }[];
-    dayTasks: { date: Date; category: string; label: string; status: string }[];
-  }>,
-): OrderLineDetail[] {
-  return lines.map((line) => {
-    const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;
-    return {
-      id: line.id,
-      title: line.jokiItem?.title ?? line.jokiPaket?.title ?? line.patchEvent?.title ?? "Item tidak dikenal",
-      explorationPercent: line.explorationPercent,
-      actFrom: line.actFrom,
-      actTo: line.actTo,
-      materialQuantity: line.materialQuantity,
-      rawatAkunQuantity: line.rawatAkunQuantity,
-      characterName: line.characterName ?? null,
-      levelFrom: line.levelFrom ?? null,
-      levelTo: line.levelTo ?? null,
-      updates: line.updates.map((update) => ({
-        id: update.id,
-        note: update.note,
-        screenshotUrl: update.screenshotUrl,
-        resetLocation: update.resetLocation,
-        createdAt: update.createdAt.toISOString(),
-      })),
-      rawatAkun:
-        isRawatAkun && line.startDate && line.endDate
-          ? {
-            days: enumerateDays(line.startDate, line.endDate).map((date) => {
-              const iso = isoDay(date);
-              const dayProgress = line.dayProgress.find(
-                (progress) => isoDay(progress.date) === iso,
-              );
-              return {
-                date: iso,
-                percent: dayProgress?.percent ?? 0,
-                note: dayProgress?.note ?? null,
-                screenshotUrls: dayProgress?.screenshotUrls ?? [],
-              };
-            }),
-            tasks: line.dayTasks.map((task) => ({
-              date: isoDay(task.date),
-              category: task.category,
-              label: task.label,
-              status: task.status as "BELUM" | "SEDANG" | "SELESAI",
-            })),
-          }
-          : null,
-    };
-  });
 }
 
 function EmptyState() {

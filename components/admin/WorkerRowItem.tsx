@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { updateWorker, deleteWorker, type WorkerActionState } from "@/lib/actions/worker";
 import { FaPen, FaTrash, FaFloppyDisk, FaXmark } from "react-icons/fa6";
 
@@ -20,6 +20,7 @@ export function WorkerRowItem({ item }: { item: WorkerRow }) {
     );
     const formRef = useRef<HTMLFormElement>(null);
     const wasPending = useRef(false);
+    const [deletePending, startDeleteTransition] = useTransition();
 
     useEffect(() => {
         if (wasPending.current && !pending && !state?.error) {
@@ -50,15 +51,19 @@ export function WorkerRowItem({ item }: { item: WorkerRow }) {
                 </button>
                 <button
                     type="button"
+                    disabled={deletePending}
+                    aria-busy={deletePending}
                     onClick={() => {
                         const fd = new FormData();
                         fd.set("id", item.id);
-                        deleteWorker(fd);
+                        startDeleteTransition(() => {
+                            deleteWorker(fd);
+                        });
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium text-red-400 hover:bg-red-400/10"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium text-red-400 hover:bg-red-400/10 disabled:opacity-60"
                 >
                     <FaTrash size={10} aria-hidden="true" />
-                    Hapus
+                    {deletePending ? "Menghapus..." : "Hapus"}
                 </button>
             </div>
         );

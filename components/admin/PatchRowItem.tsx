@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { updatePatch, deletePatch, createPatchEvent, type PatchActionState } from "@/lib/actions/patch";
 import { isPatchOngoing } from "@/lib/patch-schedule";
 import { toDateTimeLocalValue } from "@/lib/date-input";
@@ -33,6 +33,7 @@ export function PatchRowItem({ patch }: { patch: PatchRow }) {
     undefined
   );
   const hasSubmittedRef = useRef(false);
+  const [deletePending, startDeleteTransition] = useTransition();
   const ongoing = isPatchOngoing(patch);
   const upcoming = patch.startDate > new Date();
 
@@ -150,15 +151,19 @@ export function PatchRowItem({ patch }: { patch: PatchRow }) {
             </button>
             <button
               type="button"
+              disabled={deletePending}
+              aria-busy={deletePending}
               onClick={() => {
                 const fd = new FormData();
                 fd.set("id", patch.id);
-                deletePatch(fd);
+                startDeleteTransition(() => {
+                  deletePatch(fd);
+                });
               }}
-              className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10"
+              className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-medium text-xs text-red-400 hover:bg-red-400/10 disabled:opacity-60"
             >
               <FaTrash size={11} aria-hidden="true" />
-              Hapus patch
+              {deletePending ? "Menghapus..." : "Hapus patch"}
             </button>
           </div>
         </form>

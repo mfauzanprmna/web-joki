@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useTransition } from "react";
 import { addOrderLineUpdate, deleteOrderLineUpdate, type OrderLineUpdateActionState } from "@/lib/actions/order-progress";
 import { hasDailyResetContent, type OrderLineForProgressRules } from "@/lib/order-progress-rules";
 
@@ -113,13 +113,7 @@ export function OrderLineProgressPanel({ orderLineId, jokiItem, updates }: Order
               <span className="text-[10.5px] text-shihu-faint font-display">
                 {u.createdAt.toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}
               </span>
-              <form action={deleteOrderLineUpdate}>
-                <input type="hidden" name="id" value={u.id} />
-                <input type="hidden" name="orderLineId" value={orderLineId} />
-                <button type="submit" className="text-[10.5px] text-red-400 font-display font-medium">
-                  Hapus
-                </button>
-              </form>
+              <UpdateDeleteButton updateId={u.id} orderLineId={orderLineId} />
             </div>
             {u.note && <p className="text-[13px] text-shihu-text">{u.note}</p>}
             {u.resetLocation && (
@@ -142,5 +136,29 @@ export function OrderLineProgressPanel({ orderLineId, jokiItem, updates }: Order
         ))}
       </div>
     </div>
+  );
+}
+
+function UpdateDeleteButton({ updateId, orderLineId }: { updateId: string; orderLineId: string }) {
+  const [pending, startTransition] = useTransition();
+  return (
+    <form
+      action={(formData) => {
+        startTransition(async () => {
+          await deleteOrderLineUpdate(formData);
+        });
+      }}
+    >
+      <input type="hidden" name="id" value={updateId} />
+      <input type="hidden" name="orderLineId" value={orderLineId} />
+      <button
+        type="submit"
+        disabled={pending}
+        aria-busy={pending}
+        className="text-[10.5px] text-red-400 font-display font-medium disabled:opacity-60"
+      >
+        {pending ? "Menghapus..." : "Hapus"}
+      </button>
+    </form>
   );
 }

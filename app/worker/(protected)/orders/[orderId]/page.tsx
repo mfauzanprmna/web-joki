@@ -9,7 +9,6 @@ import { buildOrderTitle } from "@/lib/order-display";
 import { calculateWorkerCommission } from "@/lib/commission";
 import { ensureRawatAkunScheduleSynced } from "@/lib/rawat-akun-service";
 import { enumerateDays, isoDay } from "@/lib/rawat-akun-schedule";
-import { getJokiItemCategoryLabel } from "@/lib/order-progress-grouping";
 
 export default async function WorkerOrderProgressPage({
     params,
@@ -69,23 +68,7 @@ export default async function WorkerOrderProgressPage({
                             endgameContent: { include: { endgameContent: { select: { resetCycle: true } } } },
                         },
                     },
-                    jokiPaket: {
-                        include: {
-                            items: {
-                                include: {
-                                    jokiItem: {
-                                        select: {
-                                            id: true,
-                                            title: true,
-                                            category: true,
-                                            region: { select: { name: true } },
-                                            questType: { select: { name: true, questKind: true } },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
+                    jokiPaket: { select: { title: true } },
                     endgameContent: { select: { title: true } },
                     patchEvent: { select: { title: true } },
                     updates: { orderBy: { createdAt: "desc" } },
@@ -105,6 +88,8 @@ export default async function WorkerOrderProgressPage({
         return {
             id: line.id,
             jokiPaketId: line.jokiPaketId,
+            paketGroupId: line.paketGroupId,
+            jokiPaketTitle: line.jokiPaket?.title ?? null,
             patchEvent: line.patchEvent,
             endgameContent: line.endgameContent,
             title:
@@ -125,25 +110,6 @@ export default async function WorkerOrderProgressPage({
             progressCurrent: line.progressCurrent,
             isCompleted: line.isCompleted,
             updates: line.updates,
-            paketBreakdown:
-                line.jokiPaket?.items.map((it) => ({
-                    id: it.jokiItem.id,
-                    title: it.jokiItem.title,
-                    categoryLabel: getJokiItemCategoryLabel(it.jokiItem),
-                })) ?? [],
-            paketItems:
-                line.jokiPaket?.items.map((it) => ({
-                    id: it.jokiItem.id,
-                    title: it.jokiItem.title,
-                    actFrom: it.actFrom,
-                    actTo: it.actTo,
-                    jokiItem: {
-                        category: it.jokiItem.category,
-                        region: it.jokiItem.region,
-                        questType: it.jokiItem.questType,
-                        endgameContent: [],
-                    },
-                })) ?? [],
             rawatAkun:
                 isRawatAkun && line.startDate && line.endDate
                     ? {
