@@ -51,7 +51,7 @@ export function GameBanner({
       >
         {tagline}
       </p>
-      <h3 className="relative font-display text-xl font-semibold mb-3">
+      <h3 className="relative text-white text-xl font-semibold mb-3">
         {game.name}
       </h3>
       <span className="relative text-sm text-[#C2D0E3] font-medium">

@@ -68,20 +68,20 @@ export default async function HomePage() {
       <Navbar />
 
       <main className="relative z-10">
-        <section className="hero-character min-h-[560px] border-b border-shihu-border">
+        <section className="hero-character min-h-[560px] border-b border-[#1C3553]">
           <div className="site-container py-16 sm:py-20 flex items-center min-h-[500px] lg:min-h-[530px]">
             <div className="max-w-xl">
-              <p className="inline-flex items-center gap-2 rounded-full border border-shihu-corona/35 bg-shihu-corona/10 px-3 py-1.5 text-[11px] font-display font-semibold text-shihu-corona mb-5">
-                <span className="w-1.5 h-1.5 rounded-full bg-shihu-corona" /> Joki game & game service terpercaya
+              <p className="inline-flex items-center gap-2 rounded-full border border-[#4D9CFF]/35 bg-[#4D9CFF]/10 px-3 py-1.5 text-[11px] font-display font-semibold text-[#4D9CFF] mb-5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#4D9CFF]" /> Joki game & game service terpercaya
               </p>
-              <h1 className="font-display text-[clamp(36px,6vw,66px)] font-bold tracking-tight leading-[1.02] mb-5">
+              <h1 className="font-display text-[clamp(36px,6vw,66px)] font-bold tracking-tight leading-[1.02] mb-5 text-[#F4F8FF]">
                 Solusi lengkap
                 <br />
                 untuk kebutuhan
                 <br />
-                <span className="text-shihu-corona">game kamu.</span>
+                <span className="text-[#4D9CFF]">game kamu.</span>
               </h1>
-              <p className="text-shihu-muted text-[15px] max-w-md mb-8 leading-relaxed">
+              <p className="text-[#A8BAD2] text-[15px] max-w-md mb-8 leading-relaxed">
                 Dari joki eksplorasi hingga rawat akun, semua bisa di sini.
                 Proses cepat, aman, dan dikerjakan oleh tim berpengalaman.
               </p>
@@ -95,7 +95,7 @@ export default async function HomePage() {
                 </Link>
                 <Link
                   href="/antrian"
-                  className="rounded-xl font-display font-medium text-sm border border-shihu-borderSoft text-shihu-text hover:bg-white/5"
+                  className="rounded-xl font-display font-medium text-sm border border-[#2C4C72] text-[#F4F8FF] hover:bg-white/5"
                   style={{ padding: "12px 22px" }}
                 >
                   Cek status antrian
@@ -104,8 +104,8 @@ export default async function HomePage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-12 max-w-2xl">
                 {[["◈", "Aman & Terpercaya", "Data kamu aman"], ["ϟ", "Proses Cepat", "Sesuai estimasi"], ["♧", "Tim Profesional", "Berpengalaman"], ["✦", "Harga Terjangkau", "Kualitas tetap utama"]].map(([icon, title, desc]) => (
                   <div key={title} className="flex items-start gap-2">
-                    <span className="text-shihu-corona text-lg leading-none">{icon}</span>
-                    <div><p className="font-display text-[11px] font-semibold text-shihu-text">{title}</p><p className="text-[10px] text-shihu-faint mt-0.5">{desc}</p></div>
+                    <span className="text-[#4D9CFF] text-lg leading-none">{icon}</span>
+                    <div><p className="font-display text-[11px] font-semibold text-[#F4F8FF]">{title}</p><p className="text-[10px] text-[#7187A5] mt-0.5">{desc}</p></div>
                   </div>
                 ))}
               </div>
@@ -126,7 +126,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="border-y border-shihu-border bg-[#091727]">
+        <section className="border-y border-shihu-border bg-shihu-card">
           <div className="site-container py-10 sm:py-12 grid grid-cols-1 lg:grid-cols-[1.15fr_2fr] gap-8 items-center">
             <SectionHeading eyebrow="Kenapa pilih kami?" title={<>Kenapa pilih <span className="text-shihu-corona">Shihu Service?</span></>} desc="Kami berkomitmen memberikan layanan terbaik untuk pengalaman gaming kamu." />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

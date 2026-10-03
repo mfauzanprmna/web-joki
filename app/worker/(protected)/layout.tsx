@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ShihuMark } from "@/components/ShihuMark";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { FaUser, FaRightFromBracket } from "react-icons/fa6";
 import {
     getCurrentWorker,
@@ -34,6 +35,7 @@ export default async function WorkerProtectedLayout({
                             <FaUser className="text-[11px]" aria-hidden="true" />
                             {worker.name}
                         </p>
+                        <ThemeToggle />
                         <form action={workerLogoutAction}>
                             <button
                                 type="submit"

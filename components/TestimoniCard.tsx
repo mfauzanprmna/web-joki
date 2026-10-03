@@ -44,7 +44,7 @@ export function TestimoniCard({
         </div>
         <Stars rating={rating} />
       </div>
-      <p className="text-[#B8B4C6] text-[13.5px] leading-relaxed italic">
+      <p className="text-shihu-muted text-[13.5px] leading-relaxed italic">
         &ldquo;{message}&rdquo;
       </p>
     </div>

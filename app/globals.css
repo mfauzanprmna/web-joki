@@ -6,6 +6,54 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ====================================================================
+   TEMA (mode gelap & terang)
+   Format "R G B" (tanpa rgb(...)) supaya modifier opacity Tailwind
+   (mis. bg-shihu-corona/10) tetap berfungsi -- lihat tailwind.config.ts.
+   :root = mode gelap (default, sama seperti tampilan awal sebelum ada
+   toggle ini). [data-theme="light"] di <html> meng-override semuanya
+   ke versi terang. Diset lewat komponen ThemeToggle + script anti-flash
+   di app/layout.tsx.
+   ==================================================================== */
+:root {
+  --shihu-bg: 7 17 31;
+  --shihu-card: 13 27 45;
+  --shihu-border: 28 53 83;
+  --shihu-border-soft: 44 76 114;
+  --shihu-text: 244 248 255;
+  --shihu-muted: 168 186 210;
+  --shihu-faint: 113 135 165;
+  --shihu-corona: 77 156 255;
+  --shihu-corona-to: 35 109 227;
+  --shihu-violet: 121 183 255;
+
+  /* Tint dekoratif (glow, grid, overlay hero) -- dipisah dari token warna
+     utama karena opacity-nya sengaja beda antar tema (lihat override di
+     bawah), bukan sekadar warna solid biasa. */
+  --shihu-glow-opacity: 1;
+  --shihu-grid-opacity: 1;
+}
+
+[data-theme="light"] {
+  --shihu-bg: 244 247 252;
+  --shihu-card: 255 255 255;
+  --shihu-border: 220 227 239;
+  --shihu-border-soft: 194 207 227;
+  --shihu-text: 11 21 36;
+  --shihu-muted: 78 96 121;
+  --shihu-faint: 124 140 166;
+  /* corona/coronaTo/violet sedikit digelapkan dari versi dark supaya tetap
+     kontras cukup dipakai sebagai warna teks/link di atas background
+     terang (di mode gelap, biru terang ini kontras jelas di atas navy
+     gelap; di mode terang biru yang sama terlalu terang untuk teks). */
+  --shihu-corona: 27 111 227;
+  --shihu-corona-to: 19 88 184;
+  --shihu-violet: 63 111 209;
+
+  --shihu-glow-opacity: 0.55;
+  --shihu-grid-opacity: 1.6;
+}
+
 .site-container {
   width: 100%;
   margin-inline: auto;
@@ -43,15 +91,17 @@ html {
 }
 
 body {
-  background-color: #07111f;
-  color: #f4f8ff;
-  background-image: linear-gradient(135deg, rgba(19, 55, 94, 0.22), transparent 42%), linear-gradient(315deg, rgba(10, 34, 66, 0.3), transparent 55%);
+  background-color: rgb(var(--shihu-bg));
+  color: rgb(var(--shihu-text));
+  background-image: linear-gradient(135deg, rgb(var(--shihu-corona-to) / 0.16), transparent 42%), linear-gradient(315deg, rgb(var(--shihu-corona-to) / 0.2), transparent 55%);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Scrollbar mengikuti permukaan panel dark Shihu, bukan warna default browser. */
+/* Scrollbar mengikuti permukaan panel Shihu (menyesuaikan tema), bukan
+   warna default browser. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2c4c72 transparent;
+  scrollbar-color: rgb(var(--shihu-border-soft)) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -64,14 +114,14 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #2c4c72;
+  background: rgb(var(--shihu-border-soft));
   border: 3px solid transparent;
   border-radius: 9999px;
   background-clip: padding-box;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #4d9cff;
+  background: rgb(var(--shihu-corona));
   border-width: 2px;
 }
 
@@ -93,8 +143,8 @@ button[aria-busy="true"]::before {
 }
 
 ::selection {
-  background-color: rgba(77, 156, 255, 0.32);
-  color: #f4f8ff;
+  background-color: rgb(var(--shihu-corona) / 0.32);
+  color: rgb(var(--shihu-text));
 }
 
 .shihu-glow-top {
@@ -104,9 +154,9 @@ button[aria-busy="true"]::before {
   width: 560px;
   height: 560px;
   border-radius: 9999px;
-    background: radial-gradient(circle,
-      rgba(52, 133, 255, 0.2) 0%,
-      rgba(52, 133, 255, 0) 70%);
+  background: radial-gradient(circle,
+      rgb(var(--shihu-corona) / calc(0.2 * var(--shihu-glow-opacity))) 0%,
+      rgb(var(--shihu-corona) / 0) 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -118,27 +168,27 @@ button[aria-busy="true"]::before {
   width: 520px;
   height: 520px;
   border-radius: 9999px;
-    background: radial-gradient(circle,
-      rgba(34, 91, 173, 0.24) 0%,
-      rgba(34, 91, 173, 0) 70%);
+  background: radial-gradient(circle,
+      rgb(var(--shihu-corona-to) / calc(0.24 * var(--shihu-glow-opacity))) 0%,
+      rgb(var(--shihu-corona-to) / 0) 70%);
   pointer-events: none;
   z-index: 0;
 }
 
 .admin-input {
   width: 100%;
-  background-color: #0d1b2d;
-  border: 1px solid #1c3553;
+  background-color: rgb(var(--shihu-card));
+  border: 1px solid rgb(var(--shihu-border));
   border-radius: 10px;
   padding: 8px 12px;
   font-size: 13px;
-  color: #fbf9ff;
+  color: rgb(var(--shihu-text));
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background-color 0.2s, color 0.2s;
 }
 
 .admin-input:focus {
-  border-color: #4d9cff;
+  border-color: rgb(var(--shihu-corona));
 }
 
 /* Animasi untuk SweetAlert-style modal & komponen loading. */
@@ -219,15 +269,31 @@ button[aria-busy="true"]::before {
 }
 
 .home-grid {
-  background-image: linear-gradient(rgba(90, 150, 220, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(90, 150, 220, 0.06) 1px, transparent 1px);
+  background-image: linear-gradient(rgb(var(--shihu-corona) / calc(0.06 * var(--shihu-grid-opacity))) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--shihu-corona) / calc(0.06 * var(--shihu-grid-opacity))) 1px, transparent 1px);
   background-size: 42px 42px;
 }
 
+/* Sengaja SELALU gelap di kedua tema (tidak pakai variable) -- artwork
+   hero-character.png sendiri sudah punya gradasi gelap yang dibakukan di
+   tepinya supaya menyatu ke background, jadi kalau overlay ini ikut jadi
+   terang di mode terang, hasilnya malah patah/tidak menyatu dengan
+   gambarnya. Section ini jadi semacam "pulau gelap" yang konsisten,
+   serupa pola umum di banyak situs yang mempertahankan band hero/branding
+   tetap gelap walau sisi lain halaman ikut tema terang. */
 .hero-character {
   background-image: linear-gradient(90deg, #07111f 0%, rgba(7, 17, 31, 0.72) 25%, rgba(7, 17, 31, 0.08) 68%, rgba(7, 17, 31, 0.38) 100%), url("/hero-character.png");
   background-position: calc(100% + 80px) top-center;
   background-size: cover, cover;
   background-repeat: no-repeat;
+
+  --shihu-text: 244 248 255;
+  --shihu-muted: 168 186 210;
+  --shihu-faint: 113 135 165;
+  --shihu-corona: 77 156 255;
+  --shihu-corona-to: 35 109 227;
+  --shihu-violet: 121 183 255;
+  --shihu-border: 28 53 83;
+  --shihu-border-soft: 44 76 114;
 }
 
 /* Sembunyikan scrollbar untuk container yang di-scroll horizontal (mis. tab

@@ -9,18 +9,28 @@ const config: Config = {
     extend: {
       colors: {
         // Palet Shihu: navy gelap dengan aksen biru elektrik.
+        //
+        // Nilai warnanya TIDAK di-hardcode di sini lagi -- tiap token
+        // menunjuk ke CSS variable (didefinisikan di app/globals.css, format
+        // "R G B" tanpa fungsi rgb() supaya modifier opacity Tailwind macam
+        // bg-shihu-corona/10 tetap jalan). :root berisi nilai mode gelap
+        // (default), lalu [data-theme="light"] meng-override semuanya ke
+        // nilai mode terang -- jadi SATU definisi token di sini otomatis
+        // berlaku untuk kedua tema, tidak perlu varian shihu-light-xxx dst.
         shihu: {
-          bg: "#07111F",
-          card: "#0D1B2D",
-          border: "#1C3553",
-          borderSoft: "#2C4C72",
-          text: "#F4F8FF",
-          muted: "#A8BAD2",
-          faint: "#7187A5",
-          corona: "#4D9CFF",
-          coronaTo: "#236DE3",
-          violet: "#79B7FF",
+          bg: "rgb(var(--shihu-bg) / <alpha-value>)",
+          card: "rgb(var(--shihu-card) / <alpha-value>)",
+          border: "rgb(var(--shihu-border) / <alpha-value>)",
+          borderSoft: "rgb(var(--shihu-border-soft) / <alpha-value>)",
+          text: "rgb(var(--shihu-text) / <alpha-value>)",
+          muted: "rgb(var(--shihu-muted) / <alpha-value>)",
+          faint: "rgb(var(--shihu-faint) / <alpha-value>)",
+          corona: "rgb(var(--shihu-corona) / <alpha-value>)",
+          coronaTo: "rgb(var(--shihu-corona-to) / <alpha-value>)",
+          violet: "rgb(var(--shihu-violet) / <alpha-value>)",
         },
+        // Aksen per-game -- dipakai sebagai dot/badge kecil, sengaja tetap
+        // sama di kedua tema (tidak butuh kontras teks besar).
         game: {
           genshin: "#8CC8FF",
           wuwa: "#62D9FF",

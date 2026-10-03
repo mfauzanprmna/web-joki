@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ShihuMark } from "./ShihuMark";
+import { ThemeToggle } from "./ui/ThemeToggle";
 import { FaHouse, FaListCheck, FaClockRotateLeft, FaStar } from "react-icons/fa6";
 import type { IconType } from "react-icons";
 
@@ -55,18 +56,21 @@ export function Navbar() {
         <nav className="hidden md:flex gap-1 flex-wrap" aria-label="Navigasi utama">
           {renderNavItems()}
         </nav>
-        <button
-          type="button"
-          className="md:hidden w-10 h-10 rounded-xl border border-shihu-border flex flex-col items-center justify-center gap-1.5 text-shihu-text hover:bg-white/5 transition-colors"
-          aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
-          aria-expanded={menuOpen}
-          aria-controls="mobile-navigation"
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          <span className={`block w-4 h-0.5 bg-current transition-transform ${menuOpen ? "translate-y-2 rotate-45" : ""}`} />
-          <span className={`block w-4 h-0.5 bg-current transition-opacity ${menuOpen ? "opacity-0" : ""}`} />
-          <span className={`block w-4 h-0.5 bg-current transition-transform ${menuOpen ? "-translate-y-2 -rotate-45" : ""}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            type="button"
+            className="md:hidden w-10 h-10 rounded-xl border border-shihu-border flex flex-col items-center justify-center gap-1.5 text-shihu-text hover:bg-white/5 transition-colors"
+            aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-navigation"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <span className={`block w-4 h-0.5 bg-current transition-transform ${menuOpen ? "translate-y-2 rotate-45" : ""}`} />
+            <span className={`block w-4 h-0.5 bg-current transition-opacity ${menuOpen ? "opacity-0" : ""}`} />
+            <span className={`block w-4 h-0.5 bg-current transition-transform ${menuOpen ? "-translate-y-2 -rotate-45" : ""}`} />
+          </button>
+        </div>
       </div>
       <div
         id="mobile-navigation"

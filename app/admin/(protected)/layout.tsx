@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ShihuMark } from "@/components/ShihuMark";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { logoutAction } from "@/lib/actions/auth";
 import {
   FaGaugeHigh,
@@ -97,6 +98,10 @@ export default function AdminLayout({
           ))}
         </nav>
         <div className="p-3 border-t border-shihu-border">
+          <div className="flex items-center justify-between gap-2 px-1 mb-2">
+            <span className="text-shihu-faint text-[11px] font-display font-medium">Tema tampilan</span>
+            <ThemeToggle />
+          </div>
           <Link
             href="/"
             className="flex items-center gap-2 px-3.5 py-2 text-shihu-faint text-xs mb-1 hover:text-shihu-muted"
@@ -122,12 +127,15 @@ export default function AdminLayout({
             <ShihuMark size={24} />
             <span className="font-display font-bold text-sm">Admin</span>
           </div>
-          <form action={logoutAction}>
-            <button type="submit" className="flex items-center gap-1.5 text-red-400 text-xs font-display font-medium">
-              <FaRightFromBracket className="text-[11px]" aria-hidden="true" />
-              Keluar
-            </button>
-          </form>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <form action={logoutAction}>
+              <button type="submit" className="flex items-center gap-1.5 text-red-400 text-xs font-display font-medium">
+                <FaRightFromBracket className="text-[11px]" aria-hidden="true" />
+                Keluar
+              </button>
+            </form>
+          </div>
         </header>
         <main className="site-container py-6 md:py-8">{children}</main>
       </div>
