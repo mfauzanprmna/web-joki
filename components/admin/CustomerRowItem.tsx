@@ -157,7 +157,7 @@ export function CustomerRowItem({ customer }: { customer: CustomerRow }) {
         {customer.orders.length > 0 && (
           <button
             onClick={() => setExpanded((e) => !e)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[rgb(var(--admin-panel-soft))]"
           >
             {expanded ? <FaChevronUp size={9} aria-hidden="true" /> : <FaChevronDown size={9} aria-hidden="true" />}
             {expanded ? "Sembunyikan" : "Lihat order"}
@@ -165,7 +165,7 @@ export function CustomerRowItem({ customer }: { customer: CustomerRow }) {
         )}
         <button
           onClick={() => setEditing(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[rgb(var(--admin-panel-soft))]"
         >
           <FaPen size={10} aria-hidden="true" />
           Edit

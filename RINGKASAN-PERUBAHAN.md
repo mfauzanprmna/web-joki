@@ -44,6 +44,134 @@ yang sama.
   sengaja tetap statis di kedua tema, karena sudah "mandiri" (py sendiri
   teks kontrasnya sendiri, tidak bergantung warna halaman di sekitarnya).
 
+### Perbaikan susulan (beranda belum pas di mode terang)
+
+Ditemukan 3 titik yang kelewat pas konversi awal -- bukan ikut sistem token
+tema, jadi nggak berubah sama sekali atau malah jadi tidak terbaca pas mode
+terang dinyalain:
+
+1. **`app/globals.css`** (`.hero-character`) -- h1, paragraf, dan label
+   fitur di dalam banner hero tadinya ikut jadi gelap/hampir hitam di mode
+   terang (karena token `shihu-text`/`muted`/`faint`/`corona` global berubah
+   semua), padahal background gambar heronya SENGAJA tetap gelap. Sekarang
+   `.hero-character` meng-override variable-variable itu balik ke nilai
+   mode gelap, khusus untuk konten di dalamnya saja -- jadi teksnya selalu
+   putih/terang di atas gambar, di kedua tema.
+2. **`app/page.tsx`** -- section "Kenapa pilih Shihu Service?" pakai
+   `bg-[#091727]` (hex mentah, bukan token) sehingga sama sekali tidak
+   berubah antar tema. Diganti jadi `bg-shihu-card`.
+3. **`components/TestimoniCard.tsx`** -- teks pesan testimoni pakai
+   `text-[#B8B4C6]` (abu-abu terang hardcoded) yang jadi nyaris tidak
+   kebaca di atas card putih waktu mode terang. Diganti `text-shihu-muted`.
+
+**Catatan:** waktu nyari ini, saya juga nemu pola serupa (hex mentah
+`text-[#...]`/`bg-[#...]`) di belasan komponen LAIN di luar beranda
+(JokiCard, HistoryRow, OrderLineDetailPanel, halaman error, dll). Belum
+saya sentuh semuanya karena laporan kamu spesifik ke beranda dan sebagian
+dari itu memang sengaja (banner game yang mirip hero, sengaja tetap gelap).
+Kalau nanti ketemu halaman lain yang juga belum pas di mode terang, kasih
+tahu halamannya -- saya cek satu-satu, soalnya tiap kasus perlu dicek
+konteksnya dulu (ada yang memang harus tetap gelap, ada yang beneran bug).
+
+### Perbaikan susulan #2 (hero dikunci hex + bagian History)
+
+**Hero homepage** -- pendekatan sebelumnya (override CSS variable di
+`.hero-character`) diganti total jadi hex langsung di `app/page.tsx`
+(`text-[#4D9CFF]`, `text-[#F4F8FF]`, dst, menggantikan `text-shihu-corona`,
+`text-shihu-text`, dst khusus di section ini). Dengan hex mentah, warna di
+section hero ini dijamin TIDAK akan berubah apa pun temanya.
+
+**Bagian History** -- ditemukan pola yang sama persis kayak sebelumnya:
+beberapa card & hover pakai warna ungu/amber hardcoded (dari palet internal
+admin, bukan token `shihu-*`), jadi sama sekali tidak ikut berubah pas
+toggle tema. Diperbaiki di:
+- `components/HistoryRow.tsx` & `components/JokiHistoryPublicRow.tsx` --
+  tombol "Lihat Detail" pakai `hover:bg-[#2C2540]` (ungu statis) ->
+  `hover:bg-shihu-corona/10`.
+- `components/OrderLineDetailPanel.tsx` -- card detail yang muncul pas
+  expand "Lihat Detail" pakai `bg-[#241E38]` (ungu statis) ->
+  `bg-shihu-bg`. Ini yang bikin "cardnya belum menyesuaikan" waktu dites.
+- `components/RawatAkunProgressView.tsx`, `CountProgressView.tsx`,
+  `ExplorationProgressView.tsx` -- card progres di dalam detail (kalender
+  rawat akun, progress quest/eksplorasi) juga pakai `bg-[#241E38]` yang
+  sama, semuanya diganti `bg-shihu-bg`. Ring progress "Progres Keseluruhan"
+  (conic-gradient) track belakangnya juga disesuaikan jadi token tema.
+
+**Belum disentuh (butuh konfirmasi kamu dulu):** `components/
+CustomerAccountTabs.tsx` (dipakai di section "Sedang berjalan" / "Orderan
+baru selesai" di halaman customer) punya banyak warna ungu/amber hardcoded
+serupa, TAPI itu style tab yang sama persis dipakai juga di panel admin
+(`OrderProgressTabs.tsx`) -- kemungkinan itu memang gaya visual yang
+disengaja beda dari biru `shihu-corona` biasa (aksen amber `#FFB238` khusus
+buat UI tracking-progress). Belum saya ubah karena ini soal keputusan
+desain, bukan jelas-jelas bug. Kalau itu juga perlu ikut tema, kasih tahu.
+
+### Perbaikan susulan #3 (sapuan penuh ke seluruh admin + customer)
+
+Ternyata palet ungu+amber yang kemarin ketahuan di `CustomerAccountTabs.tsx`
+itu bukan cuma di 1-2 tempat -- dipakai hampir di SELURUH bagian admin
+(semua RowItem, OrderProgressTabs, form) DAN beberapa komponen customer
+lainnya (JokiCard, rating bintang, modal konfirmasi, dll). Total **48 file**
+disisir satu-satu.
+
+**5 token baru ditambahkan** di `app/globals.css` (terpisah dari token
+`shihu-*`, supaya identitas visual ungu+amber khusus panel progress ini
+tetap kepertahankan, bukan ikut jadi biru):
+```
+--admin-panel        (dulu #241E38 -- card/panel)
+--admin-panel-soft   (dulu #2C2540 -- input/hover/tab aktif)
+--admin-border       (dulu #3D3557 -- border/garis)
+--admin-muted        (dulu #B7ADD1 -- teks sekunder)
+--admin-accent       (dulu #FFB238 -- aksen aktif/highlight)
+```
+Nilai mode gelap PERSIS sama seperti hex lama (tampilan dark mode TIDAK
+berubah), nilai mode terang baru didefinisikan di `[data-theme="light"]`.
+
+**Sengaja DIBIARKAN statis** (tidak ikut tema), dengan alasan:
+- `#1A1206` -- teks gelap di atas tombol warna cerah (kontras tombol,
+  bukan warna halaman).
+- `#E2504A` (merah/danger), `#4CD97D` (hijau/sukses), dan warna-warna chart
+  di halaman Analitik -- warna status/semantik yang memang lazim tetap
+  sama di kedua tema (seperti warna per-game).
+- Background game banner & hero homepage -- sudah dijelaskan di bagian
+  atas, tetap gelap by design.
+- **`app/global-error.tsx`** -- halaman fallback paling darurat (muncul
+  kalau seluruh app termasuk root layout crash). Sengaja dibiarkan 100%
+  mandiri/hardcode, TIDAK bergantung sistem tema sama sekali, supaya tetap
+  bisa tampil walau ada yang rusak di tempat lain.
+
+### Perbaikan susulan #4 (akar masalah + sisa spot fixes)
+
+**Kemungkinan akar masalah utama** di balik SEMUA keluhan ("hover button",
+"form progress", "progress rawat akun", "detail history", "event patch"):
+nilai mode terang untuk token `--admin-panel` yang ditambahkan di perbaikan
+sebelumnya **terlalu mirip warna putih** (nyaris sama kayak `shihu-card`),
+jadi semua card yang bersarang di dalam card lain (form progress di dalam
+panel, kalender rawat akun, card event di dalam card patch, dll) jadi
+kelihatan "nyatu"/nggak ada bedanya sama background-nya di mode terang.
+Nilai `--admin-panel`, `--admin-panel-soft`, `--admin-border` di mode
+terang sekarang dibikin jelas lebih kontras.
+
+**Checkbox** (poin "form yang pake checkbox"): ternyata kotak checkbox yang
+BELUM dicentang itu dirender pakai tampilan bawaan browser/OS, bukan ikut
+`data-theme` kita (`accent-color` cuma ngatur warna pas SUDAH dicentang).
+Sekarang di-override total pakai styling sendiri (kotak + tanda centang
+custom), berlaku otomatis ke SEMUA form checkbox tanpa perlu ubah
+masing-masing file satu-satu.
+
+**`bg-white/5` yang kelewat** (overlay putih transparan, nyaris tidak
+kelihatan di background yang sudah terang): ditemukan & diperbaiki di 6
+file -- `RawatAkunProgressPanel.tsx` (admin), `RawatAkunProgressView.tsx`
+(customer), `WorkerRowItem.tsx`, `Navbar.tsx` (2 tempat), serta tombol
+rating di `JokiHistoryTestimonialForm.tsx` dan `TestimonialPrompt.tsx`.
+
+**Form progress & event patch**: setelah dicek file-nya satu-satu
+(`OrderLineProgressPanel`, `ExplorationProgressPanel`, `CountProgressPanel`,
+`CreatePatchForm`, `PatchRowItem`, `PatchEventRowItem`) -- semuanya
+ternyata SUDAH pakai token yang benar dari perbaikan sebelumnya, jadi
+seharusnya otomatis ikut membaik begitu nilai `--admin-panel` di atas
+diperbaiki (tidak perlu ubah file-nya lagi).
+
 ### Testing yang disarankan
 Karena saya tidak punya `node_modules`/browser untuk screenshot langsung,
 tolong cek manual setelah `npm run dev`:

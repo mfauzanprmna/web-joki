@@ -195,7 +195,7 @@ export function JokiPaketFormFields({
 
       {regionId && (
         <div className="flex flex-col gap-3 bg-shihu-violet/5 border border-shihu-violet/25 rounded-xl p-3.5">
-          <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+          <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
             <span>
               All Map Region
               <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">
@@ -243,7 +243,7 @@ export function JokiPaketFormFields({
               <p className="text-[11.5px] font-display font-medium text-shihu-muted mb-1">
                 World Quest (otomatis tercakup, tidak bisa diubah)
               </p>
-              <div className="flex flex-col gap-1 bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
+              <div className="flex flex-col gap-1 bg-[rgb(var(--admin-panel))] rounded-xl border border-shihu-border p-2.5">
                 {worldQuestItems.map((i) => (
                   <div key={i.id}>
                     <p className="text-xs text-shihu-muted px-1 py-0.5">✓ {i.title}</p>
@@ -272,7 +272,7 @@ export function JokiPaketFormFields({
         <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1">
           Joki Item lain dalam paket ini
         </label>
-        <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
+        <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto bg-[rgb(var(--admin-panel))] rounded-xl border border-shihu-border p-2.5">
           {baseSelectableItems.length === 0 && (
             <p className="text-[11px] text-shihu-faint px-1 py-1">Belum ada Joki Item untuk game ini.</p>
           )}
@@ -332,7 +332,7 @@ function ItemChecklist({
   return (
     <div>
       <p className="text-[11.5px] font-display font-medium text-shihu-muted mb-1">{label}</p>
-      <div className="flex flex-col gap-1 bg-[#241E38] rounded-xl border border-shihu-border p-2.5 max-h-36 overflow-y-auto">
+      <div className="flex flex-col gap-1 bg-[rgb(var(--admin-panel))] rounded-xl border border-shihu-border p-2.5 max-h-36 overflow-y-auto">
         {items.length === 0 && <p className="text-[11px] text-shihu-faint px-1 py-1">{emptyText}</p>}
         {items.map((i) => (
           <div key={i.id}>

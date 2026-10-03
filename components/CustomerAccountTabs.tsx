@@ -120,7 +120,7 @@ function LineDetailBody({ line }: { line: LineDetail }) {
       <p className="font-display text-sm font-semibold mb-1.5">{line.title}</p>
       <div className="flex flex-wrap gap-1.5">
         {lineDetailTags(line).map((tag) => (
-          <span key={tag} className="text-[10.5px] px-2 py-0.5 rounded-md bg-[#2C2540] text-shihu-muted font-display">
+          <span key={tag} className="text-[10.5px] px-2 py-0.5 rounded-md bg-[rgb(var(--admin-panel-soft))] text-shihu-muted font-display">
             {tag}
           </span>
         ))}
@@ -176,7 +176,7 @@ function PaketDetailBody({ title, lines }: { title: string; lines: LineDetail[] 
       <p className="font-display text-sm font-semibold">{title}</p>
 
       {byCategory.length > 0 && (
-        <div className="bg-[#241E38] border border-shihu-border rounded-xl p-4">
+        <div className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-xl p-4">
           <p className="font-display text-xs font-semibold text-shihu-muted mb-2.5">Isi paket ini</p>
           <div className="flex flex-col gap-2.5">
             {byCategory.map(([categoryLabel, items]) => (
@@ -239,9 +239,9 @@ function CategorySection({ lines, includePaketLines = false }: { lines: LineDeta
               onClick={() => selectGroup(i)}
               className="px-3.5 py-2 rounded-xl font-display text-xs font-medium transition-colors"
               style={{
-                backgroundColor: activeGroupIdx === i ? "#2C2540" : "transparent",
-                color: activeGroupIdx === i ? "#FFB238" : "#B7ADD1",
-                border: `1px solid ${activeGroupIdx === i ? "#FFB23855" : "#3D3557"}`,
+                backgroundColor: activeGroupIdx === i ? "rgb(var(--admin-panel-soft))" : "transparent",
+                color: activeGroupIdx === i ? "rgb(var(--admin-accent))" : "rgb(var(--admin-muted))",
+                border: `1px solid ${activeGroupIdx === i ? "rgb(var(--admin-accent) / 0.33)" : "rgb(var(--admin-border))"}`,
               }}
             >
               {g.label}
@@ -258,9 +258,9 @@ function CategorySection({ lines, includePaketLines = false }: { lines: LineDeta
               onClick={() => selectSub(i)}
               className="px-3 py-1.5 rounded-lg font-display text-[11.5px] font-medium transition-colors"
               style={{
-                backgroundColor: activeSubIdx === i ? "#241E38" : "transparent",
-                color: activeSubIdx === i ? "#FFB238" : "#867BA0",
-                border: `1px solid ${activeSubIdx === i ? "#FFB23855" : "#362D4C"}`,
+                backgroundColor: activeSubIdx === i ? "rgb(var(--admin-panel))" : "transparent",
+                color: activeSubIdx === i ? "rgb(var(--admin-accent))" : "rgb(var(--admin-muted))",
+                border: `1px solid ${activeSubIdx === i ? "rgb(var(--admin-accent) / 0.33)" : "rgb(var(--admin-border))"}`,
               }}
             >
               {sg.label}
@@ -277,9 +277,9 @@ function CategorySection({ lines, includePaketLines = false }: { lines: LineDeta
               onClick={() => setActiveLineIdx(i)}
               className="px-3 py-1.5 rounded-lg font-display text-[11px] font-medium transition-colors max-w-[180px] truncate"
               style={{
-                backgroundColor: activeLineIdx === i ? "#1C1830" : "transparent",
-                color: activeLineIdx === i ? "#FFB238" : "#867BA0",
-                border: `1px solid ${activeLineIdx === i ? "#FFB23855" : "#362D4C"}`,
+                backgroundColor: activeLineIdx === i ? "rgb(var(--admin-panel-soft))" : "transparent",
+                color: activeLineIdx === i ? "rgb(var(--admin-accent))" : "rgb(var(--admin-muted))",
+                border: `1px solid ${activeLineIdx === i ? "rgb(var(--admin-accent) / 0.33)" : "rgb(var(--admin-border))"}`,
               }}
               title={line.title}
             >
@@ -334,9 +334,9 @@ export function CustomerAccountTabs({ accounts }: { accounts: AccountProgress[] 
               }}
               className="px-4 py-2.5 rounded-xl font-display text-sm font-medium transition-colors"
               style={{
-                backgroundColor: activeTab === i ? "#2C2540" : "transparent",
-                color: activeTab === i ? "#FFB238" : "#B7ADD1",
-                border: `1px solid ${activeTab === i ? "#FFB23855" : "#3D3557"}`,
+                backgroundColor: activeTab === i ? "rgb(var(--admin-panel-soft))" : "transparent",
+                color: activeTab === i ? "rgb(var(--admin-accent))" : "rgb(var(--admin-muted))",
+                border: `1px solid ${activeTab === i ? "rgb(var(--admin-accent) / 0.33)" : "rgb(var(--admin-border))"}`,
               }}
             >
               {acc.accountName} · {acc.gameName}
@@ -378,9 +378,9 @@ export function CustomerAccountTabs({ accounts }: { accounts: AccountProgress[] 
                   onClick={() => setActiveTopIdx(i)}
                   className="px-3.5 py-2 rounded-xl font-display text-xs font-medium transition-colors max-w-[220px] truncate"
                   style={{
-                    backgroundColor: activeTopIdx === i ? "#2C2540" : "transparent",
-                    color: activeTopIdx === i ? "#FFB238" : "#B7ADD1",
-                    border: `1px solid ${activeTopIdx === i ? "#FFB23855" : "#3D3557"}`,
+                    backgroundColor: activeTopIdx === i ? "rgb(var(--admin-panel-soft))" : "transparent",
+                    color: activeTopIdx === i ? "rgb(var(--admin-accent))" : "rgb(var(--admin-muted))",
+                    border: `1px solid ${activeTopIdx === i ? "rgb(var(--admin-accent) / 0.33)" : "rgb(var(--admin-border))"}`,
                   }}
                   title={tab.label ?? "Item"}
                 >

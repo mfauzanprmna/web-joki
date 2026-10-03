@@ -45,7 +45,7 @@ function localDateKey(date: Date = new Date()): string {
 const STATUS_STYLE: Record<string, string> = {
   SELESAI: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
   SEDANG: "bg-shihu-corona/15 text-shihu-corona border-shihu-corona/30",
-  BELUM: "bg-white/5 text-shihu-muted border-shihu-border",
+  BELUM: "bg-[rgb(var(--admin-panel-soft))] text-shihu-muted border-shihu-border",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -154,7 +154,7 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
                 onClick={() => setSelectedDate(d.date)}
                 className={`shrink-0 w-[84px] rounded-xl border px-2 py-2.5 text-center transition-colors ${active
                   ? "border-shihu-corona bg-shihu-corona/10"
-                  : "border-shihu-border bg-[#241E38] hover:border-shihu-corona/40"
+                  : "border-shihu-border bg-[rgb(var(--admin-panel))] hover:border-shihu-corona/40"
                   }`}
               >
                 <p className="text-[10px] text-shihu-faint">{dayName(d.date)}</p>
@@ -175,7 +175,7 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
         {/* Kolom kiri: detail hari terpilih */}
         <div className="flex flex-col gap-4">
           {selectedDay && (
-            <div className="bg-[#241E38] border border-shihu-border rounded-2xl p-4">
+            <div className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-display font-semibold text-shihu-text">
                   {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric" }).format(
@@ -247,7 +247,7 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
           )}
 
           {/* Task checklist */}
-          <div className="bg-[#241E38] border border-shihu-border rounded-2xl p-4">
+          <div className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-display font-semibold text-shihu-text">Task Checklist (Hari Ini)</p>
               <button
@@ -262,7 +262,7 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
             {showAddTask && (
               <form
                 action={addDayTask}
-                className="flex flex-wrap gap-2 mb-3 bg-white/5 rounded-xl p-2.5"
+                className="flex flex-wrap gap-2 mb-3 bg-[rgb(var(--admin-panel-soft))] rounded-xl p-2.5"
                 onSubmit={() => {
                   setNewTaskCategory("");
                   setNewTaskLabel("");
@@ -303,7 +303,7 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
               <div className="flex flex-col divide-y divide-shihu-border">
                 {selectedTasks.map((t) => (
                   <div key={t.id} className="flex items-center gap-2 py-2">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-shihu-muted border border-shihu-border shrink-0">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[rgb(var(--admin-panel-soft))] text-shihu-muted border border-shihu-border shrink-0">
                       {t.category}
                     </span>
                     <span className="text-xs text-shihu-text flex-1">{t.label}</span>
@@ -331,16 +331,16 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
 
         {/* Kolom kanan: ring progress + quick update */}
         <div className="flex flex-col gap-4">
-          <div className="bg-[#241E38] border border-shihu-border rounded-2xl p-4">
+          <div className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-2xl p-4">
             <p className="text-xs font-display font-semibold text-shihu-text mb-3">Progress Keseluruhan</p>
             <div className="flex items-center gap-3 mb-3">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center text-sm font-bold text-shihu-text shrink-0"
                 style={{
-                  background: `conic-gradient(#FFB238 ${breakdown.totalPercent * 3.6}deg, #3D3557 0deg)`,
+                  background: `conic-gradient(rgb(var(--admin-accent)) ${breakdown.totalPercent * 3.6}deg, rgb(var(--admin-border)) 0deg)`,
                 }}
               >
-                <div className="w-11 h-11 rounded-full bg-[#241E38] flex items-center justify-center text-xs">
+                <div className="w-11 h-11 rounded-full bg-[rgb(var(--admin-panel))] flex items-center justify-center text-xs">
                   {breakdown.totalPercent}%
                 </div>
               </div>
@@ -358,7 +358,7 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
             </div>
           </div>
 
-          <div className="bg-[#241E38] border border-shihu-border rounded-2xl p-4">
+          <div className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-2xl p-4">
             <p className="text-xs font-display font-semibold text-shihu-text mb-3">Quick Update</p>
             <div className="grid grid-cols-2 gap-2 mb-3">
               {[

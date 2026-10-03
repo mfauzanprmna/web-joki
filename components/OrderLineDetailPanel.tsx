@@ -66,7 +66,7 @@ export function OrderLineDetailPanel({
           {tags.map((tag) => (
             <span
               key={tag}
-              className={`text-[10.5px] px-2 py-0.5 rounded-md text-shihu-muted font-display ${bare ? "bg-[#2C2540]" : "bg-shihu-card"
+              className={`text-[10.5px] px-2 py-0.5 rounded-md text-shihu-muted font-display ${bare ? "bg-shihu-bg" : "bg-shihu-card"
                 }`}
             >
               {tag}
@@ -128,5 +128,5 @@ export function OrderLineDetailPanel({
 
   if (bare) return body;
 
-  return <div className="bg-[#241E38] border border-shihu-border rounded-xl p-3.5">{body}</div>;
+  return <div className="bg-shihu-bg border border-shihu-border rounded-xl p-3.5">{body}</div>;
 }

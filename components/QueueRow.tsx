@@ -16,7 +16,7 @@ interface QueueRowProps {
 const STATUS_STYLE: Record<string, { bg: string; text: string }> = {
   FINISHING: { bg: "#4CD97D18", text: "#4CD97D" },
   SELESAI: { bg: "#4CD97D18", text: "#4CD97D" },
-  MENUNGGU: { bg: "#B7ADD118", text: "#B7ADD1" },
+  MENUNGGU: { bg: "rgb(var(--admin-muted) / 0.09)", text: "rgb(var(--admin-muted))" },
   DIBATALKAN: { bg: "#E2504A18", text: "#E2504A" },
 };
 

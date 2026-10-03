@@ -57,7 +57,7 @@ export function JokiHistoryPublicRow({
         {hasDetail && (
           <button
             onClick={() => setShowDetail((v) => !v)}
-            className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540] shrink-0"
+            className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-shihu-corona/10 shrink-0"
           >
             {showDetail ? "Tutup" : "Lihat Detail"}
           </button>
@@ -65,7 +65,7 @@ export function JokiHistoryPublicRow({
       </div>
 
       {showDetail && hasDetail && (
-        <div className="bg-[#241E38] border border-shihu-border rounded-xl p-3.5 flex flex-col gap-3">
+        <div className="bg-shihu-bg border border-shihu-border rounded-xl p-3.5 flex flex-col gap-3">
           {note && <p className="text-xs text-shihu-text whitespace-pre-line">{note}</p>}
           {screenshotUrls.length > 0 && (
             <div className="flex flex-wrap gap-2">

@@ -19,7 +19,7 @@ export function RingProgress({
       aria-label={`Progres ${value} persen`}
     >
       <svg width={size} height={size} viewBox="0 0 56 56">
-        <circle cx="28" cy="28" r={r} fill="none" stroke="#362D4C" strokeWidth="4" />
+        <circle cx="28" cy="28" r={r} fill="none" stroke="rgb(var(--admin-border))" strokeWidth="4" />
         <circle
           cx="28"
           cy="28"

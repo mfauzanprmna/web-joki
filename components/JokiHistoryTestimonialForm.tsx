@@ -45,7 +45,7 @@ function StarPicker({
                         width="26"
                         height="26"
                         viewBox="0 0 24 24"
-                        fill={(hover || value) >= i ? "#FFB238" : "#413759"}
+                        fill={(hover || value) >= i ? "rgb(var(--admin-accent))" : "rgb(var(--admin-border))"}
                     >
                         <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7L18.2 21 12 17.3 5.8 21l1.6-7.1L2 9.2l7.1-.6L12 2z" />
                     </svg>
@@ -83,7 +83,7 @@ export function JokiHistoryTestimonialForm({
                                 width="16"
                                 height="16"
                                 viewBox="0 0 24 24"
-                                fill={i <= existing.rating ? "#FFB238" : "#413759"}
+                                fill={i <= existing.rating ? "rgb(var(--admin-accent))" : "rgb(var(--admin-border))"}
                             >
                                 <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7L18.2 21 12 17.3 5.8 21l1.6-7.1L2 9.2l7.1-.6L12 2z" />
                             </svg>
@@ -92,7 +92,7 @@ export function JokiHistoryTestimonialForm({
                     <span
                         className={`text-[10px] px-2 py-0.5 rounded-full border ${existing.isPublished
                             ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-                            : "bg-white/5 text-shihu-muted border-shihu-border"
+                            : "bg-shihu-bg text-shihu-muted border-shihu-border"
                             }`}
                     >
                         {existing.isPublished ? "Sudah tayang" : "Menunggu moderasi"}

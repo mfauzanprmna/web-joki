@@ -73,7 +73,7 @@ export function PatchRowItem({ patch }: { patch: PatchRow }) {
         {!editing && (
           <button
             onClick={() => setEditing(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[rgb(var(--admin-panel-soft))]"
           >
             <FaPen size={10} aria-hidden="true" />
             Edit
@@ -87,7 +87,7 @@ export function PatchRowItem({ patch }: { patch: PatchRow }) {
             hasSubmittedRef.current = true;
             formAction(formData);
           }}
-          className="flex flex-col gap-2.5 bg-[#241E38] border border-shihu-corona/40 rounded-xl p-3.5"
+          className="flex flex-col gap-2.5 bg-[rgb(var(--admin-panel))] border border-shihu-corona/40 rounded-xl p-3.5"
         >
           <input type="hidden" name="id" value={patch.id} />
           <input
@@ -217,7 +217,7 @@ function CreateEventInlineForm({ patchId, onDone }: { patchId: string; onDone: (
         hasSubmittedRef.current = true;
         formAction(formData);
       }}
-      className="bg-[#241E38] border border-shihu-corona/40 rounded-xl p-3.5 flex flex-col gap-2.5"
+      className="bg-[rgb(var(--admin-panel))] border border-shihu-corona/40 rounded-xl p-3.5 flex flex-col gap-2.5"
     >
       <input type="hidden" name="patchId" value={patchId} />
 

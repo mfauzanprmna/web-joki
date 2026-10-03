@@ -45,7 +45,7 @@ function StarPicker({
             width="22"
             height="22"
             viewBox="0 0 24 24"
-            fill={(hover || value) >= i ? "#FFB238" : "#413759"}
+            fill={(hover || value) >= i ? "rgb(var(--admin-accent))" : "rgb(var(--admin-border))"}
           >
             <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7L18.2 21 12 17.3 5.8 21l1.6-7.1L2 9.2l7.1-.6L12 2z" />
           </svg>
@@ -71,7 +71,7 @@ export function TestimonialPrompt({
 
   if (existing) {
     return (
-      <div className="bg-[#241E38] border border-shihu-border rounded-xl px-3.5 py-2.5 flex items-start gap-3">
+      <div className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-xl px-3.5 py-2.5 flex items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <div className="flex gap-0.5">
@@ -81,7 +81,7 @@ export function TestimonialPrompt({
                   width="12"
                   height="12"
                   viewBox="0 0 24 24"
-                  fill={i <= existing.rating ? "#FFB238" : "#413759"}
+                  fill={i <= existing.rating ? "rgb(var(--admin-accent))" : "rgb(var(--admin-border))"}
                 >
                   <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7L18.2 21 12 17.3 5.8 21l1.6-7.1L2 9.2l7.1-.6L12 2z" />
                 </svg>
@@ -90,7 +90,7 @@ export function TestimonialPrompt({
             <span
               className={`text-[10px] px-2 py-0.5 rounded-full border ${existing.isPublished
                   ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-                  : "bg-white/5 text-shihu-muted border-shihu-border"
+                  : "bg-shihu-bg text-shihu-muted border-shihu-border"
                 }`}
             >
               {existing.isPublished ? "Sudah tayang" : "Menunggu moderasi"}
@@ -104,7 +104,7 @@ export function TestimonialPrompt({
 
   if (state?.success) {
     return (
-      <div className="bg-[#241E38] border border-emerald-500/30 rounded-xl px-3.5 py-2.5">
+      <div className="bg-[rgb(var(--admin-panel))] border border-emerald-500/30 rounded-xl px-3.5 py-2.5">
         <p className="text-xs text-emerald-300">
           Terima kasih! Testimoni kamu sudah terkirim dan akan tayang setelah
           dicek admin.
@@ -132,7 +132,7 @@ export function TestimonialPrompt({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="text-xs font-display font-medium px-3 py-1.5 rounded-lg border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+        className="text-xs font-display font-medium px-3 py-1.5 rounded-lg border border-shihu-borderSoft text-shihu-text hover:bg-[rgb(var(--admin-panel-soft))]"
       >
         Beri Testimoni
       </button>
@@ -142,7 +142,7 @@ export function TestimonialPrompt({
   return (
     <form
       action={formAction}
-      className="bg-[#241E38] border border-shihu-border rounded-xl p-3.5 flex flex-col gap-2.5"
+      className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-xl p-3.5 flex flex-col gap-2.5"
     >
       <input type="hidden" name="orderId" value={orderId} />
       <input type="hidden" name="rating" value={rating} />
@@ -155,7 +155,7 @@ export function TestimonialPrompt({
           name="customerName"
           defaultValue={defaultCustomerName}
           required
-          className="admin-input !bg-[#1A1628]"
+          className="admin-input !bg-[rgb(var(--admin-panel))]"
         />
       </div>
 
@@ -174,7 +174,7 @@ export function TestimonialPrompt({
           name="message"
           required
           rows={3}
-          className="admin-input !bg-[#1A1628] resize-none"
+          className="admin-input !bg-[rgb(var(--admin-panel))] resize-none"
           placeholder="Ceritain pengalaman jokinya gimana..."
         />
       </div>
@@ -187,7 +187,7 @@ export function TestimonialPrompt({
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="flex items-center gap-1.5 text-xs font-display font-medium px-3 py-1.5 rounded-lg text-shihu-muted hover:bg-white/5"
+          className="flex items-center gap-1.5 text-xs font-display font-medium px-3 py-1.5 rounded-lg text-shihu-muted hover:bg-shihu-corona/10"
         >
           <FaXmark size={10} aria-hidden="true" />
           Batal

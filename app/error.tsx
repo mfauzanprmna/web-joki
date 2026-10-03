@@ -58,7 +58,7 @@ export default function GlobalPageError({
           </button>
           <Link
             href="/"
-            className="px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-shihu-muted bg-[#2C2540] hover:bg-[#332B4A] transition-colors"
+            className="px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-shihu-muted bg-[rgb(var(--admin-panel-soft))] hover:bg-[rgb(var(--admin-border))] transition-colors"
           >
             Kembali ke beranda
           </Link>

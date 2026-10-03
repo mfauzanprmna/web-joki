@@ -42,7 +42,7 @@ export function OrderLineProgressPanel({ orderLineId, jokiItem, updates }: Order
           hasSubmittedRef.current = true;
           formAction(formData);
         }}
-        className="bg-[#241E38] border border-shihu-border rounded-xl p-4 flex flex-col gap-3"
+        className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-xl p-4 flex flex-col gap-3"
       >
         <input type="hidden" name="orderLineId" value={orderLineId} />
         <p className="font-display text-xs font-semibold text-shihu-muted">Tambah update progres</p>

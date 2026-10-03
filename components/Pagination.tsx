@@ -33,7 +33,7 @@ export function Pagination({ page, totalPages, onPageChange }: PaginationProps) 
                 type="button"
                 onClick={() => onPageChange(page - 1)}
                 disabled={page <= 1}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-border text-shihu-muted hover:bg-[#2C2540] disabled:opacity-40 disabled:hover:bg-transparent"
+                className="px-2.5 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-border text-shihu-muted hover:bg-[rgb(var(--admin-panel-soft))] disabled:opacity-40 disabled:hover:bg-transparent"
             >
                 ← Prev
             </button>
@@ -50,7 +50,7 @@ export function Pagination({ page, totalPages, onPageChange }: PaginationProps) 
                         onClick={() => onPageChange(p)}
                         className={`min-w-[30px] px-2.5 py-1.5 rounded-lg text-xs font-display font-medium border ${p === page
                                 ? "bg-shihu-corona/15 border-shihu-corona/40 text-shihu-corona"
-                                : "border-shihu-border text-shihu-muted hover:bg-[#2C2540]"
+                                : "border-shihu-border text-shihu-muted hover:bg-[rgb(var(--admin-panel-soft))]"
                             }`}
                     >
                         {p}
@@ -62,7 +62,7 @@ export function Pagination({ page, totalPages, onPageChange }: PaginationProps) 
                 type="button"
                 onClick={() => onPageChange(page + 1)}
                 disabled={page >= totalPages}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-border text-shihu-muted hover:bg-[#2C2540] disabled:opacity-40 disabled:hover:bg-transparent"
+                className="px-2.5 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-border text-shihu-muted hover:bg-[rgb(var(--admin-panel-soft))] disabled:opacity-40 disabled:hover:bg-transparent"
             >
                 Next →
             </button>

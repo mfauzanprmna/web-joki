@@ -9,7 +9,7 @@ export function CountProgressView({ title, current, target, unitLabel }: CountPr
     const percent = target && target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
 
     return (
-        <div className="bg-[#241E38] border border-shihu-border rounded-xl p-4">
+        <div className="bg-shihu-bg border border-shihu-border rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
                 <p className="font-display text-sm font-semibold">{title}</p>
                 <span className="text-shihu-corona font-display text-sm font-bold">

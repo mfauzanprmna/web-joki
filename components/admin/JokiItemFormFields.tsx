@@ -300,7 +300,7 @@ export function JokiItemFormFields({
             Pengaturan Rawat Akun
           </p>
 
-          <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+          <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
             <span>
               Include event
               <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">
@@ -315,7 +315,7 @@ export function JokiItemFormFields({
             />
           </label>
 
-          <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+          <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
             <span>
               Rawat akun 1 patch
               <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">
@@ -376,7 +376,7 @@ export function JokiItemFormFields({
                 <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1">
                   Konten endgame yang dicakup
                 </label>
-                <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
+                <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto bg-[rgb(var(--admin-panel))] rounded-xl border border-shihu-border p-2.5">
                   {endgameContentsForGame.length === 0 && (
                     <p className="text-[11px] text-shihu-faint px-1 py-1">
                       Belum ada konten endgame untuk game ini.

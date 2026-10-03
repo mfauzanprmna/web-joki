@@ -49,7 +49,7 @@ export default function GlobalError({
           <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
             Aplikasi mengalami masalah
           </h1>
-          <p style={{ color: "#B7ADD1", fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
+          <p style={{ color: "rgb(var(--admin-muted))", fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
             Maaf, terjadi kesalahan yang tidak terduga. Silakan coba muat ulang halaman.
             {error.digest ? ` (Kode: ${error.digest})` : ""}
           </p>
@@ -62,7 +62,7 @@ export default function GlobalError({
               fontWeight: 600,
               fontSize: 14,
               color: "#1A1206",
-              background: "linear-gradient(135deg, #FFB238, #FF7A45)",
+              background: "linear-gradient(135deg, rgb(var(--admin-accent)), #FF7A45)",
               border: "none",
               cursor: "pointer",
             }}

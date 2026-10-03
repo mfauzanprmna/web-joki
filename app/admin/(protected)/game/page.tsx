@@ -58,7 +58,7 @@ export default async function AdminGamePage() {
               <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1">
                 Warna aksen (hex)
               </label>
-              <input name="accentColor" required className="admin-input" placeholder="#FFB238" defaultValue="#FFB238" />
+              <input name="accentColor" required className="admin-input" placeholder="rgb(var(--admin-accent))" defaultValue="rgb(var(--admin-accent))" />
             </div>
 
             <button

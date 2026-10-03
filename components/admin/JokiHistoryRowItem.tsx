@@ -49,14 +49,14 @@ export function JokiHistoryRowItem({ item }: { item: JokiHistoryRow }) {
         </div>
         <button
           onClick={copyTestimonialLink}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-corona hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-corona hover:bg-[rgb(var(--admin-panel-soft))]"
         >
           {copied ? <FaCheck size={10} aria-hidden="true" /> : <FaLink size={10} aria-hidden="true" />}
           {copied ? "Link disalin!" : item.hasTestimonial ? "Salin link (sudah diisi)" : "Salin link testimoni"}
         </button>
         <button
           onClick={() => setShowDetail((v) => !v)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[rgb(var(--admin-panel-soft))]"
         >
           {showDetail ? <FaEyeSlash size={10} aria-hidden="true" /> : <FaEye size={10} aria-hidden="true" />}
           {showDetail ? "Tutup" : "Lihat Detail"}
@@ -82,7 +82,7 @@ export function JokiHistoryRowItem({ item }: { item: JokiHistoryRow }) {
       </div>
 
       {showDetail && (
-        <div className="bg-[#241E38] border border-shihu-border rounded-xl p-3.5 flex flex-col gap-3">
+        <div className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-xl p-3.5 flex flex-col gap-3">
           {item.note ? (
             <div>
               <p className="text-[11px] text-shihu-muted mb-1">Catatan</p>

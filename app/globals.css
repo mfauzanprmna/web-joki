@@ -32,6 +32,20 @@ html {
      bawah), bukan sekadar warna solid biasa. */
   --shihu-glow-opacity: 1;
   --shihu-grid-opacity: 1;
+
+  /* Token panel ADMIN (terpisah dari token shihu-* di atas). Panel progress
+     di dalam admin (tab kategori/paket, card progress harian, dst -- lihat
+     OrderProgressTabs.tsx & komponen *ProgressPanel) sengaja dibangun
+     dengan identitas visual sendiri: dasar ungu gelap + aksen amber, bukan
+     biru shihu-corona. Nilai di sini (mode gelap) PERSIS sama seperti hex
+     yang sebelumnya hardcode di kode -- jadi tampilan dark mode admin
+     tidak berubah sama sekali, cuma sekarang bisa di-override untuk mode
+     terang lewat [data-theme="light"] di bawah. */
+  --admin-panel: 36 30 56;
+  --admin-panel-soft: 44 37 64;
+  --admin-border: 61 53 87;
+  --admin-muted: 183 173 209;
+  --admin-accent: 255 178 56;
 }
 
 [data-theme="light"] {
@@ -52,6 +66,12 @@ html {
 
   --shihu-glow-opacity: 0.55;
   --shihu-grid-opacity: 1.6;
+
+  --admin-panel: 239 235 250;
+  --admin-panel-soft: 227 220 243;
+  --admin-border: 192 179 221;
+  --admin-muted: 91 84 120;
+  --admin-accent: 179 107 0;
 }
 
 .site-container {
@@ -191,6 +211,48 @@ button[aria-busy="true"]::before {
   border-color: rgb(var(--shihu-corona));
 }
 
+/* Checkbox custom, theme-aware penuh -- accent-color browser cuma ngatur
+   warna CENTANG-nya, kotak yang BELUM dicentang tetap ikut rendering
+   native browser/OS (bukan data-theme kita), makanya kelihatan beda-beda/
+   tidak konsisten antar tema. Di-override total di sini. */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+  border-radius: 4px;
+  border: 1.5px solid rgb(var(--shihu-border-soft));
+  background-color: rgb(var(--shihu-card));
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+input[type="checkbox"]:hover {
+  border-color: rgb(var(--shihu-corona) / 0.6);
+}
+
+input[type="checkbox"]:checked {
+  background-color: rgb(var(--shihu-corona));
+  border-color: rgb(var(--shihu-corona));
+}
+
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 30%;
+  top: 12%;
+  width: 28%;
+  height: 55%;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(40deg);
+}
+
+input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Animasi untuk SweetAlert-style modal & komponen loading. */
 @keyframes shihu-fade-in {
   from {
@@ -286,6 +348,12 @@ button[aria-busy="true"]::before {
   background-size: cover, cover;
   background-repeat: no-repeat;
 
+  /* Background section ini SELALU gelap (lihat komentar di atas), jadi
+     token teks/aksen di dalamnya juga dikunci ke nilai mode gelap -- tanpa
+     ini, h1/paragraf/label fitur di dalam hero ikut berubah gelap juga di
+     mode terang lewat token global shihu-text/muted/faint/corona, padahal
+     background gambarnya tetap gelap -> teks jadi nyaris hitam di atas
+     gambar gelap, tidak terbaca sama sekali. */
   --shihu-text: 244 248 255;
   --shihu-muted: 168 186 210;
   --shihu-faint: 113 135 165;

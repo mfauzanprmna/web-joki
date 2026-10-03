@@ -63,7 +63,7 @@ export function HistoryRow({
         {hasDetail && (
           <button
             onClick={() => setShowDetail((v) => !v)}
-            className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540] shrink-0"
+            className="px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-shihu-corona/10 shrink-0"
           >
             {showDetail ? "Tutup" : "Lihat Detail"}
           </button>

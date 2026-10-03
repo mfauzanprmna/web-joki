@@ -178,7 +178,7 @@ export function OrderRowItem({ order, workers }: { order: OrderRow; workers: Wor
           </Link>
           <button
             onClick={() => setEditing(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[rgb(var(--admin-panel-soft))]"
           >
             <FaPen size={10} aria-hidden="true" />
             Edit

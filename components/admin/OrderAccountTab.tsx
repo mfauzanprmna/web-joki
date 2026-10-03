@@ -186,7 +186,7 @@ export function OrderAccountTab({ games, items, pakets, events, endgameContents,
         }}
       />
 
-      <div className="flex items-center justify-between bg-[#241E38] border border-shihu-border rounded-xl px-4 py-3">
+      <div className="flex items-center justify-between bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-xl px-4 py-3">
         <span className="text-xs font-display font-medium text-shihu-muted">Subtotal akun ini</span>
         <span className="font-display font-bold text-shihu-corona">{formatRupiah(total)}</span>
       </div>

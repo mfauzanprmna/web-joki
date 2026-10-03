@@ -30,7 +30,7 @@ function Chip({
   href,
   label,
   isActive,
-  accent = "#FFB238",
+  accent = "rgb(var(--admin-accent))",
 }: {
   href: string;
   label: string;
@@ -42,9 +42,9 @@ function Chip({
       href={href}
       className="px-4 py-2 rounded-full font-display text-[13px] font-medium border transition-colors"
       style={{
-        borderColor: isActive ? accent : "#3D3557",
+        borderColor: isActive ? accent : "rgb(var(--admin-border))",
         backgroundColor: isActive ? `${accent}18` : "transparent",
-        color: isActive ? accent : "#B7ADD1",
+        color: isActive ? accent : "rgb(var(--admin-muted))",
       }}
     >
       {label}

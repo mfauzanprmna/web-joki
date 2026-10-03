@@ -60,7 +60,7 @@ export function JokiCategoryRowItem({ category }: { category: CategoryRow }) {
         </div>
         <button
           onClick={() => setEditing(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[rgb(var(--admin-panel-soft))]"
         >
           <FaPen size={10} aria-hidden="true" />
           Edit
@@ -97,7 +97,7 @@ export function JokiCategoryRowItem({ category }: { category: CategoryRow }) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+        <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
           <span>
             Wajib pilih Region
             <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">
@@ -113,7 +113,7 @@ export function JokiCategoryRowItem({ category }: { category: CategoryRow }) {
           />
         </label>
 
-        <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+        <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
           <span>
             Wajib pilih Jenis Quest
             <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">
@@ -129,7 +129,7 @@ export function JokiCategoryRowItem({ category }: { category: CategoryRow }) {
           />
         </label>
 
-        <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+        <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
           <span>
             Kategori Rawat Akun
             <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">
@@ -145,7 +145,7 @@ export function JokiCategoryRowItem({ category }: { category: CategoryRow }) {
           />
         </label>
 
-        <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+        <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
           <span>
             Kategori Material
             <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">

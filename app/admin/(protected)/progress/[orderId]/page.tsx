@@ -133,7 +133,7 @@ export default async function AdminOrderProgressPage({
       <div className="flex items-center gap-3 flex-wrap mt-3 mb-1">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: order.game.accentColor }} />
         <h1 className="font-display text-2xl font-bold">{order.orderCode}</h1>
-        <span className="text-[11px] px-2 py-0.5 rounded bg-[#2C2540] text-shihu-muted font-display">
+        <span className="text-[11px] px-2 py-0.5 rounded bg-[rgb(var(--admin-panel-soft))] text-shihu-muted font-display">
           {STATUS_LABEL[order.status] ?? order.status}
         </span>
       </div>

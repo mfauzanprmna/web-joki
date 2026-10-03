@@ -33,7 +33,7 @@ export function ExplorationProgressPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-[#241E38] border border-shihu-border rounded-xl p-4">
+      <div className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-xl p-4">
         <div className="flex items-center justify-between mb-2">
           <p className="font-display text-sm font-semibold">{title}</p>
           <span className="text-shihu-corona font-display text-sm font-bold">{percent}% dieksplor</span>

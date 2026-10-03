@@ -62,7 +62,7 @@ export default async function AdminQuestPage() {
             </p>
           </div>
 
-          <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+          <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
             <span>
               Spesifik ke region tertentu
               <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">

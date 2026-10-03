@@ -250,9 +250,9 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
                 onClick={() => setActiveTab(i)}
                 className="px-3.5 py-2 rounded-xl font-display text-xs font-medium transition-colors"
                 style={{
-                  backgroundColor: activeTab === i ? "#2C2540" : "transparent",
-                  color: activeTab === i ? "#FFB238" : "#B7ADD1",
-                  border: `1px solid ${activeTab === i ? "#FFB23855" : "#3D3557"}`,
+                  backgroundColor: activeTab === i ? "rgb(var(--admin-panel-soft))" : "transparent",
+                  color: activeTab === i ? "rgb(var(--admin-accent))" : "rgb(var(--admin-muted))",
+                  border: `1px solid ${activeTab === i ? "rgb(var(--admin-accent) / 0.33)" : "rgb(var(--admin-border))"}`,
                 }}
               >
                 Akun {i + 1}
@@ -278,7 +278,7 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
           </div>
         ))}
 
-        <div className="flex flex-col gap-1 bg-[#241E38] border border-shihu-corona/30 rounded-xl px-4 py-3">
+        <div className="flex flex-col gap-1 bg-[rgb(var(--admin-panel))] border border-shihu-corona/30 rounded-xl px-4 py-3">
           {discountAmountTotal > 0 && (
             <div className="flex items-center justify-between text-[11.5px] text-shihu-muted">
               <span>Subtotal ({accountCount} akun)</span>
@@ -327,7 +327,7 @@ export function CreateOrderForm({ games, items, pakets, events, endgameContents,
               </button>
             </div>
 
-            <div className="bg-[#241E38] border border-shihu-border rounded-xl p-3 mb-4">
+            <div className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-xl p-3 mb-4">
               <p className="text-[11px] text-shihu-faint uppercase tracking-wide">Customer</p>
               <p className="font-display font-semibold text-sm mt-1">
                 {selectedCustomer?.name ?? String(confirmFormData.get("newCustomerName") || "Customer baru")}

@@ -211,7 +211,7 @@ export function OrderLineSelector({ gameId, items, pakets, events, endgameConten
         <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1.5">
           Joki Item
         </label>
-        <div className="flex flex-col gap-2 max-h-64 overflow-y-auto bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
+        <div className="flex flex-col gap-2 max-h-64 overflow-y-auto bg-[rgb(var(--admin-panel))] rounded-xl border border-shihu-border p-2.5">
           <input
             type="search"
             value={itemSearch}
@@ -380,7 +380,7 @@ export function OrderLineSelector({ gameId, items, pakets, events, endgameConten
         <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1.5">
           Konten Endgame
         </label>
-        <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
+        <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto bg-[rgb(var(--admin-panel))] rounded-xl border border-shihu-border p-2.5">
           <input type="search" value={endgameSearch} onChange={(e) => setEndgameSearch(e.target.value)} className="admin-input" placeholder="Cari konten endgame..." aria-label="Cari konten endgame" />
           {filteredEndgameContents.map((content) => {
             const key = makeKey("endgame", content.id);
@@ -401,7 +401,7 @@ export function OrderLineSelector({ gameId, items, pakets, events, endgameConten
         <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1.5">
           Event Patch
         </label>
-        <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
+        <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto bg-[rgb(var(--admin-panel))] rounded-xl border border-shihu-border p-2.5">
           <input
             type="search"
             value={eventSearch}
@@ -441,7 +441,7 @@ export function OrderLineSelector({ gameId, items, pakets, events, endgameConten
         <label className="block text-[11.5px] font-display font-medium text-shihu-muted mb-1.5">
           Paket Joki
         </label>
-        <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto bg-[#241E38] rounded-xl border border-shihu-border p-2.5">
+        <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto bg-[rgb(var(--admin-panel))] rounded-xl border border-shihu-border p-2.5">
           <input
             type="search"
             value={paketSearch}

@@ -29,7 +29,7 @@ export function JokiCard({
         {badge && (
           <span
             className="text-[10.5px] font-semibold px-2 py-0.5 rounded-md font-display"
-            style={{ backgroundColor: "#FFB23818", color: "#FFB238" }}
+            style={{ backgroundColor: "rgb(var(--admin-accent) / 0.09)", color: "rgb(var(--admin-accent))" }}
           >
             {badge}
           </span>
@@ -43,7 +43,7 @@ export function JokiCard({
         {tags.map((tag) => (
           <span
             key={tag}
-            className="text-[10.5px] px-2 py-0.5 rounded-md bg-[#2C2540] text-shihu-muted font-display"
+            className="text-[10.5px] px-2 py-0.5 rounded-md bg-[rgb(var(--admin-panel-soft))] text-shihu-muted font-display"
           >
             {tag}
           </span>

@@ -86,7 +86,7 @@ export default function AdminLayout({
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-display text-sm font-medium text-shihu-muted hover:text-shihu-text hover:bg-[#2C2540] transition-colors"
+                      className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-display text-sm font-medium text-shihu-muted hover:text-shihu-text hover:bg-[rgb(var(--admin-panel-soft))] transition-colors"
                     >
                       <Icon className="text-[13px] shrink-0" aria-hidden="true" />
                       {item.label}

@@ -34,7 +34,7 @@ export function Navbar() {
           onClick={() => setMenuOpen(false)}
           className={`${mobile ? "flex items-center gap-2.5 w-full px-3.5 py-3" : "flex items-center gap-1.5 px-3.5 py-2"} rounded-[10px] font-display text-sm font-medium transition-colors ${active
             ? "bg-shihu-corona/15 text-shihu-corona"
-            : "text-shihu-muted hover:text-shihu-text hover:bg-white/5"
+            : "text-shihu-muted hover:text-shihu-text hover:bg-shihu-corona/10"
             }`}
         >
           <Icon className={mobile ? "text-base" : "text-[13px]"} aria-hidden="true" />
@@ -60,7 +60,7 @@ export function Navbar() {
           <ThemeToggle />
           <button
             type="button"
-            className="md:hidden w-10 h-10 rounded-xl border border-shihu-border flex flex-col items-center justify-center gap-1.5 text-shihu-text hover:bg-white/5 transition-colors"
+            className="md:hidden w-10 h-10 rounded-xl border border-shihu-border flex flex-col items-center justify-center gap-1.5 text-shihu-text hover:bg-shihu-corona/10 transition-colors"
             aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
             aria-expanded={menuOpen}
             aria-controls="mobile-navigation"

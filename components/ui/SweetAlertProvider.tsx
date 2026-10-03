@@ -59,7 +59,7 @@ const VARIANT_ICON: Record<AlertVariant, ReactNode> = {
 const VARIANT_STYLE: Record<AlertVariant, { ring: string; glow: string }> = {
   success: { ring: "#4CD97D", glow: "#4CD97D26" },
   error: { ring: "#E2504A", glow: "#E2504A26" },
-  warning: { ring: "#FFB238", glow: "#FFB23826" },
+  warning: { ring: "rgb(var(--admin-accent))", glow: "rgb(var(--admin-accent) / 0.15)" },
   info: { ring: "#4FE0FF", glow: "#4FE0FF26" },
   question: { ring: "#A385FF", glow: "#A385FF26" },
 };
@@ -196,7 +196,7 @@ function AlertModal({
             <button
               type="button"
               onClick={() => onClose(false)}
-              className="flex-1 px-4 py-2.5 rounded-xl font-display font-semibold text-sm text-shihu-muted bg-[#2C2540] hover:bg-[#332B4A] transition-colors"
+              className="flex-1 px-4 py-2.5 rounded-xl font-display font-semibold text-sm text-shihu-muted bg-[rgb(var(--admin-panel-soft))] hover:bg-[rgb(var(--admin-border))] transition-colors"
             >
               {alert.cancelLabel}
             </button>

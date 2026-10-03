@@ -26,7 +26,7 @@ export function GameRowItem({ game }: { game: GameRow }) {
         <div className="flex-1 min-w-[200px]">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-display text-sm font-semibold">{game.name}</p>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#2C2540] text-shihu-faint font-display">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[rgb(var(--admin-panel-soft))] text-shihu-faint font-display">
               {game.slug}
             </span>
           </div>
@@ -34,7 +34,7 @@ export function GameRowItem({ game }: { game: GameRow }) {
         </div>
         <button
           onClick={() => setEditing(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[rgb(var(--admin-panel-soft))]"
         >
           <FaPen size={10} aria-hidden="true" />
           Edit
@@ -102,7 +102,7 @@ export function GameRowItem({ game }: { game: GameRow }) {
             defaultValue={game.accentColor}
             required
             className="admin-input flex-1"
-            placeholder="#FFB238"
+            placeholder="rgb(var(--admin-accent))"
           />
         </div>
       </div>

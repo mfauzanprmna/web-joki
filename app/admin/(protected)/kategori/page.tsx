@@ -49,7 +49,7 @@ export default async function AdminKategoriPage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+            <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
               <span>
                 Wajib pilih Region
                 <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">
@@ -63,7 +63,7 @@ export default async function AdminKategoriPage() {
               />
             </label>
 
-            <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+            <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
               <span>
                 Wajib pilih Jenis Quest
                 <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">
@@ -77,7 +77,7 @@ export default async function AdminKategoriPage() {
               />
             </label>
 
-            <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+            <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
               <span>
                 Kategori Rawat Akun
                 <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">
@@ -91,7 +91,7 @@ export default async function AdminKategoriPage() {
               />
             </label>
 
-            <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+            <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
               <span>
                 Kategori Material
                 <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">
@@ -104,7 +104,7 @@ export default async function AdminKategoriPage() {
                 className="accent-shihu-corona w-4 h-4 shrink-0"
               />
             </label>
-            <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[#241E38] rounded-xl px-3.5 py-3 border border-shihu-border">
+            <label className="flex items-center justify-between gap-2 text-xs text-shihu-text font-display bg-[rgb(var(--admin-panel))] rounded-xl px-3.5 py-3 border border-shihu-border">
               <span>
                 Kategori Build Karakter
                 <span className="block text-[11px] text-shihu-faint font-normal mt-0.5">

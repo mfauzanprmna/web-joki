@@ -35,7 +35,7 @@ export function PatchEventRowItem({ event }: { event: PatchEventRow }) {
 
   if (!editing) {
     return (
-      <div className="bg-[#241E38] border border-shihu-border rounded-xl p-3.5 flex items-center gap-3 flex-wrap">
+      <div className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-xl p-3.5 flex items-center gap-3 flex-wrap">
         <span
           className={`text-[10px] px-1.5 py-0.5 rounded font-display shrink-0 ${live ? "bg-shihu-corona/15 text-shihu-corona" : "bg-shihu-faint/15 text-shihu-faint"
             }`}
@@ -51,7 +51,7 @@ export function PatchEventRowItem({ event }: { event: PatchEventRow }) {
         </div>
         <button
           onClick={() => setEditing(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-display font-medium border border-shihu-borderSoft hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-display font-medium border border-shihu-borderSoft hover:bg-[rgb(var(--admin-panel-soft))]"
         >
           <FaPen size={9} aria-hidden="true" />
           Edit
@@ -66,7 +66,7 @@ export function PatchEventRowItem({ event }: { event: PatchEventRow }) {
         hasSubmittedRef.current = true;
         formAction(formData);
       }}
-      className="bg-[#241E38] border border-shihu-corona/40 rounded-xl p-3.5 flex flex-col gap-2.5"
+      className="bg-[rgb(var(--admin-panel))] border border-shihu-corona/40 rounded-xl p-3.5 flex flex-col gap-2.5"
     >
       <input type="hidden" name="id" value={event.id} />
 

@@ -31,7 +31,7 @@ function localDateKey(date: Date = new Date()): string {
 const STATUS_STYLE: Record<string, string> = {
   SELESAI: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
   SEDANG: "bg-shihu-corona/15 text-shihu-corona border-shihu-corona/30",
-  BELUM: "bg-white/5 text-shihu-muted border-shihu-border",
+  BELUM: "bg-shihu-card text-shihu-muted border-shihu-border",
 };
 const STATUS_LABEL: Record<string, string> = {
   SELESAI: "Selesai",
@@ -101,7 +101,7 @@ export function RawatAkunProgressView({ days, tasks }: RawatAkunProgressViewProp
                 className={`shrink-0 w-[84px] rounded-xl border px-2 py-2.5 text-center transition-colors ${
                   active
                     ? "border-shihu-corona bg-shihu-corona/10"
-                    : "border-shihu-border bg-[#241E38] hover:border-shihu-corona/40"
+                    : "border-shihu-border bg-shihu-bg hover:border-shihu-corona/40"
                 }`}
               >
                 <p className="text-[10px] text-shihu-faint">{dayName(d.date)}</p>
@@ -121,7 +121,7 @@ export function RawatAkunProgressView({ days, tasks }: RawatAkunProgressViewProp
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-4">
         <div className="flex flex-col gap-4">
           {selectedDay && (
-            <div className="bg-[#241E38] border border-shihu-border rounded-2xl p-4">
+            <div className="bg-shihu-bg border border-shihu-border rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-display font-semibold text-shihu-text">
                   {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric" }).format(
@@ -136,7 +136,7 @@ export function RawatAkunProgressView({ days, tasks }: RawatAkunProgressViewProp
               {selectedDay.note && (
                 <div className="mb-3">
                   <p className="text-[11px] text-shihu-muted mb-1">Catatan Pengerjaan</p>
-                  <p className="text-xs text-shihu-text bg-white/5 rounded-lg p-2.5">{selectedDay.note}</p>
+                  <p className="text-xs text-shihu-text bg-shihu-card rounded-lg p-2.5">{selectedDay.note}</p>
                 </div>
               )}
 
@@ -163,7 +163,7 @@ export function RawatAkunProgressView({ days, tasks }: RawatAkunProgressViewProp
             </div>
           )}
 
-          <div className="bg-[#241E38] border border-shihu-border rounded-2xl p-4">
+          <div className="bg-shihu-bg border border-shihu-border rounded-2xl p-4">
             <p className="text-xs font-display font-semibold text-shihu-text mb-3">Task Checklist</p>
             {selectedTasks.length === 0 ? (
               <p className="text-xs text-shihu-faint py-2 text-center">Tidak ada task untuk tanggal ini.</p>
@@ -171,7 +171,7 @@ export function RawatAkunProgressView({ days, tasks }: RawatAkunProgressViewProp
               <div className="flex flex-col divide-y divide-shihu-border">
                 {selectedTasks.map((t, i) => (
                   <div key={`${t.category}-${t.label}-${i}`} className="flex items-center gap-2 py-2">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-shihu-muted border border-shihu-border shrink-0">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-shihu-card text-shihu-muted border border-shihu-border shrink-0">
                       {t.category}
                     </span>
                     <span className="text-xs text-shihu-text flex-1">{t.label}</span>
@@ -185,14 +185,14 @@ export function RawatAkunProgressView({ days, tasks }: RawatAkunProgressViewProp
           </div>
         </div>
 
-        <div className="bg-[#241E38] border border-shihu-border rounded-2xl p-4 h-fit">
+        <div className="bg-shihu-bg border border-shihu-border rounded-2xl p-4 h-fit">
           <p className="text-xs font-display font-semibold text-shihu-text mb-3">Progres Keseluruhan</p>
           <div className="flex items-center gap-3">
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center text-sm font-bold text-shihu-text shrink-0"
-              style={{ background: `conic-gradient(#FFB238 ${breakdown.totalPercent * 3.6}deg, #3D3557 0deg)` }}
+              style={{ background: `conic-gradient(rgb(var(--admin-accent)) ${breakdown.totalPercent * 3.6}deg, rgb(var(--shihu-border-soft)) 0deg)` }}
             >
-              <div className="w-11 h-11 rounded-full bg-[#241E38] flex items-center justify-center text-xs">
+              <div className="w-11 h-11 rounded-full bg-shihu-bg flex items-center justify-center text-xs">
                 {breakdown.totalPercent}%
               </div>
             </div>

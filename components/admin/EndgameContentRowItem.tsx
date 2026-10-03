@@ -43,7 +43,7 @@ export function EndgameContentRowItem({ content }: { content: EndgameContentRow 
         <div className="flex-1 min-w-[220px]">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-display text-sm font-semibold">{content.title}</p>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#2C2540] text-shihu-muted font-display">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[rgb(var(--admin-panel-soft))] text-shihu-muted font-display">
               {RESET_CYCLE_LABEL[content.resetCycle]}
             </span>
             {!content.isActive && (
@@ -63,7 +63,7 @@ export function EndgameContentRowItem({ content }: { content: EndgameContentRow 
         </div>
         <button
           onClick={() => setEditing(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[rgb(var(--admin-panel-soft))]"
         >
           <FaPen size={10} aria-hidden="true" />
           Edit

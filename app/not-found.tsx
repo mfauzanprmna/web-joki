@@ -31,7 +31,7 @@ export default function NotFound() {
           </Link>
           <Link
             href="/antrian"
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-shihu-muted bg-[#2C2540] hover:bg-[#332B4A] transition-colors"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-display font-semibold text-sm text-shihu-muted bg-[rgb(var(--admin-panel-soft))] hover:bg-[rgb(var(--admin-border))] transition-colors"
           >
             <FaListCheck size={13} aria-hidden="true" />
             Lihat antrian

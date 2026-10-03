@@ -44,7 +44,7 @@ export function WorkerRowItem({ item }: { item: WorkerRow }) {
                 </div>
                 <button
                     onClick={() => setEditing(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[#2C2540]"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium border border-shihu-borderSoft text-shihu-text hover:bg-[rgb(var(--admin-panel-soft))]"
                 >
                     <FaPen size={10} aria-hidden="true" />
                     Edit
@@ -110,7 +110,7 @@ export function WorkerRowItem({ item }: { item: WorkerRow }) {
                 <button
                     type="button"
                     onClick={() => setEditing(false)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-display font-medium text-shihu-muted hover:bg-white/5"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-display font-medium text-shihu-muted hover:bg-[rgb(var(--admin-panel-soft))]"
                 >
                     <FaXmark size={11} aria-hidden="true" />
                     Batal

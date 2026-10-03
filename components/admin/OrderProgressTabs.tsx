@@ -70,7 +70,7 @@ function LinePanel({ line }: { line: OrderLineData }) {
             await toggleOrderLineCompletion(formData);
           });
         }}
-        className="flex items-center justify-between gap-3 bg-[#241E38] border border-shihu-border rounded-xl p-3.5"
+        className="flex items-center justify-between gap-3 bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-xl p-3.5"
       >
         <div>
           <p className="font-display text-xs font-semibold">Status item</p>
@@ -112,7 +112,7 @@ function PaketPanel({ title, lines }: { title: string; lines: OrderLineData[] })
       <p className="font-display text-sm font-semibold">{title}</p>
 
       {byCategory.length > 0 && (
-        <div className="bg-[#241E38] border border-shihu-border rounded-xl p-4">
+        <div className="bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-xl p-4">
           <p className="font-display text-xs font-semibold text-shihu-muted mb-2.5">Isi paket ini</p>
           <div className="flex flex-col gap-2.5">
             {byCategory.map(([categoryLabel, items]) => (
@@ -167,9 +167,9 @@ function CategoryTabs({ lines, includePaketLines = false }: { lines: OrderLineDa
               onClick={() => selectGroup(i)}
               className="px-3.5 py-2 rounded-xl font-display text-xs font-medium transition-colors"
               style={{
-                backgroundColor: activeGroupIdx === i ? "#2C2540" : "transparent",
-                color: activeGroupIdx === i ? "#FFB238" : "#B7ADD1",
-                border: `1px solid ${activeGroupIdx === i ? "#FFB23855" : "#3D3557"}`,
+                backgroundColor: activeGroupIdx === i ? "rgb(var(--admin-panel-soft))" : "transparent",
+                color: activeGroupIdx === i ? "rgb(var(--admin-accent))" : "rgb(var(--admin-muted))",
+                border: `1px solid ${activeGroupIdx === i ? "rgb(var(--admin-accent) / 0.33)" : "rgb(var(--admin-border))"}`,
               }}
             >
               {g.label}
@@ -186,9 +186,9 @@ function CategoryTabs({ lines, includePaketLines = false }: { lines: OrderLineDa
               onClick={() => setActiveSubIdx(i)}
               className="px-3 py-1.5 rounded-lg font-display text-[11.5px] font-medium transition-colors"
               style={{
-                backgroundColor: activeSubIdx === i ? "#241E38" : "transparent",
-                color: activeSubIdx === i ? "#FFB238" : "#867BA0",
-                border: `1px solid ${activeSubIdx === i ? "#FFB23855" : "#362D4C"}`,
+                backgroundColor: activeSubIdx === i ? "rgb(var(--admin-panel))" : "transparent",
+                color: activeSubIdx === i ? "rgb(var(--admin-accent))" : "rgb(var(--admin-muted))",
+                border: `1px solid ${activeSubIdx === i ? "rgb(var(--admin-accent) / 0.33)" : "rgb(var(--admin-border))"}`,
               }}
             >
               {sg.label}
@@ -248,9 +248,9 @@ export function OrderProgressTabs({ lines }: { lines: OrderLineData[] }) {
             onClick={() => setActiveTopIdx(i)}
             className="px-3.5 py-2 rounded-xl font-display text-xs font-medium transition-colors max-w-[220px] truncate"
             style={{
-              backgroundColor: activeTopIdx === i ? "#2C2540" : "transparent",
-              color: activeTopIdx === i ? "#FFB238" : "#B7ADD1",
-              border: `1px solid ${activeTopIdx === i ? "#FFB23855" : "#3D3557"}`,
+              backgroundColor: activeTopIdx === i ? "rgb(var(--admin-panel-soft))" : "transparent",
+              color: activeTopIdx === i ? "rgb(var(--admin-accent))" : "rgb(var(--admin-muted))",
+              border: `1px solid ${activeTopIdx === i ? "rgb(var(--admin-accent) / 0.33)" : "rgb(var(--admin-border))"}`,
             }}
             title={tab.label ?? "Item"}
           >

@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
               type="password"
               required
               autoFocus
-              className="w-full bg-[#241E38] border border-shihu-border rounded-xl px-3.5 py-2.5 text-sm text-shihu-text outline-none focus:border-shihu-corona transition-colors"
+              className="w-full bg-[rgb(var(--admin-panel))] border border-shihu-border rounded-xl px-3.5 py-2.5 text-sm text-shihu-text outline-none focus:border-shihu-corona transition-colors"
               placeholder="Masukkan password"
             />
           </div>
