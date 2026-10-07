@@ -24,7 +24,7 @@ export default async function AntrianPage() {
       // order aktif sekaligus, jadi pemangkasan ini cukup berarti.
       lines: {
         select: {
-          jokiItem: { select: { title: true } },
+          jokiItem: { select: { title: true, category: { select: { isRawatAkun: true } } } },
           jokiPaket: { select: { title: true } },
           patchEvent: { select: { title: true } },
           endgameContent: { select: { title: true } },
@@ -43,6 +43,11 @@ export default async function AntrianPage() {
     status: o.status,
     progressPct: o.progressPct,
     game: o.game,
+    // Order dianggap "Rawat Akun" kalau SEMUA barisnya memang Rawat Akun --
+    // order campuran (ada Rawat Akun + item lain, mis. dari isi Paket) ikut
+    // masuk tab "Joki Item" karena bukan Rawat Akun MURNI. Lihat
+    // AntrianListFilter untuk tab pemisahnya.
+    isRawatAkunOnly: o.lines.length > 0 && o.lines.every((l) => l.jokiItem?.category.isRawatAkun === true),
   }));
 
   return (
