@@ -2,9 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { CreateOrderForm } from "@/components/admin/CreateOrderForm";
 import { OrderListFilter } from "@/components/admin/OrderListFilter";
 import { isPatchEventLive } from "@/lib/patch-schedule";
+import { getWorkerCommissionPercent } from "@/lib/settings";
 
 export default async function AdminAntrianPage() {
-  const [games, items, pakets, events, endgameContents, customers, accounts, orders, workers] = await Promise.all([
+  const [games, items, pakets, events, endgameContents, customers, accounts, orders, workers, commissionPercent] = await Promise.all([
     prisma.game.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.jokiItem.findMany({
       where: { isActive: true },
@@ -79,6 +80,7 @@ export default async function AdminAntrianPage() {
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
+    getWorkerCommissionPercent(),
   ]);
 
   const itemOptions = items.map((i) => ({
@@ -143,7 +145,7 @@ export default async function AdminAntrianPage() {
         <CreateOrderForm games={games} items={itemOptions} pakets={paketOptions} events={eventOptions} endgameContents={endgameContents} customers={customerOptions} />
       </details>
 
-      <OrderListFilter orders={orders} games={games} workers={workers} />
+      <OrderListFilter orders={orders} games={games} workers={workers} commissionPercent={commissionPercent} />
     </div>
   );
 }

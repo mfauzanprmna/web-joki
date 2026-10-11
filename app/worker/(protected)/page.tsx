@@ -5,10 +5,8 @@ import { getCurrentWorker } from "@/lib/actions/worker-auth";
 import { STATUS_LABEL } from "@/types/game";
 import { formatRupiah } from "@/lib/format";
 import { buildOrderTitle } from "@/lib/order-display";
-import {
-    calculateWorkerCommission,
-    WORKER_COMMISSION_RATE,
-} from "@/lib/commission";
+import { calculateWorkerCommission } from "@/lib/commission";
+import { getWorkerCommissionPercent } from "@/lib/settings";
 import { getOrderNotifications } from "@/lib/order-notifications";
 import { OrderNotifications } from "@/components/OrderNotifications";
 
@@ -16,7 +14,7 @@ export default async function WorkerDashboardPage() {
     const worker = await getCurrentWorker();
     if (!worker) redirect("/worker/login");
 
-    const [orders, notifications] = await Promise.all([
+    const [orders, notifications, commissionPercent] = await Promise.all([
         // OPTIMASI: sebelumnya `include` penuh (semua kolom jokiItem/
         // jokiPaket/patchEvent/endgameContent), padahal render di bawah
         // (lihat komponen OrderCard) cuma pakai title & characterName.
@@ -46,6 +44,7 @@ export default async function WorkerDashboardPage() {
         // Independen dari query di atas -- dijalankan paralel, bukan
         // menunggu orders selesai lebih dulu.
         getOrderNotifications(worker.id),
+        getWorkerCommissionPercent(),
     ]);
 
     const activeOrders = orders.filter(
@@ -54,11 +53,11 @@ export default async function WorkerDashboardPage() {
     const doneOrders = orders.filter((o) => o.status === "SELESAI");
 
     const totalCommissionDone = doneOrders.reduce(
-        (sum, o) => sum + calculateWorkerCommission(o.totalPrice),
+        (sum, o) => sum + calculateWorkerCommission(o.totalPrice, commissionPercent),
         0,
     );
     const totalCommissionActive = activeOrders.reduce(
-        (sum, o) => sum + calculateWorkerCommission(o.totalPrice),
+        (sum, o) => sum + calculateWorkerCommission(o.totalPrice, commissionPercent),
         0,
     );
 
@@ -69,7 +68,7 @@ export default async function WorkerDashboardPage() {
             </h1>
             <p className="text-shihu-muted text-sm mb-6">
                 Pesanan yang ditugaskan ke kamu. Komisi dihitung{" "}
-                {Math.round(WORKER_COMMISSION_RATE * 100)}% dari harga tiap pesanan.
+                {commissionPercent}% dari harga tiap pesanan.
             </p>
 
             <div className="grid grid-cols-2 gap-3 mb-7">
@@ -111,7 +110,7 @@ export default async function WorkerDashboardPage() {
             ) : (
                 <div className="flex flex-col gap-2.5 mb-8">
                     {activeOrders.map((o) => (
-                        <OrderCard key={o.id} order={o} />
+                        <OrderCard key={o.id} order={o} commissionPercent={commissionPercent} />
                     ))}
                 </div>
             )}
@@ -123,7 +122,7 @@ export default async function WorkerDashboardPage() {
                     </p>
                     <div className="flex flex-col gap-2.5">
                         {doneOrders.map((o) => (
-                            <OrderCard key={o.id} order={o} />
+                            <OrderCard key={o.id} order={o} commissionPercent={commissionPercent} />
                         ))}
                     </div>
                 </>
@@ -134,7 +133,9 @@ export default async function WorkerDashboardPage() {
 
 function OrderCard({
     order,
+    commissionPercent,
 }: {
+    commissionPercent: number;
     order: {
         id: string;
         orderCode: string;
@@ -151,7 +152,7 @@ function OrderCard({
         }[];
     };
 }) {
-    const commission = calculateWorkerCommission(order.totalPrice);
+    const commission = calculateWorkerCommission(order.totalPrice, commissionPercent);
 
     return (
         <Link

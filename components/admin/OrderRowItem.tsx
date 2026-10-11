@@ -95,11 +95,19 @@ function describeLine(line: OrderLineRow): string {
   return `${title}${detailStr} — ${formatRupiah(line.calculatedPrice)}`;
 }
 
-export function OrderRowItem({ order, workers }: { order: OrderRow; workers: WorkerOption[] }) {
+export function OrderRowItem({
+  order,
+  workers,
+  commissionPercent,
+}: {
+  order: OrderRow;
+  workers: WorkerOption[];
+  commissionPercent: number;
+}) {
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
   const [assignPending, startAssignTransition] = useTransition();
-  const commission = calculateWorkerCommission(order.totalPrice);
+  const commission = calculateWorkerCommission(order.totalPrice, commissionPercent);
 
   if (!editing) {
     return (

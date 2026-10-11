@@ -2,12 +2,17 @@ import { prisma } from "@/lib/prisma";
 import { CreateWorkerForm } from "@/components/admin/CreateWorkerForm";
 import { WorkerRowItem } from "@/components/admin/WorkerRowItem";
 import { PaginatedList } from "@/components/PaginatedList";
+import Link from "next/link";
+import { getWorkerCommissionPercent } from "@/lib/settings";
 
 export default async function AdminWorkerPage() {
-    const workers = await prisma.worker.findMany({
-        include: { _count: { select: { orders: true } } },
-        orderBy: { createdAt: "asc" },
-    });
+    const [workers, commissionPercent] = await Promise.all([
+        prisma.worker.findMany({
+            include: { _count: { select: { orders: true } } },
+            orderBy: { createdAt: "asc" },
+        }),
+        getWorkerCommissionPercent(),
+    ]);
 
     return (
         <div>
@@ -15,7 +20,11 @@ export default async function AdminWorkerPage() {
             <p className="text-shihu-muted text-sm mb-6">
                 Kelola akun login untuk joki/worker. Worker yang login cuma bisa lihat & update progres pesanan
                 yang ditugaskan ke akunnya sendiri (lewat dropdown &ldquo;Worker&rdquo; di halaman Pesanan), lengkap
-                dengan info komisi 80% dari harga tiap pesanan.
+                dengan info komisi {commissionPercent}% dari harga tiap pesanan (persentasenya bisa diubah di menu{" "}
+                <Link href="/admin/setting" className="text-shihu-corona hover:underline">
+                    Setting
+                </Link>
+                ).
             </p>
 
             <details className="bg-shihu-card border border-shihu-border rounded-2xl p-5 mb-7 group" open={workers.length === 0}>

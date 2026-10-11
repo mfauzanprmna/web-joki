@@ -7,6 +7,7 @@ import { STATUS_LABEL } from "@/types/game";
 import { formatRupiah } from "@/lib/format";
 import { buildOrderTitle } from "@/lib/order-display";
 import { calculateWorkerCommission } from "@/lib/commission";
+import { getWorkerCommissionPercent } from "@/lib/settings";
 import { ensureRawatAkunScheduleSynced } from "@/lib/rawat-akun-service";
 import { enumerateDays, isoDay } from "@/lib/rawat-akun-schedule";
 
@@ -81,7 +82,7 @@ export default async function WorkerOrderProgressPage({
 
     if (!order) notFound();
 
-    const commission = calculateWorkerCommission(order.totalPrice);
+    const commission = calculateWorkerCommission(order.totalPrice, await getWorkerCommissionPercent());
 
     const lines: OrderLineData[] = order.lines.map((line) => {
         const isRawatAkun = line.jokiItem?.category.isRawatAkun ?? false;

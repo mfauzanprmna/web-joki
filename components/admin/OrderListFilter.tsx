@@ -56,7 +56,17 @@ interface OrderRow {
 const STATUS_OPTIONS = ["MENUNGGU", "DIKERJAKAN", "FINISHING", "SELESAI", "DIBATALKAN"];
 const PAGE_SIZE = 15;
 
-export function OrderListFilter({ orders, games, workers }: { orders: OrderRow[]; games: GameOption[]; workers: WorkerOption[] }) {
+export function OrderListFilter({
+    orders,
+    games,
+    workers,
+    commissionPercent,
+}: {
+    orders: OrderRow[];
+    games: GameOption[];
+    workers: WorkerOption[];
+    commissionPercent: number;
+}) {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
     const [gameFilter, setGameFilter] = useState("");
@@ -128,7 +138,7 @@ export function OrderListFilter({ orders, games, workers }: { orders: OrderRow[]
                 <>
                     <div className="flex flex-col gap-2.5">
                         {paged.map((o) => (
-                            <OrderRowItem key={o.id} order={o} workers={workers} />
+                            <OrderRowItem key={o.id} order={o} workers={workers} commissionPercent={commissionPercent} />
                         ))}
                     </div>
                     <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />

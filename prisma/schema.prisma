@@ -600,6 +600,42 @@ model JokiHistoryEntry {
   @@index([customerId])
 }
 
+/// Link kontak publik (Discord, TikTok, Instagram, dst) yang tampil di footer
+/// semua halaman customer. Dikelola admin lewat menu Setting (/admin/setting)
+/// -- bisa tambah, edit, hapus, dan atur urutannya.
+model ContactLink {
+  id        String   @id @default(cuid())
+  /// Kunci ikon preset (lihat lib/contact-icons.ts), mis. "discord",
+  /// "tiktok", "instagram". Dipakai kalau logoUrl kosong.
+  icon      String
+  /// URL logo kustom (opsional). Kalau diisi, gambar ini dipakai
+  /// MENGGANTIKAN ikon preset di atas -- untuk platform yang tidak ada di
+  /// daftar ikon preset.
+  logoUrl   String?
+  name      String
+  url       String
+  /// Urutan tampil di footer (kecil -> besar).
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([position])
+}
+
+/// Pengaturan global aplikasi -- SELALU cuma satu baris (id "singleton").
+/// Sengaja satu tabel dengan kolom per pengaturan (bukan key-value) supaya
+/// tipenya jelas & terjaga Prisma; tambah kolom baru di sini kalau nanti
+/// ada pengaturan global lain.
+model AppSetting {
+  id                      String   @id @default("singleton")
+  /// Persentase harga order yang jadi komisi worker (0-100). Dipakai
+  /// lib/commission.ts -- dihitung langsung saat ditampilkan, TIDAK
+  /// disimpan per order, jadi mengubah angka ini ikut mengubah tampilan
+  /// komisi semua order (termasuk yang sudah selesai).
+  workerCommissionPercent Int      @default(80)
+  updatedAt               DateTime @updatedAt
+}
+
 enum GameSlug {
   genshin
   wuwa

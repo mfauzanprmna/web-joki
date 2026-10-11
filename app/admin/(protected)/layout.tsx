@@ -18,6 +18,7 @@ import {
   FaUserTie,
   FaClockRotateLeft,
   FaStar,
+  FaGear,
   FaArrowLeft,
   FaRightFromBracket,
 } from "react-icons/fa6";
@@ -53,6 +54,10 @@ const NAV_GROUPS: { label: string | null; items: { href: string; label: string; 
       { href: "/admin/history-joki", label: "History joki", icon: FaClockRotateLeft },
       { href: "/admin/testimoni", label: "Testimoni", icon: FaStar },
     ],
+  },
+  {
+    label: "Pengaturan",
+    items: [{ href: "/admin/setting", label: "Setting", icon: FaGear }],
   },
 ];
 
