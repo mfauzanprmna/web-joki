@@ -3,8 +3,10 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { notifyTestimonialPublished } from "@/lib/discord-notify";
+import { requireAdminSession } from "@/lib/actions/authorization";
 
 export async function createTestimonial(formData: FormData) {
+  await requireAdminSession();
   const gameId = String(formData.get("gameId"));
   const orderId = String(formData.get("orderId") || "").trim();
   const customerName = String(formData.get("customerName"));
@@ -26,6 +28,7 @@ export async function createTestimonial(formData: FormData) {
 }
 
 export async function updateTestimonial(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const customerName = String(formData.get("customerName"));
   const rating = Number(formData.get("rating"));
@@ -60,6 +63,7 @@ export async function updateTestimonial(formData: FormData) {
 }
 
 export async function publishAllTestimonials() {
+  await requireAdminSession();
   await prisma.testimonial.updateMany({
     where: { isPublished: false },
     data: { isPublished: true },
@@ -71,6 +75,7 @@ export async function publishAllTestimonials() {
 }
 
 export async function deleteTestimonial(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   await prisma.testimonial.delete({ where: { id } });
 

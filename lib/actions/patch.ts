@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { syncRawatAkunLinesForEventChange } from "@/lib/rawat-akun-service";
+import { requireAdminSession } from "@/lib/actions/authorization";
 
 export interface PatchActionState {
   error?: string;
@@ -38,6 +39,7 @@ export async function createPatch(
   _prevState: PatchActionState | undefined,
   formData: FormData
 ): Promise<PatchActionState> {
+  await requireAdminSession();
   const gameId = String(formData.get("gameId"));
   const name = String(formData.get("name"));
   const startDate = parseDate(formData.get("startDate"));
@@ -65,6 +67,7 @@ export async function updatePatch(
   _prevState: PatchActionState | undefined,
   formData: FormData
 ): Promise<PatchActionState> {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const name = String(formData.get("name"));
   const startDate = parseDate(formData.get("startDate"));
@@ -90,6 +93,7 @@ export async function updatePatch(
 }
 
 export async function deletePatch(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   await prisma.patch.delete({ where: { id } });
 
@@ -104,6 +108,7 @@ export async function createPatchEvent(
   _prevState: PatchActionState | undefined,
   formData: FormData
 ): Promise<PatchActionState> {
+  await requireAdminSession();
   const patchId = String(formData.get("patchId"));
   const title = String(formData.get("title"));
   const description = String(formData.get("description"));
@@ -135,6 +140,7 @@ export async function updatePatchEvent(
   _prevState: PatchActionState | undefined,
   formData: FormData
 ): Promise<PatchActionState> {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const title = String(formData.get("title"));
   const description = String(formData.get("description"));
@@ -178,6 +184,7 @@ export async function updatePatchEvent(
 }
 
 export async function deletePatchEvent(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   await prisma.patchEvent.delete({ where: { id } });
 

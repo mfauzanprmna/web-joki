@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { hashPassword } from "@/lib/password";
+import { requireAdminSession } from "@/lib/actions/authorization";
 
 export interface WorkerActionState {
     error?: string;
@@ -12,6 +13,7 @@ export async function createWorker(
     _prevState: WorkerActionState | undefined,
     formData: FormData
 ): Promise<WorkerActionState> {
+    await requireAdminSession();
     const name = String(formData.get("name") || "").trim();
     const username = String(formData.get("username") || "").trim().toLowerCase();
     const password = String(formData.get("password") || "");
@@ -38,6 +40,7 @@ export async function updateWorker(
     _prevState: WorkerActionState | undefined,
     formData: FormData
 ): Promise<WorkerActionState> {
+    await requireAdminSession();
     const id = String(formData.get("id") || "").trim();
     const name = String(formData.get("name") || "").trim();
     const isActive = formData.get("isActive") === "on";
@@ -63,6 +66,7 @@ export async function updateWorker(
 }
 
 export async function deleteWorker(formData: FormData) {
+    await requireAdminSession();
     const id = String(formData.get("id") || "").trim();
     if (!id) return;
 
@@ -74,6 +78,7 @@ export async function deleteWorker(formData: FormData) {
 
 /** Menugaskan/melepas akun Worker dari sebuah Order (dropdown di baris pesanan). */
 export async function assignWorkerToOrder(formData: FormData) {
+    await requireAdminSession();
     const orderId = String(formData.get("orderId") || "").trim();
     const workerId = String(formData.get("workerId") || "").trim();
     if (!orderId) return;

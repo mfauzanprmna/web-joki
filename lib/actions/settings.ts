@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { CONTACT_ICON_KEYS } from "@/lib/contact-icons";
+import { requireAdminSession } from "@/lib/actions/authorization";
 
 export interface SettingActionState {
   error?: string;
@@ -79,6 +80,7 @@ export async function createContactLink(
   _prevState: SettingActionState | undefined,
   formData: FormData,
 ): Promise<SettingActionState> {
+  await requireAdminSession();
   const parsed = parseContactFields(formData);
   if ("error" in parsed) return { error: parsed.error };
 
@@ -100,6 +102,7 @@ export async function updateContactLink(
   _prevState: SettingActionState | undefined,
   formData: FormData,
 ): Promise<SettingActionState> {
+  await requireAdminSession();
   const id = String(formData.get("id") || "").trim();
   if (!id) return { error: "Kontak tidak ditemukan." };
 
@@ -125,6 +128,7 @@ export async function updateContactLink(
 }
 
 export async function deleteContactLink(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id") || "").trim();
   if (!id) return;
 
@@ -141,6 +145,7 @@ export async function updateWorkerCommission(
   _prevState: SettingActionState | undefined,
   formData: FormData,
 ): Promise<SettingActionState> {
+  await requireAdminSession();
   const raw = String(formData.get("percent") || "").trim();
   const percent = Number(raw);
 

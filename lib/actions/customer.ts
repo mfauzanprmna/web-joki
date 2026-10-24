@@ -3,12 +3,14 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { generateCustomerSlug } from "@/lib/customer-slug";
+import { requireAdminSession } from "@/lib/actions/authorization";
 
 /**
  * Generate publicSlug yang dijamin belum dipakai Customer lain (retry jika
  * ada collision, meski secara statistik sangat jarang terjadi).
  */
 export async function createUniqueCustomerSlug(): Promise<string> {
+  await requireAdminSession();
   for (let attempt = 0; attempt < 5; attempt++) {
     const slug = generateCustomerSlug();
     const existing = await prisma.customer.findUnique({ where: { publicSlug: slug } });
@@ -19,6 +21,7 @@ export async function createUniqueCustomerSlug(): Promise<string> {
 }
 
 export async function createCustomer(formData: FormData) {
+  await requireAdminSession();
   const name = String(formData.get("name"));
   const notes = String(formData.get("notes") || "").trim();
   const whatsappNumber = String(formData.get("whatsappNumber") || "").trim();
@@ -40,6 +43,7 @@ export async function createCustomer(formData: FormData) {
 }
 
 export async function updateCustomer(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const name = String(formData.get("name"));
   const notes = String(formData.get("notes") || "").trim();
@@ -61,6 +65,7 @@ export async function updateCustomer(formData: FormData) {
 }
 
 export async function deleteCustomer(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   await prisma.customer.delete({ where: { id } });
 

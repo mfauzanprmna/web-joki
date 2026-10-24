@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { notifyOrderProgress } from "@/lib/discord-notify";
 import { notifyOrderProgressWA } from "@/lib/whatsapp-notify";
+import { requireOrderLineAccess } from "@/lib/actions/authorization";
 
 export interface OrderLineUpdateActionState {
   error?: string;
@@ -21,6 +22,7 @@ export async function addOrderLineUpdate(
   if (!orderLineId) {
     return { error: "OrderLine tidak ditemukan." };
   }
+  await requireOrderLineAccess(orderLineId);
 
   if (!note && !screenshotUrl && !resetLocation) {
     return { error: "Isi minimal salah satu: catatan, link screenshot, atau lokasi reset." };
@@ -94,19 +96,24 @@ export async function addOrderLineUpdate(
 
 export async function deleteOrderLineUpdate(formData: FormData) {
   const id = String(formData.get("id"));
-  const orderLineId = String(formData.get("orderLineId") || "");
+  if (!id) return;
+
+  const update = await prisma.orderLineUpdate.findUnique({
+    where: { id },
+    select: { orderLineId: true },
+  });
+  if (!update) return;
+  await requireOrderLineAccess(update.orderLineId);
 
   await prisma.orderLineUpdate.delete({ where: { id } });
 
   revalidatePath("/admin/antrian");
-  if (orderLineId) {
-    const orderLine = await prisma.orderLine.findUnique({
-      where: { id: orderLineId },
-      select: { orderId: true, order: { select: { customer: { select: { publicSlug: true } } } } },
-    });
-    if (orderLine) {
-      revalidatePath(`/admin/progress/${orderLine.orderId}`);
-      revalidatePath(`/progress/${orderLine.order.customer.publicSlug}`);
-    }
+  const orderLine = await prisma.orderLine.findUnique({
+    where: { id: update.orderLineId },
+    select: { orderId: true, order: { select: { customer: { select: { publicSlug: true } } } } },
+  });
+  if (orderLine) {
+    revalidatePath(`/admin/progress/${orderLine.orderId}`);
+    revalidatePath(`/progress/${orderLine.order.customer.publicSlug}`);
   }
 }

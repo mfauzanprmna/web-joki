@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { validateJokiItemRelations } from "@/lib/joki-rules";
 import { notifyPriceListChanged } from "@/lib/discord-notify";
+import { requireAdminSession } from "@/lib/actions/authorization";
 
 // Catatan: revalidatePath("/[slug]", "page") di bawah me-revalidate SEMUA
 // halaman per-game sekaligus (/genshin, /wuwa, /neverness -- lihat
@@ -117,6 +118,7 @@ export async function createJokiItem(
   _prevState: JokiItemActionState | undefined,
   formData: FormData
 ): Promise<JokiItemActionState> {
+  await requireAdminSession();
   const gameId = String(formData.get("gameId"));
   const title = String(formData.get("title"));
   const description = String(formData.get("description"));
@@ -176,6 +178,7 @@ export async function updateJokiItem(
   _prevState: JokiItemActionState | undefined,
   formData: FormData
 ): Promise<JokiItemActionState> {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const gameId = String(formData.get("gameId"));
   const title = String(formData.get("title"));
@@ -245,6 +248,7 @@ export async function updateJokiItem(
 }
 
 export async function deleteJokiItem(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const deleted = await prisma.jokiItem.delete({
     where: { id },
@@ -261,6 +265,7 @@ export async function deleteJokiItem(formData: FormData) {
 // ---------- Kategori ----------
 
 export async function createJokiCategory(formData: FormData) {
+  await requireAdminSession();
   const gameId = String(formData.get("gameId"));
   const name = String(formData.get("name"));
   const requiresRegion = formData.get("requiresRegion") === "on";
@@ -278,6 +283,7 @@ export async function createJokiCategory(formData: FormData) {
 }
 
 export async function updateJokiCategory(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const name = String(formData.get("name"));
   const requiresRegion = formData.get("requiresRegion") === "on";
@@ -297,6 +303,7 @@ export async function updateJokiCategory(formData: FormData) {
 }
 
 export async function deleteJokiCategory(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   await prisma.jokiCategory.delete({ where: { id } });
 
@@ -307,6 +314,7 @@ export async function deleteJokiCategory(formData: FormData) {
 // ---------- Region ----------
 
 export async function createGameRegion(formData: FormData) {
+  await requireAdminSession();
   const gameId = String(formData.get("gameId"));
   const name = String(formData.get("name"));
 
@@ -317,6 +325,7 @@ export async function createGameRegion(formData: FormData) {
 }
 
 export async function updateGameRegion(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const name = String(formData.get("name"));
   const isActive = formData.get("isActive") === "on";
@@ -328,6 +337,7 @@ export async function updateGameRegion(formData: FormData) {
 }
 
 export async function deleteGameRegion(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   await prisma.gameRegion.delete({ where: { id } });
 
@@ -338,6 +348,7 @@ export async function deleteGameRegion(formData: FormData) {
 // ---------- Quest Type ----------
 
 export async function createQuestType(formData: FormData) {
+  await requireAdminSession();
   const gameId = String(formData.get("gameId"));
   const name = String(formData.get("name"));
   const isRegionSpecific = formData.get("isRegionSpecific") === "on";
@@ -351,6 +362,7 @@ export async function createQuestType(formData: FormData) {
 }
 
 export async function updateQuestType(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const name = String(formData.get("name"));
   const isRegionSpecific = formData.get("isRegionSpecific") === "on";
@@ -368,6 +380,7 @@ export async function updateQuestType(formData: FormData) {
 }
 
 export async function deleteQuestType(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   await prisma.questType.delete({ where: { id } });
 

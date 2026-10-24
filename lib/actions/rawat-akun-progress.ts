@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { dateFromIsoDay, startOfDay } from "@/lib/rawat-akun-schedule";
+import { requireDayTaskAccess, requireOrderLineAccess } from "@/lib/actions/authorization";
 
 function parseDateOnly(value: string): Date {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -38,6 +39,7 @@ export async function setDayPercent(formData: FormData) {
   const percent = Math.max(0, Math.min(100, Number(formData.get("percent") || 0)));
 
   if (!orderLineId || Number.isNaN(date.getTime())) return;
+  await requireOrderLineAccess(orderLineId);
 
   await prisma.orderLineDayProgress.upsert({
     where: { orderLineId_date: { orderLineId, date } },
@@ -61,6 +63,7 @@ export async function saveDayUpdate(
   if (!orderLineId || Number.isNaN(date.getTime())) {
     return { error: "Baris pesanan atau tanggal tidak valid." };
   }
+  await requireOrderLineAccess(orderLineId);
 
   if (screenshotUrl) {
     try {
@@ -96,6 +99,7 @@ export async function deleteDayScreenshot(formData: FormData) {
   const date = parseDayDate(formData);
   const url = String(formData.get("url") || "");
   if (!orderLineId || Number.isNaN(date.getTime())) return;
+  await requireOrderLineAccess(orderLineId);
 
   const existing = await prisma.orderLineDayProgress.findUnique({
     where: { orderLineId_date: { orderLineId, date } },
@@ -114,9 +118,9 @@ export async function deleteDayScreenshot(formData: FormData) {
 export async function updateDayTaskStatus(formData: FormData) {
   const id = String(formData.get("id") || "").trim();
   const status = String(formData.get("status") || "BELUM") as "BELUM" | "SEDANG" | "SELESAI";
-  const orderLineId = String(formData.get("orderLineId") || "").trim();
   if (!id) return;
 
+  const orderLineId = await requireDayTaskAccess(id);
   const task = await prisma.orderLineDayTask.findUnique({ where: { id } });
   if (!task) return;
 
@@ -134,7 +138,7 @@ export async function updateDayTaskStatus(formData: FormData) {
     await prisma.orderLineDayTask.update({ where: { id }, data: { note: note || null } });
   }
 
-  if (orderLineId) await revalidateForOrderLine(orderLineId);
+  await revalidateForOrderLine(orderLineId);
 }
 
 /** Tambah task checklist manual ("Kelola Checklist" -> tambah task) untuk tanggal terpilih. */
@@ -144,6 +148,7 @@ export async function addDayTask(formData: FormData) {
   const category = String(formData.get("category") || "").trim();
   const label = String(formData.get("label") || "").trim();
   if (!orderLineId || Number.isNaN(date.getTime()) || !category || !label) return;
+  await requireOrderLineAccess(orderLineId);
 
   await prisma.orderLineDayTask.create({
     data: { orderLineId, date, category, label, sourceKey: null },
@@ -154,9 +159,9 @@ export async function addDayTask(formData: FormData) {
 
 export async function deleteDayTask(formData: FormData) {
   const id = String(formData.get("id") || "").trim();
-  const orderLineId = String(formData.get("orderLineId") || "").trim();
   if (!id) return;
 
+  const authorizedOrderLineId = await requireDayTaskAccess(id);
   const task = await prisma.orderLineDayTask.findUnique({ where: { id } });
   if (!task) return;
 
@@ -168,5 +173,5 @@ export async function deleteDayTask(formData: FormData) {
     await prisma.orderLineDayTask.delete({ where: { id } });
   }
 
-  if (orderLineId) await revalidateForOrderLine(orderLineId);
+  await revalidateForOrderLine(authorizedOrderLineId);
 }

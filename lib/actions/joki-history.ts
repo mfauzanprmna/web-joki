@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { createUniqueCustomerSlug } from "./customer";
+import { requireAdminSession } from "@/lib/actions/authorization";
 
 export interface JokiHistoryActionState {
   error?: string;
@@ -34,6 +35,7 @@ export async function createJokiHistoryEntry(
   _prevState: JokiHistoryActionState | undefined,
   formData: FormData
 ): Promise<JokiHistoryActionState> {
+  await requireAdminSession();
   const gameId = String(formData.get("gameId") || "").trim();
   const title = String(formData.get("title") || "").trim();
   const customerId = String(formData.get("customerId") || "").trim();
@@ -95,6 +97,7 @@ export async function createJokiHistoryEntry(
 }
 
 export async function deleteJokiHistoryEntry(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id") || "").trim();
   if (!id) return;
 

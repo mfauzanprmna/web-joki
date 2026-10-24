@@ -3,8 +3,10 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import type { GameSlug } from "@prisma/client";
+import { requireAdminSession } from "@/lib/actions/authorization";
 
 export async function createGame(formData: FormData) {
+  await requireAdminSession();
   const slug = String(formData.get("slug")) as GameSlug;
   const name = String(formData.get("name"));
   const tagline = String(formData.get("tagline"));
@@ -20,6 +22,7 @@ export async function createGame(formData: FormData) {
 }
 
 export async function updateGame(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const name = String(formData.get("name"));
   const tagline = String(formData.get("tagline"));
@@ -36,6 +39,7 @@ export async function updateGame(formData: FormData) {
 }
 
 export async function deleteGame(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   await prisma.game.delete({ where: { id } });
 

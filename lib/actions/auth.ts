@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { createSessionToken, isSessionSecretConfigured } from "@/lib/session-token";
 
 const ADMIN_COOKIE = "shihu_admin_session";
 
@@ -16,12 +17,16 @@ export async function loginAction(
     return { error: "ADMIN_PASSWORD belum diset di environment server." };
   }
 
-  if (password !== expected) {
+  if (!isSessionSecretConfigured()) {
+    return { error: "SESSION_SECRET wajib diisi minimal 32 byte di environment server." };
+  }
+
+  if (typeof password !== "string" || password.length > 1024 || password !== expected) {
     return { error: "Password salah. Coba lagi." };
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(ADMIN_COOKIE, "authenticated", {
+  cookieStore.set(ADMIN_COOKIE, await createSessionToken("admin", 60 * 60 * 8), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

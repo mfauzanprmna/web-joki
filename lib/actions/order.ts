@@ -8,6 +8,7 @@ import { createUniqueCustomerSlug } from "./customer";
 import { notifyOrderCreated, notifyOrderProgress } from "@/lib/discord-notify";
 import { notifyOrderCreatedWA, notifyOrderProgressWA } from "@/lib/whatsapp-notify";
 import { isPatchEventLive } from "@/lib/patch-schedule";
+import { requireAdminSession } from "@/lib/actions/authorization";
 
 export interface OrderActionState {
   error?: string;
@@ -136,6 +137,7 @@ export async function createOrder(
   _prevState: OrderActionState | undefined,
   formData: FormData
 ): Promise<OrderActionState> {
+  await requireAdminSession();
   const customerId = String(formData.get("customerId") || "").trim();
   const newCustomerName = String(formData.get("newCustomerName") || "").trim();
 
@@ -627,6 +629,7 @@ export async function createOrder(
 }
 
 export async function updateOrder(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const jokerName = String(formData.get("jokerName") || "").trim();
   const status = String(formData.get("status"));
@@ -689,6 +692,7 @@ export async function updateOrder(formData: FormData) {
 }
 
 export async function deleteOrder(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   await prisma.order.delete({ where: { id } });
 

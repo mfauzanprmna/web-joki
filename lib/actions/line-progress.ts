@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireOrderLineAccess } from "@/lib/actions/authorization";
 
 async function revalidateForOrderLine(orderLineId: string) {
   const line = await prisma.orderLine.findUnique({
@@ -53,6 +54,7 @@ export async function toggleOrderLineCompletion(formData: FormData) {
   const orderLineId = String(formData.get("orderLineId") || "").trim();
   const isCompleted = String(formData.get("isCompleted") || "false") === "true";
   if (!orderLineId) return;
+  await requireOrderLineAccess(orderLineId);
 
   await prisma.orderLine.update({
     where: { id: orderLineId },
@@ -66,6 +68,7 @@ export async function updateExplorationProgress(formData: FormData) {
   const orderLineId = String(formData.get("orderLineId") || "").trim();
   const percent = Math.max(0, Math.min(100, Number(formData.get("percent") || 0)));
   if (!orderLineId) return;
+  await requireOrderLineAccess(orderLineId);
 
   await prisma.orderLine.update({
     where: { id: orderLineId },
@@ -88,6 +91,7 @@ export async function updateCountProgress(formData: FormData) {
   const target = Math.max(0, Number(formData.get("target") || 0));
   const current = Math.max(0, Math.min(target || Number.MAX_SAFE_INTEGER, Number(formData.get("current") || 0)));
   if (!orderLineId) return;
+  await requireOrderLineAccess(orderLineId);
 
   await prisma.orderLine.update({
     where: { id: orderLineId },

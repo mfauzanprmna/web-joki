@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import type { ResetCycle } from "@prisma/client";
+import { requireAdminSession } from "@/lib/actions/authorization";
 
 export interface EndgameActionState {
   error?: string;
@@ -18,6 +19,7 @@ export async function createEndgameContent(
   _prevState: EndgameActionState | undefined,
   formData: FormData
 ): Promise<EndgameActionState> {
+  await requireAdminSession();
   const gameId = String(formData.get("gameId"));
   const title = String(formData.get("title"));
   const description = String(formData.get("description"));
@@ -42,6 +44,7 @@ export async function updateEndgameContent(
   _prevState: EndgameActionState | undefined,
   formData: FormData
 ): Promise<EndgameActionState> {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const title = String(formData.get("title"));
   const description = String(formData.get("description"));
@@ -65,6 +68,7 @@ export async function updateEndgameContent(
 }
 
 export async function deleteEndgameContent(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   await prisma.endgameContent.delete({ where: { id } });
 

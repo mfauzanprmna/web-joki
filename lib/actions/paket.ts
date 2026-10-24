@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { notifyPriceListChanged } from "@/lib/discord-notify";
+import { requireAdminSession } from "@/lib/actions/authorization";
 
 export interface PaketActionState {
   error?: string;
@@ -12,6 +13,7 @@ export async function createJokiPaket(
   _prevState: PaketActionState | undefined,
   formData: FormData
 ): Promise<PaketActionState> {
+  await requireAdminSession();
   const gameId = String(formData.get("gameId"));
   const title = String(formData.get("title"));
   const description = String(formData.get("description"));
@@ -73,6 +75,7 @@ export async function updateJokiPaket(
   _prevState: PaketActionState | undefined,
   formData: FormData
 ): Promise<PaketActionState> {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const title = String(formData.get("title"));
   const description = String(formData.get("description"));
@@ -128,6 +131,7 @@ export async function updateJokiPaket(
 }
 
 export async function deleteJokiPaket(formData: FormData) {
+  await requireAdminSession();
   const id = String(formData.get("id"));
   const deleted = await prisma.jokiPaket.delete({
     where: { id },

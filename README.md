@@ -35,7 +35,7 @@ Website joki game untuk **Genshin Impact**, **Wuthering Waves**, dan **Neverness
 - **TypeScript**
 - **Tailwind CSS 3**
 - **Prisma ORM 5** → **PostgreSQL** (didesain untuk [Neon](https://neon.tech), tapi provider Postgres lain juga bisa)
-- Auth admin sederhana berbasis cookie + middleware (tanpa library eksternal)
+- Auth admin dan worker berbasis cookie bertanda tangan HMAC + middleware; server actions juga memvalidasi role dan kepemilikan order
 
 ## Setup lokal
 
@@ -65,7 +65,16 @@ cp .env.example .env
 DATABASE_URL="postgresql://<user>:<password>@<endpoint>-pooler.<region>.aws.neon.tech/<dbname>?sslmode=require"
 DIRECT_URL="postgresql://<user>:<password>@<endpoint>.<region>.aws.neon.tech/<dbname>?sslmode=require"
 ADMIN_PASSWORD="ganti-dengan-password-kuat"
+SESSION_SECRET="buat-random-minimal-32-byte"
 ```
+
+Generate `SESSION_SECRET` unik (jangan gunakan nilai contoh) dengan:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Mengganti `SESSION_SECRET` akan membatalkan semua sesi admin dan worker yang sedang aktif.
 
 ### 4. Push schema ke database & isi data awal
 
@@ -88,13 +97,14 @@ Buka [http://localhost:3000](http://localhost:3000) untuk tampilan customer, dan
 
 1. Push project ini ke repository GitHub/GitLab/Bitbucket
 2. Buka [vercel.com](https://vercel.com) → **Add New Project** → import repository tadi
-3. Di step **Environment Variables**, tambahkan tiga variabel yang sama seperti di `.env`:
+3. Di step **Environment Variables**, tambahkan variabel yang sama seperti di `.env`:
    - `DATABASE_URL`
    - `DIRECT_URL`
    - `ADMIN_PASSWORD`
+   - `SESSION_SECRET`
 4. Klik **Deploy**
 
-Vercel otomatis menjalankan `npm install` (yang men-trigger `prisma generate` lewat script `postinstall`) lalu `npm run build` (yang juga menjalankan `prisma generate` sebagai jaga-jaga). Schema database **tidak** otomatis ter-push saat deploy — jalankan `npm run db:push` dan `npm run db:seed` sekali dari komputer lokal (dengan `.env` yang menunjuk ke database Neon yang sama) sebelum atau setelah deploy pertama.
+Vercel otomatis menjalankan `npm install` (yang men-trigger `prisma generate` lewat script `postinstall`) lalu `npm run build` (yang juga menjalankan `prisma generate` sebagai jaga-jaga). Schema database **tidak** otomatis ter-push saat deploy — jalankan `npm run db:push` dan `npm run db:seed` sekali dari komputer lokal (dengan `.env` yang menunjuk ke database Neon yang sama) sebelum atau setelah deploy pertama. Untuk pembaruan schema berikutnya (termasuk indeks daftar order worker), jalankan `npm run db:push` ke database target sebelum deploy versi baru.
 
 Setelah deploy selesai, situs bisa diakses di domain `*.vercel.app` yang diberikan Vercel (atau domain custom jika sudah dihubungkan).
 

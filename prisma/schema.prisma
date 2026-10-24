@@ -394,7 +394,7 @@ model Order {
   @@index([customerId])
   @@index([accountId])
   @@index([createdAt])
-  @@index([workerId])
+  @@index([workerId, status, createdAt(sort: Desc)])
 }
 
 /// Satu baris dalam Order: merujuk ke SATU Joki Item ATAU SATU Paket Joki
