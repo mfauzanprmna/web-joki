@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { syncRawatAkunLinesForEventChange } from "@/lib/rawat-akun-service";
 
 export interface PatchActionState {
   error?: string;
@@ -11,6 +12,24 @@ function parseDate(value: FormDataEntryValue | null): Date | null {
   if (!value) return null;
   const d = new Date(String(value));
   return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Masukkan event yang baru dibuat / berubah tanggalnya ke checklist order
+ * Rawat Akun yang SUDAH berjalan (lihat syncRawatAkunLinesForEventChange).
+ * Event-nya sendiri sudah tersimpan saat ini dipanggil, jadi kegagalan di
+ * sini tidak boleh membuat action terlihat gagal -- cukup dicatat; baris
+ * yang gagal disinkronkan otomatis dicoba lagi saat halamannya dibuka.
+ */
+async function applyEventToExistingOrders(gameId: string, from: Date, to: Date) {
+  try {
+    const count = await syncRawatAkunLinesForEventChange({ gameId, from, to });
+    if (count > 0) {
+      revalidatePath("/progress/[slug]", "page");
+    }
+  } catch (err) {
+    console.error("Gagal memasukkan event ke order Rawat Akun yang sudah ada:", err);
+  }
 }
 
 // ---------- Patch ----------
@@ -99,9 +118,12 @@ export async function createPatchEvent(
     return { error: "Tanggal selesai event harus setelah tanggal mulai." };
   }
 
-  await prisma.patchEvent.create({
+  const created = await prisma.patchEvent.create({
     data: { patchId, title, description, priceRupiah, startDate, endDate },
+    select: { patch: { select: { gameId: true } } },
   });
+
+  await applyEventToExistingOrders(created.patch.gameId, startDate, endDate);
 
   revalidatePath("/admin/patch");
   revalidatePath("/[slug]", "page");
@@ -127,10 +149,27 @@ export async function updatePatchEvent(
     return { error: "Tanggal selesai event harus setelah tanggal mulai." };
   }
 
-  await prisma.patchEvent.update({
+  const before = await prisma.patchEvent.findUnique({
+    where: { id },
+    select: { startDate: true, endDate: true },
+  });
+
+  const updated = await prisma.patchEvent.update({
     where: { id },
     data: { title, description, priceRupiah, startDate, endDate },
+    select: { patch: { select: { gameId: true } } },
   });
+
+  // Selalu sinkronkan ulang order yang kena, walau tanggal tidak berubah:
+  // sinkron ulang itu idempotent (cuma menambah task yang belum ada), jadi
+  // murah kalau tidak ada yang perlu ditambah -- dan sekaligus jadi cara
+  // "menyusulkan" event yang dulu dibuat sebelum fitur ini ada ke order
+  // lama (cukup simpan ulang event-nya). Rentang yang dicek gabungan tanggal
+  // lama + baru, supaya perpanjangan ke arah manapun tercakup. Perhatikan:
+  // judul yang diubah TIDAK menimpa label task yang sudah terlanjur dibuat.
+  const from = before && before.startDate < startDate ? before.startDate : startDate;
+  const to = before && before.endDate > endDate ? before.endDate : endDate;
+  await applyEventToExistingOrders(updated.patch.gameId, from, to);
 
   revalidatePath("/admin/patch");
   revalidatePath("/[slug]", "page");

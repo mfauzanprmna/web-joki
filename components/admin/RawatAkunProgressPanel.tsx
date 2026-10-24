@@ -207,17 +207,34 @@ export function RawatAkunProgressPanel({ orderLineId, days, tasks }: RawatAkunPr
                   <label className="block text-[11px] text-shihu-muted mb-1">Screenshot (opsional, link URL)</label>
                   <div className="flex flex-wrap gap-2 mb-2">
                     {selectedDay.screenshotUrls.map((url) => (
-                      <div key={url} className="relative w-16 h-16 rounded-lg overflow-hidden border border-shihu-border group">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={url} alt="Screenshot" className="w-full h-full object-cover" />
+                      <div key={url} className="relative w-16 h-16 rounded-lg overflow-hidden border border-shihu-border hover:border-shihu-corona/50 transition-colors">
+                        {/* Klik gambar = buka versi penuh di tab baru (sama seperti
+                            screenshot di item lain). Tombol hapus sengaja cuma "x"
+                            kecil di pojok -- dulu overlay "Hapus" menutupi SELURUH
+                            thumbnail (muncul saat hover), jadi klik gambar malah
+                            menghapus, dan di HP (tanpa hover) tap pada gambar bisa
+                            langsung menghapusnya. */}
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Buka gambar penuh"
+                          aria-label="Buka gambar penuh di tab baru"
+                          className="block w-full h-full"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt="Screenshot" className="w-full h-full object-cover" />
+                        </a>
                         <button
                           type="submit"
                           formAction={deleteDayScreenshot}
                           name="url"
                           value={url}
-                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 text-white text-[10px] flex items-center justify-center transition-opacity"
+                          title="Hapus screenshot"
+                          aria-label="Hapus screenshot"
+                          className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/70 hover:bg-red-500 text-white text-[13px] leading-none flex items-center justify-center transition-colors"
                         >
-                          Hapus
+                          ×
                         </button>
                       </div>
                     ))}

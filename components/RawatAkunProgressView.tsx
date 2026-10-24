@@ -145,13 +145,21 @@ export function RawatAkunProgressView({ days, tasks }: RawatAkunProgressViewProp
                   <p className="text-[11px] text-shihu-muted mb-1">Screenshot</p>
                   <div className="flex flex-wrap gap-2">
                     {selectedDay.screenshotUrls.map((url) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <a
                         key={url}
-                        src={url}
-                        alt="Screenshot progres"
-                        className="w-16 h-16 rounded-lg object-cover border border-shihu-border"
-                      />
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Buka gambar penuh"
+                        aria-label="Buka gambar penuh di tab baru"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={url}
+                          alt="Screenshot progres"
+                          className="w-16 h-16 rounded-lg object-cover border border-shihu-border hover:border-shihu-corona/50 transition-colors"
+                        />
+                      </a>
                     ))}
                   </div>
                 </div>

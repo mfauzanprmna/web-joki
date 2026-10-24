@@ -1,3 +1,4 @@
+import type { OrderStatus } from "@prisma/client";
 import { prisma } from "./prisma";
 import { computeRawatAkunPeriod, buildAutoTasks, enumerateDays, isoDay, startOfDay } from "./rawat-akun-schedule";
 
@@ -174,4 +175,94 @@ export async function ensureRawatAkunScheduleSynced(orderLineId: string): Promis
     where: { id: orderLineId },
     data: { scheduleSyncedAt: new Date() },
   });
+}
+
+
+const ACTIVE_ORDER_STATUSES: OrderStatus[] = ["MENUNGGU", "DIKERJAKAN", "FINISHING"];
+const DAY_MS = 24 * 60 * 60 * 1000;
+// Batas sinkron paralel -- tiap sinkron menjalankan beberapa query, jadi
+// jangan semua baris sekaligus supaya connection pool database tidak habis.
+const RESYNC_CONCURRENCY = 5;
+
+/**
+ * Dipanggil saat sebuah PatchEvent DITAMBAH atau tanggalnya DIUBAH (lihat
+ * createPatchEvent/updatePatchEvent di lib/actions/patch.ts), supaya event
+ * tsb langsung masuk ke checklist order Rawat Akun yang SUDAH berjalan.
+ *
+ * Kenapa perlu: ensureRawatAkunScheduleSynced di atas sengaja cuma jalan
+ * sekali per baris (guard scheduleSyncedAt, demi performa), jadi event yang
+ * baru dibuat setelah itu tidak akan pernah ikut masuk ke baris yang sudah
+ * tersinkron. Fungsi ini mereset guard-nya KHUSUS untuk baris yang relevan
+ * lalu menyinkronkannya ulang. Sinkron ulang itu idempotent: cuma
+ * menambah task yang belum ada -- status/catatan task yang sudah ada TIDAK
+ * berubah.
+ *
+ * Baris yang diproses (semua syarat harus terpenuhi):
+ *  - Joki Item-nya kategori Rawat Akun, includeEvent aktif, game yang sama
+ *    dengan event.
+ *  - Periode baris (startDate..endDate) overlap dengan tanggal event.
+ *  - Order-nya masih aktif (MENUNGGU/DIKERJAKAN/FINISHING) dan barisnya
+ *    belum ditandai selesai -- order yang sudah selesai tidak diutak-atik
+ *    supaya riwayatnya tidak tiba-tiba punya task baru yang kosong.
+ *  - Baris yang BELUM pernah tersinkron dilewati: begitu pertama kali
+ *    dibuka, sinkron pertamanya otomatis sudah memuat event ini.
+ *
+ * Rentang tanggal dilebarkan 1 hari di kedua sisi karena penyimpanan
+ * tanggal & perbandingan hari di sync memakai potongan jam yang berbeda --
+ * kelebihan pilih cuma berarti satu sinkron ulang yang tidak mengubah apa
+ * pun, sedangkan kekurangan pilih berarti event terlewat.
+ *
+ * Reset guard dilakukan LEBIH DULU untuk semua baris (satu query) sebelum
+ * sinkron langsung dijalankan: kalau sinkron langsungnya gagal/timeout,
+ * baris tetap akan disinkronkan lagi otomatis saat halamannya dibuka
+ * berikutnya. Return: jumlah baris yang diproses.
+ */
+export async function syncRawatAkunLinesForEventChange(params: {
+  gameId: string;
+  from: Date;
+  to: Date;
+}): Promise<number> {
+  const windowStart = new Date(params.from.getTime() - DAY_MS);
+  const windowEnd = new Date(params.to.getTime() + DAY_MS);
+
+  const lines = await prisma.orderLine.findMany({
+    where: {
+      isCompleted: false,
+      scheduleSyncedAt: { not: null },
+      startDate: { lte: windowEnd },
+      endDate: { gte: windowStart },
+      order: { status: { in: ACTIVE_ORDER_STATUSES } },
+      jokiItem: {
+        gameId: params.gameId,
+        includeEvent: true,
+        category: { isRawatAkun: true },
+      },
+    },
+    select: { id: true },
+  });
+
+  if (lines.length === 0) return 0;
+  const ids = lines.map((l) => l.id);
+
+  await prisma.orderLine.updateMany({
+    where: { id: { in: ids } },
+    data: { scheduleSyncedAt: null },
+  });
+
+  for (let i = 0; i < ids.length; i += RESYNC_CONCURRENCY) {
+    const chunk = ids.slice(i, i + RESYNC_CONCURRENCY);
+    await Promise.all(
+      chunk.map(async (id) => {
+        try {
+          await ensureRawatAkunScheduleSynced(id);
+        } catch (err) {
+          // Tidak dilempar: guard sudah direset di atas, jadi baris ini
+          // tetap akan dicoba lagi otomatis di kunjungan halaman berikutnya.
+          console.error(`Gagal sinkron ulang Rawat Akun untuk baris ${id}:`, err);
+        }
+      }),
+    );
+  }
+
+  return ids.length;
 }
