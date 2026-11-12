@@ -125,11 +125,11 @@ export interface AutoTaskDef {
   sourceKey: string;
 }
 
-const WEEKLY_CYCLE_DAYS: Partial<Record<string, number>> = {
+const WEEKLY_CYCLE_DAYS: Partial<Record<EndgameContentForSchedule["resetCycle"], number>> = {
   MINGGU_1: 7,
   MINGGU_2: 14,
   MINGGU_3: 21,
-  MiNGGU_4: 28,
+  MINGGU_4: 28,
 };
 
 /**
