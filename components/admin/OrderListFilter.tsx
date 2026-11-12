@@ -56,6 +56,8 @@ interface OrderRow {
 const STATUS_OPTIONS = ["MENUNGGU", "DIKERJAKAN", "FINISHING", "SELESAI", "DIBATALKAN"];
 const PAGE_SIZE = 15;
 
+type OrderTab = "unfinished" | "completed";
+
 export function OrderListFilter({
     orders,
     games,
@@ -67,6 +69,7 @@ export function OrderListFilter({
     workers: WorkerOption[];
     commissionPercent: number;
 }) {
+    const [activeTab, setActiveTab] = useState<OrderTab>("unfinished");
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
     const [gameFilter, setGameFilter] = useState("");
@@ -75,6 +78,7 @@ export function OrderListFilter({
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
         return orders.filter((o) => {
+            if ((o.status === "SELESAI") !== (activeTab === "completed")) return false;
             if (statusFilter && o.status !== statusFilter) return false;
             if (gameFilter && o.game.id !== gameFilter) return false;
             if (!q) return true;
@@ -89,17 +93,62 @@ export function OrderListFilter({
                 .toLowerCase();
             return haystack.includes(q);
         });
-    }, [orders, search, statusFilter, gameFilter]);
+    }, [orders, search, statusFilter, gameFilter, activeTab]);
 
     useEffect(() => {
         setPage(1);
-    }, [search, statusFilter, gameFilter]);
+    }, [search, statusFilter, gameFilter, activeTab]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const completedCount = orders.filter((order) => order.status === "SELESAI").length;
+    const unfinishedCount = orders.length - completedCount;
+
+    function selectTab(tab: OrderTab) {
+        setActiveTab(tab);
+        if (tab === "completed") {
+            setStatusFilter("SELESAI");
+        } else if (statusFilter === "SELESAI") {
+            setStatusFilter("");
+        }
+    }
+
+    function selectStatus(status: string) {
+        setStatusFilter(status);
+        if (status === "SELESAI") {
+            setActiveTab("completed");
+        } else if (status) {
+            setActiveTab("unfinished");
+        }
+    }
 
     return (
         <div className="flex flex-col gap-3">
+            <div role="tablist" aria-label="Status penyelesaian pesanan" className="flex gap-2">
+                {([
+                    { key: "unfinished", label: "Belum selesai", count: unfinishedCount },
+                    { key: "completed", label: "Sudah selesai", count: completedCount },
+                ] as const).map((tab) => (
+                    <button
+                        key={tab.key}
+                        id={`order-tab-${tab.key}`}
+                        type="button"
+                        role="tab"
+                        aria-selected={activeTab === tab.key}
+                        aria-controls="order-tab-panel"
+                        onClick={() => selectTab(tab.key)}
+                        className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-display font-semibold transition-colors ${
+                            activeTab === tab.key
+                                ? "border-shihu-corona/40 bg-shihu-corona/15 text-shihu-corona"
+                                : "border-shihu-border text-shihu-muted hover:bg-[rgb(var(--admin-panel-soft))]"
+                        }`}
+                    >
+                        {tab.label}
+                        <span className="text-[10px] tabular-nums opacity-75">{tab.count}</span>
+                    </button>
+                ))}
+            </div>
+
             <div className="flex flex-wrap gap-2">
                 <input
                     value={search}
@@ -115,7 +164,7 @@ export function OrderListFilter({
                         </option>
                     ))}
                 </select>
-                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="admin-input !w-auto">
+                <select value={statusFilter} onChange={(e) => selectStatus(e.target.value)} className="admin-input !w-auto">
                     <option value="">Semua status</option>
                     {STATUS_OPTIONS.map((s) => (
                         <option key={s} value={s}>
@@ -125,25 +174,29 @@ export function OrderListFilter({
                 </select>
             </div>
 
-            <p className="text-shihu-faint text-xs">
-                Menampilkan {filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} dari {filtered.length} pesanan
-                {filtered.length !== orders.length && ` (total ${orders.length})`}
-            </p>
+            <div id="order-tab-panel" role="tabpanel" aria-labelledby={`order-tab-${activeTab}`}>
+                <p className="text-shihu-faint text-xs mb-3">
+                    Menampilkan {filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} dari {filtered.length} pesanan
+                    {filtered.length !== orders.length && ` (total ${orders.length})`}
+                </p>
 
-            {filtered.length === 0 ? (
-                <div className="bg-shihu-card border border-shihu-border rounded-2xl p-8 text-center">
-                    <p className="text-shihu-muted text-sm">Tidak ada pesanan yang cocok dengan filter.</p>
-                </div>
-            ) : (
-                <>
-                    <div className="flex flex-col gap-2.5">
-                        {paged.map((o) => (
-                            <OrderRowItem key={o.id} order={o} workers={workers} commissionPercent={commissionPercent} />
-                        ))}
+                {filtered.length === 0 ? (
+                    <div className="bg-shihu-card border border-shihu-border rounded-2xl p-8 text-center">
+                        <p className="text-shihu-muted text-sm">
+                            {activeTab === "completed" ? "Belum ada pesanan yang selesai." : "Tidak ada pesanan belum selesai yang cocok dengan filter."}
+                        </p>
                     </div>
-                    <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-                </>
-            )}
+                ) : (
+                    <>
+                        <div className="flex flex-col gap-2.5">
+                            {paged.map((o) => (
+                                <OrderRowItem key={o.id} order={o} workers={workers} commissionPercent={commissionPercent} />
+                            ))}
+                        </div>
+                        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                    </>
+                )}
+            </div>
         </div>
     );
 }

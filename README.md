@@ -66,6 +66,10 @@ DATABASE_URL="postgresql://<user>:<password>@<endpoint>-pooler.<region>.aws.neon
 DIRECT_URL="postgresql://<user>:<password>@<endpoint>.<region>.aws.neon.tech/<dbname>?sslmode=require"
 ADMIN_PASSWORD="ganti-dengan-password-kuat"
 SESSION_SECRET="buat-random-minimal-32-byte"
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=""
+VAPID_PRIVATE_KEY=""
+VAPID_SUBJECT="mailto:admin@shihuservice.com"
+CRON_SECRET="buat-random-minimal-32-byte"
 ```
 
 Generate `SESSION_SECRET` unik (jangan gunakan nilai contoh) dengan:
@@ -75,6 +79,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 Mengganti `SESSION_SECRET` akan membatalkan semua sesi admin dan worker yang sedang aktif.
+
+Push notification admin memakai pasangan VAPID (buat dengan `npx web-push generate-vapid-keys`) dan `CRON_SECRET` acak minimal 32 karakter. Push berjalan melalui cron harian Vercel, sehingga perangkat perlu mengizinkan notifikasi dan server harus memiliki semua variabel tersebut.
 
 ### 4. Push schema ke database & isi data awal
 
@@ -102,9 +108,15 @@ Buka [http://localhost:3000](http://localhost:3000) untuk tampilan customer, dan
    - `DIRECT_URL`
    - `ADMIN_PASSWORD`
    - `SESSION_SECRET`
+   - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
+   - `VAPID_PRIVATE_KEY`
+   - `VAPID_SUBJECT`
+   - `CRON_SECRET`
 4. Klik **Deploy**
 
-Vercel otomatis menjalankan `npm install` (yang men-trigger `prisma generate` lewat script `postinstall`) lalu `npm run build` (yang juga menjalankan `prisma generate` sebagai jaga-jaga). Schema database **tidak** otomatis ter-push saat deploy — jalankan `npm run db:push` dan `npm run db:seed` sekali dari komputer lokal (dengan `.env` yang menunjuk ke database Neon yang sama) sebelum atau setelah deploy pertama. Untuk pembaruan schema berikutnya (termasuk indeks daftar order worker), jalankan `npm run db:push` ke database target sebelum deploy versi baru.
+Vercel otomatis menjalankan `npm install` (yang men-trigger `prisma generate` lewat script `postinstall`) lalu `npm run build` (yang juga menjalankan `prisma generate` sebagai jaga-jaga). Schema database **tidak** otomatis ter-push saat deploy — jalankan `npm run db:push` dan `npm run db:seed` sekali dari komputer lokal (dengan `.env` yang menunjuk ke database Neon yang sama) sebelum atau setelah deploy pertama. Untuk pembaruan schema berikutnya (termasuk tabel langganan dan riwayat push), jalankan `npm run db:push` ke database target sebelum deploy versi baru.
+
+Notifikasi pengerjaan menampilkan tenggat mulai H-3, dengan tenggat terlewat di tab tersendiri. Di dashboard admin, aktifkan **push di perangkat ini** untuk mendaftarkan perangkat/browser. `vercel.json` menjalankan endpoint pengirim setiap hari pukul 07.00 WIB; perangkat menerima push H-3 jika browser mendukung Web Push dan izin notifikasi diberikan. Di iPhone/iPad, situs harus ditambahkan ke Home Screen untuk mengaktifkan push. Perubahan berikutnya pada jadwal otomatis memerlukan cron provider setara jika tidak di-host di Vercel.
 
 Setelah deploy selesai, situs bisa diakses di domain `*.vercel.app` yang diberikan Vercel (atau domain custom jika sudah dihubungkan).
 

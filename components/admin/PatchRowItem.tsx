@@ -5,7 +5,7 @@ import { updatePatch, deletePatch, createPatchEvent, type PatchActionState } fro
 import { isPatchOngoing } from "@/lib/patch-schedule";
 import { toDateTimeLocalValue } from "@/lib/date-input";
 import { PatchEventRowItem } from "./PatchEventRowItem";
-import { FaPen, FaFloppyDisk, FaXmark, FaTrash, FaPlus } from "react-icons/fa6";
+import { FaPen, FaFloppyDisk, FaXmark, FaTrash, FaPlus, FaChevronDown } from "react-icons/fa6";
 
 interface PatchEventData {
   id: string;
@@ -28,6 +28,7 @@ interface PatchRow {
 export function PatchRowItem({ patch }: { patch: PatchRow }) {
   const [editing, setEditing] = useState(false);
   const [showEventForm, setShowEventForm] = useState(false);
+  const [eventsOpen, setEventsOpen] = useState(false);
   const [state, formAction, pending] = useActionState<PatchActionState | undefined, FormData>(
     updatePatch,
     undefined
@@ -169,29 +170,45 @@ export function PatchRowItem({ patch }: { patch: PatchRow }) {
         </form>
       )}
 
-      <div className="pl-4 border-l-2 border-shihu-border flex flex-col gap-2">
-        <p className="font-display text-[11.5px] font-semibold text-shihu-muted">
-          Event dalam patch ini ({patch.events.length})
-        </p>
-
-        {patch.events.map((ev) => (
-          <PatchEventRowItem key={ev.id} event={ev} />
-        ))}
-
-        {showEventForm ? (
-          <CreateEventInlineForm
-            patchId={patch.id}
-            onDone={() => setShowEventForm(false)}
+      <div>
+        <button
+          type="button"
+          aria-expanded={eventsOpen}
+          aria-controls={`patch-events-${patch.id}`}
+          onClick={() => setEventsOpen((open) => !open)}
+          className="flex w-full items-center justify-between gap-3 rounded-xl border border-shihu-borderSoft px-3 py-2 text-left text-xs font-display font-medium text-shihu-muted hover:bg-[rgb(var(--admin-panel-soft))] hover:text-shihu-text"
+        >
+          <span>Event dalam patch ini ({patch.events.length})</span>
+          <FaChevronDown
+            size={10}
+            aria-hidden="true"
+            className={`shrink-0 transition-transform ${eventsOpen ? "rotate-180" : ""}`}
           />
-        ) : (
-          <button
-            onClick={() => setShowEventForm(true)}
-            className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display font-medium text-[11px] border border-dashed border-shihu-borderSoft text-shihu-muted hover:text-shihu-text hover:border-shihu-corona/50"
-          >
-            <FaPlus size={9} aria-hidden="true" />
-            Tambah event
-          </button>
-        )}
+        </button>
+
+        <div
+          id={`patch-events-${patch.id}`}
+          className={eventsOpen ? "mt-2 flex flex-col gap-2" : "hidden"}
+        >
+          {patch.events.map((ev) => (
+            <PatchEventRowItem key={ev.id} event={ev} />
+          ))}
+
+          {showEventForm ? (
+            <CreateEventInlineForm
+              patchId={patch.id}
+              onDone={() => setShowEventForm(false)}
+            />
+          ) : (
+            <button
+              onClick={() => setShowEventForm(true)}
+              className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display font-medium text-[11px] border border-dashed border-shihu-borderSoft text-shihu-muted hover:text-shihu-text hover:border-shihu-corona/50"
+            >
+              <FaPlus size={9} aria-hidden="true" />
+              Tambah event
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

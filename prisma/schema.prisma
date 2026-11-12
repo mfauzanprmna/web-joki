@@ -636,6 +636,27 @@ model AppSetting {
   updatedAt               DateTime @updatedAt
 }
 
+model AdminPushSubscription {
+  id         String               @id @default(cuid())
+  endpoint   String               @unique
+  p256dh     String
+  auth       String
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+  deliveries DevicePushDelivery[]
+}
+
+model DevicePushDelivery {
+  id              String                @id @default(cuid())
+  subscriptionId  String
+  notificationKey String
+  sentAt          DateTime              @default(now())
+  subscription    AdminPushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, notificationKey])
+  @@index([sentAt])
+}
+
 enum GameSlug {
   genshin
   wuwa

@@ -64,6 +64,8 @@ export function JokiItemListFilter({
     const [search, setSearch] = useState("");
     const [gameFilter, setGameFilter] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("");
+    const [regionFilter, setRegionFilter] = useState("");
+    const [questTypeFilter, setQuestTypeFilter] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
     const [page, setPage] = useState(1);
 
@@ -72,22 +74,79 @@ export function JokiItemListFilter({
         return items.filter((item) => {
             if (gameFilter && item.gameId !== gameFilter) return false;
             if (categoryFilter && item.categoryId !== categoryFilter) return false;
+            if (regionFilter && item.regionId !== regionFilter) return false;
+            if (questTypeFilter && item.questTypeId !== questTypeFilter) return false;
             if (statusFilter === "active" && !item.isActive) return false;
             if (statusFilter === "inactive" && item.isActive) return false;
             if (q && !item.title.toLowerCase().includes(q) && !item.description.toLowerCase().includes(q)) return false;
             return true;
         });
-    }, [items, search, gameFilter, categoryFilter, statusFilter]);
+    }, [items, search, gameFilter, categoryFilter, regionFilter, questTypeFilter, statusFilter]);
 
     useEffect(() => {
         setPage(1);
-    }, [search, gameFilter, categoryFilter, statusFilter]);
+    }, [search, gameFilter, categoryFilter, regionFilter, questTypeFilter, statusFilter]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const gameItems = gameFilter
+        ? items.filter((item) => item.gameId === gameFilter)
+        : items;
+    const visibleCategories = categories.filter((category) => !gameFilter || category.gameId === gameFilter);
+    const visibleRegions = regions.filter((region) => !gameFilter || region.gameId === gameFilter);
+    const visibleQuestTypes = questTypes.filter((questType) => !gameFilter || questType.gameId === gameFilter);
+
+    function selectGame(gameId: string) {
+        setGameFilter(gameId);
+        setCategoryFilter("");
+        setRegionFilter("");
+        setQuestTypeFilter("");
+    }
 
     return (
         <div className="flex flex-col gap-3">
+            <div role="tablist" aria-label="Filter game joki item" className="flex gap-2 overflow-x-auto pb-1">
+                <button
+                    id="joki-game-tab-all"
+                    type="button"
+                    role="tab"
+                    aria-selected={!gameFilter}
+                    aria-controls="joki-game-tab-panel"
+                    onClick={() => selectGame("")}
+                    className={`shrink-0 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-display font-semibold transition-colors ${
+                        !gameFilter
+                            ? "border-shihu-corona/40 bg-shihu-corona/15 text-shihu-corona"
+                            : "border-shihu-border text-shihu-muted hover:bg-[rgb(var(--admin-panel-soft))]"
+                    }`}
+                >
+                    Semua game
+                    <span className="text-[10px] tabular-nums opacity-75">{items.length}</span>
+                </button>
+                {games.map((game) => {
+                    const count = items.filter((item) => item.gameId === game.id).length;
+                    const selected = gameFilter === game.id;
+                    return (
+                        <button
+                            key={game.id}
+                            id={`joki-game-tab-${game.id}`}
+                            type="button"
+                            role="tab"
+                            aria-selected={selected}
+                            aria-controls="joki-game-tab-panel"
+                            onClick={() => selectGame(game.id)}
+                            className={`shrink-0 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-display font-semibold transition-colors ${
+                                selected
+                                    ? "border-shihu-corona/40 bg-shihu-corona/15 text-shihu-corona"
+                                    : "border-shihu-border text-shihu-muted hover:bg-[rgb(var(--admin-panel-soft))]"
+                            }`}
+                        >
+                            {game.name}
+                            <span className="text-[10px] tabular-nums opacity-75">{count}</span>
+                        </button>
+                    );
+                })}
+            </div>
+
             <div className="flex flex-wrap gap-2">
                 <input
                     value={search}
@@ -95,19 +154,27 @@ export function JokiItemListFilter({
                     placeholder="Cari nama atau deskripsi item..."
                     className="admin-input flex-1 min-w-[220px]"
                 />
-                <select value={gameFilter} onChange={(e) => setGameFilter(e.target.value)} className="admin-input !w-auto">
-                    <option value="">Semua game</option>
-                    {games.map((g) => (
-                        <option key={g.id} value={g.id}>
-                            {g.name}
+                <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="admin-input !w-auto">
+                    <option value="">Semua kategori</option>
+                    {visibleCategories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                            {!gameFilter ? `${games.find((game) => game.id === c.gameId)?.name ?? "Game"} · ` : ""}{c.name}
                         </option>
                     ))}
                 </select>
-                <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="admin-input !w-auto">
-                    <option value="">Semua kategori</option>
-                    {categories.map((c) => (
-                        <option key={c.id} value={c.id}>
-                            {c.name}
+                <select value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)} className="admin-input !w-auto">
+                    <option value="">Semua region</option>
+                    {visibleRegions.map((region) => (
+                        <option key={region.id} value={region.id}>
+                            {!gameFilter ? `${games.find((game) => game.id === region.gameId)?.name ?? "Game"} · ` : ""}{region.name}
+                        </option>
+                    ))}
+                </select>
+                <select value={questTypeFilter} onChange={(e) => setQuestTypeFilter(e.target.value)} className="admin-input !w-auto">
+                    <option value="">Semua jenis quest</option>
+                    {visibleQuestTypes.map((questType) => (
+                        <option key={questType.id} value={questType.id}>
+                            {!gameFilter ? `${games.find((game) => game.id === questType.gameId)?.name ?? "Game"} · ` : ""}{questType.name}
                         </option>
                     ))}
                 </select>
@@ -118,34 +185,36 @@ export function JokiItemListFilter({
                 </select>
             </div>
 
-            <p className="text-shihu-faint text-xs">
-                Menampilkan {filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} dari {filtered.length} item
-                {filtered.length !== items.length && ` (total ${items.length})`}
-            </p>
+            <div id="joki-game-tab-panel" role="tabpanel" aria-labelledby={gameFilter ? `joki-game-tab-${gameFilter}` : "joki-game-tab-all"}>
+                <p className="text-shihu-faint text-xs mb-3">
+                    Menampilkan {filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} dari {filtered.length} item
+                    {filtered.length !== gameItems.length && ` (total ${gameItems.length} pada game ini)`}
+                </p>
 
-            {filtered.length === 0 ? (
-                <div className="bg-shihu-card border border-shihu-border rounded-2xl p-8 text-center">
-                    <p className="text-shihu-muted text-sm">Tidak ada item yang cocok dengan filter.</p>
-                </div>
-            ) : (
-                <>
-                    <div className="flex flex-col gap-2.5">
-                        {paged.map((item) => (
-                            <JokiItemRowItem
-                                key={item.id}
-                                item={item}
-                                games={games}
-                                categories={categories}
-                                regions={regions}
-                                questTypes={questTypes}
-                                patches={patches}
-                                endgameContents={endgameContents}
-                            />
-                        ))}
+                {filtered.length === 0 ? (
+                    <div className="bg-shihu-card border border-shihu-border rounded-2xl p-8 text-center">
+                        <p className="text-shihu-muted text-sm">Tidak ada item yang cocok dengan filter.</p>
                     </div>
-                    <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-                </>
-            )}
+                ) : (
+                    <>
+                        <div className="flex flex-col gap-2.5">
+                            {paged.map((item) => (
+                                <JokiItemRowItem
+                                    key={item.id}
+                                    item={item}
+                                    games={games}
+                                    categories={categories}
+                                    regions={regions}
+                                    questTypes={questTypes}
+                                    patches={patches}
+                                    endgameContents={endgameContents}
+                                />
+                            ))}
+                        </div>
+                        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                    </>
+                )}
+            </div>
         </div>
     );
 }

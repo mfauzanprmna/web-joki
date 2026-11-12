@@ -2,10 +2,9 @@ import { buildAutoTasks, startOfDay } from "@/lib/rawat-akun-schedule";
 import { prisma } from "@/lib/prisma";
 
 const ACTIVE_STATUSES = ["MENUNGGU", "DIKERJAKAN", "FINISHING"] as const;
-// Window pengingat: notifikasi muncul kalau konten akan reset / event akan
-// selesai / order akan berakhir dalam <= 2 hari dari sekarang (termasuk hari
-// ini, "H-2" s.d. "H").
-const REMINDER_DAYS = 2;
+// Pengingat tampil mulai tiga hari sebelum tanggal reset/selesai, termasuk
+// hari tenggat. Pengingat order yang lewat tetap tersedia di tab terpisah.
+export const REMINDER_DAYS = 3;
 
 export interface OrderNotification {
     id: string;
@@ -15,6 +14,9 @@ export interface OrderNotification {
     title: string;
     detail: string;
     tone: "urgent" | "normal";
+    daysUntil: number;
+    dueDate: Date;
+    isOverdue: boolean;
     /** Jenis pengingat, dipakai untuk pilih ikon yang sesuai di tampilan. */
     kind: "deadline" | "reset" | "event";
 }
@@ -152,6 +154,9 @@ export async function getOrderNotifications(workerId?: string): Promise<OrderNot
                     detail,
                     tone: daysLeft <= 1 ? "urgent" : "normal",
                     kind: "deadline",
+                    daysUntil: daysLeft,
+                    dueDate: line.endDate,
+                    isOverdue: daysLeft < 0,
                 });
             }
 
@@ -215,6 +220,9 @@ export async function getOrderNotifications(workerId?: string): Promise<OrderNot
                     detail: formatReminderDetail(cycle.category, daysUntil),
                     tone: daysUntil <= 1 ? "urgent" : "normal",
                     kind: cycle.category === "Event" ? "event" : "reset",
+                    daysUntil,
+                    dueDate: cycle.endDate,
+                    isOverdue: false,
                 });
             }
         }

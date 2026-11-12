@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { CreateJokiItemForm } from "@/components/admin/CreateJokiItemForm";
-import { JokiItemRowItem } from "@/components/admin/JokiItemRowItem";
-import { PaginatedList } from "@/components/PaginatedList";
+import { JokiItemListFilter } from "@/components/admin/JokiItemListFilter";
 import Link from "next/link";
 
 export default async function AdminJokiPage() {
@@ -77,21 +76,14 @@ export default async function AdminJokiPage() {
         </details>
       )}
 
-      <PaginatedList
-        pageSize={15}
-        className="flex flex-col gap-2.5"
-        items={items.map((item) => (
-          <JokiItemRowItem
-            key={item.id}
-            item={item}
-            games={games}
-            categories={categories}
-            regions={regions}
-            questTypes={questTypes}
-            patches={patchOptions}
-            endgameContents={endgameContents}
-          />
-        ))}
+      <JokiItemListFilter
+        items={items}
+        games={games}
+        categories={categories}
+        regions={regions}
+        questTypes={questTypes}
+        patches={patchOptions}
+        endgameContents={endgameContents}
       />
     </div>
   );

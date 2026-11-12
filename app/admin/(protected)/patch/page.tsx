@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { CreatePatchForm } from "@/components/admin/CreatePatchForm";
-import { PatchRowItem } from "@/components/admin/PatchRowItem";
-import { PaginatedList } from "@/components/PaginatedList";
+import { PatchListTabs } from "@/components/admin/PatchListTabs";
 
 export default async function AdminPatchPage() {
   const [games, patches] = await Promise.all([
@@ -30,7 +29,7 @@ export default async function AdminPatchPage() {
         <CreatePatchForm games={games} />
       </details>
 
-      <PaginatedList pageSize={10} className="flex flex-col gap-3" items={patches.map((p) => <PatchRowItem key={p.id} patch={p} />)} />
+      <PatchListTabs patches={patches} />
     </div>
   );
 }
