@@ -1,6 +1,13 @@
 import type { OrderStatus } from "@prisma/client";
 import { prisma } from "./prisma";
-import { computeRawatAkunPeriod, buildAutoTasks, enumerateDays, isoDay, startOfDay } from "./rawat-akun-schedule";
+import {
+  computeRawatAkunPeriod,
+  buildAutoTasks,
+  enumerateDays,
+  isoDay,
+  startOfDay,
+  type EndgameContentForSchedule,
+} from "./rawat-akun-schedule";
 
 /**
  * Memastikan OrderLineDayProgress (satu baris per tanggal) dan
@@ -20,7 +27,10 @@ import { computeRawatAkunPeriod, buildAutoTasks, enumerateDays, isoDay, startOfD
  * Dipanggil dari Server Component (bukan dari client), sebelum data
  * OrderLineDayProgress/OrderLineDayTask dibaca untuk ditampilkan.
  */
-export async function ensureRawatAkunScheduleSynced(orderLineId: string): Promise<void> {
+export async function ensureRawatAkunScheduleSynced(
+  orderLineId: string,
+  additionalEndgameContentIds: string[] = [],
+): Promise<void> {
   const line = await prisma.orderLine.findUnique({
     where: { id: orderLineId },
     include: {
@@ -64,9 +74,33 @@ export async function ensureRawatAkunScheduleSynced(orderLineId: string): Promis
   // endgame manual di form (lihat JokiItemFormFields) -- otomatis mencakup
   // SEMUA konten endgame milik game tsb. Selain itu (Rawat Akun biasa),
   // pakai konten endgame yang dipilih manual admin lewat endgameContent.
-  const endgameContents = line.jokiItem.isPatchWide
+  const selectedEndgameContents = line.jokiItem.isPatchWide
     ? await prisma.endgameContent.findMany({ where: { gameId: line.jokiItem.gameId, isActive: true } })
     : line.jokiItem.endgameContent.map((e) => e.endgameContent);
+  const additionalEndgameContents = await prisma.endgameContent.findMany({
+    where: {
+      gameId: line.jokiItem.gameId,
+      isActive: true,
+      OR: [
+        { createdAt: { gt: line.createdAt } },
+        ...(additionalEndgameContentIds.length > 0
+          ? [{ id: { in: additionalEndgameContentIds } }]
+          : []),
+      ],
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      resetCycle: true,
+      anchorStartDate: true,
+      daysAfterPatchStart: true,
+    },
+  });
+  const endgameContentsById = new Map<string, EndgameContentForSchedule>();
+  for (const content of [...selectedEndgameContents, ...additionalEndgameContents]) {
+    endgameContentsById.set(content.id, content);
+  }
 
   const selectedPatchId = line.jokiItem.patch?.id;
   const schedulePatches = line.jokiItem.isPatchWide && selectedPatchId
@@ -75,7 +109,7 @@ export async function ensureRawatAkunScheduleSynced(orderLineId: string): Promis
 
   const autoTasks = buildAutoTasks(
     period,
-    endgameContents,
+    Array.from(endgameContentsById.values()),
     schedulePatches,
     events,
     line.jokiItem.includeEvent
@@ -258,6 +292,55 @@ export async function syncRawatAkunLinesForEventChange(params: {
         } catch (err) {
           // Tidak dilempar: guard sudah direset di atas, jadi baris ini
           // tetap akan dicoba lagi otomatis di kunjungan halaman berikutnya.
+          console.error(`Gagal sinkron ulang Rawat Akun untuk baris ${id}:`, err);
+        }
+
+      }),
+    );
+  }
+
+  return ids.length;
+}
+
+/**
+ * Tambahkan konten endgame yang baru dibuat/diaktifkan ke checklist Rawat
+ * Akun yang sudah ada untuk game yang sama. Konten disertakan untuk order
+ * aktif meski belum menjadi pilihan katalog Joki Item, agar order lama ikut
+ * menerima jadwal konten baru tanpa mengubah konfigurasi item.
+ */
+export async function syncRawatAkunLinesForEndgameContentChange(params: {
+  gameId: string;
+  endgameContentId: string;
+}): Promise<number> {
+  const lines = await prisma.orderLine.findMany({
+    where: {
+      isCompleted: false,
+      startDate: { not: null },
+      endDate: { not: null },
+      order: { status: { in: ACTIVE_ORDER_STATUSES } },
+      jokiItem: {
+        gameId: params.gameId,
+        category: { isRawatAkun: true },
+      },
+    },
+    select: { id: true },
+  });
+
+  if (lines.length === 0) return 0;
+  const ids = lines.map((line) => line.id);
+
+  await prisma.orderLine.updateMany({
+    where: { id: { in: ids } },
+    data: { scheduleSyncedAt: null },
+  });
+
+  for (let i = 0; i < ids.length; i += RESYNC_CONCURRENCY) {
+    const chunk = ids.slice(i, i + RESYNC_CONCURRENCY);
+    await Promise.all(
+      chunk.map(async (id) => {
+        try {
+          await ensureRawatAkunScheduleSynced(id, [params.endgameContentId]);
+        } catch (err) {
           console.error(`Gagal sinkron ulang Rawat Akun untuk baris ${id}:`, err);
         }
       }),

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import type { ResetCycle } from "@prisma/client";
 import { requireAdminSession } from "@/lib/actions/authorization";
+import { syncRawatAkunLinesForEndgameContentChange } from "@/lib/rawat-akun-service";
 
 export interface EndgameActionState {
   error?: string;
@@ -13,6 +14,21 @@ function parseDate(value: FormDataEntryValue | null): Date | null {
   if (!value) return null;
   const d = new Date(String(value));
   return isNaN(d.getTime()) ? null : d;
+}
+
+async function applyEndgameContentToExistingOrders(gameId: string, endgameContentId: string) {
+  try {
+    const count = await syncRawatAkunLinesForEndgameContentChange({ gameId, endgameContentId });
+    if (count > 0) {
+      revalidatePath("/progress/[slug]", "page");
+      revalidatePath("/admin/progress/[orderId]", "page");
+      revalidatePath("/worker/orders/[orderId]", "page");
+      revalidatePath("/admin");
+      revalidatePath("/worker");
+    }
+  } catch (err) {
+    console.error("Gagal memasukkan konten endgame ke order Rawat Akun yang sudah ada:", err);
+  }
 }
 
 export async function createEndgameContent(
@@ -30,9 +46,12 @@ export async function createEndgameContent(
   const data = buildCycleFields(resetCycle, formData);
   if ("error" in data) return { error: data.error };
 
-  await prisma.endgameContent.create({
+  const created = await prisma.endgameContent.create({
     data: { gameId, title, description, priceRupiah, resetCycle, isOrderable, ...data },
+    select: { id: true, gameId: true },
   });
+
+  await applyEndgameContentToExistingOrders(created.gameId, created.id);
 
   revalidatePath("/admin/endgame");
   revalidatePath("/[slug]", "page");
@@ -56,10 +75,15 @@ export async function updateEndgameContent(
   const data = buildCycleFields(resetCycle, formData);
   if ("error" in data) return { error: data.error };
 
-  await prisma.endgameContent.update({
+  const updated = await prisma.endgameContent.update({
     where: { id },
     data: { title, description, priceRupiah, resetCycle, isActive, isOrderable, ...data },
+    select: { id: true, gameId: true, isActive: true },
   });
+
+  if (updated.isActive) {
+    await applyEndgameContentToExistingOrders(updated.gameId, updated.id);
+  }
 
   revalidatePath("/admin/endgame");
   revalidatePath("/[slug]", "page");
