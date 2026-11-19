@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { requireOrderLineAccess } from "@/lib/actions/authorization";
+import { ensureRawatAkunScheduleSynced } from "@/lib/rawat-akun-service";
 
 async function revalidateForOrderLine(orderLineId: string) {
   const line = await prisma.orderLine.findUnique({
@@ -56,10 +57,34 @@ export async function toggleOrderLineCompletion(formData: FormData) {
   if (!orderLineId) return;
   await requireOrderLineAccess(orderLineId);
 
-  await prisma.orderLine.update({
+  const line = await prisma.orderLine.findUnique({
     where: { id: orderLineId },
-    data: { isCompleted },
+    select: { jokiItem: { select: { category: { select: { isRawatAkun: true } } } } },
   });
+  const isRawatAkun = line?.jokiItem?.category.isRawatAkun ?? false;
+
+  if (isCompleted && isRawatAkun) {
+    await ensureRawatAkunScheduleSynced(orderLineId);
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.orderLine.update({
+      where: { id: orderLineId },
+      data: { isCompleted },
+    });
+
+    if (isCompleted && isRawatAkun) {
+      await tx.orderLineDayProgress.updateMany({
+        where: { orderLineId },
+        data: { percent: 100 },
+      });
+      await tx.orderLineDayTask.updateMany({
+        where: { orderLineId },
+        data: { status: "SELESAI" },
+      });
+    }
+  });
+
   await recalculateOrderProgress(orderLineId);
 }
 
